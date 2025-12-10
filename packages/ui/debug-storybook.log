@@ -1,22 +1,14 @@
-[14:15:58.886] [INFO] storybook v10.1.5
-[14:15:59.761] [DEBUG] Getting package.json info for /Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/packages/ui/package.json...
-[14:15:59.777] [WARN] Could not resolve addon "@storybook/addon-essentials", skipping. Is it installed?
-[14:15:59.816] [WARN] Could not resolve addon "@storybook/addon-essentials", skipping. Is it installed?
-[14:16:00.057] [INFO] Starting...
-[14:16:00.209] [DEBUG] Starting preview..
-[14:16:00.264] [DEBUG] Using tsconfig paths for react-docgen
-[14:16:00.264] [ERROR] Failed to build the preview
-[14:16:00.265] [ERROR] [38;2;241;97;97mReferenceError: __dirname is not defined[39m
-    at Object.viteFinal (file://./.storybook/main.ts:16:26)
-    at file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/_node-chunks/chunk-RZ3SV46Y.js:10134:36
-    at async createViteServer (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/@storybook/builder-vite/dist/index.js:6410:21)
-    at async Module.start (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/@storybook/builder-vite/dist/index.js:6435:17)
-    at async storybookDevServer (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/core-server/index.js:7180:82)
-    at async buildOrThrow (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/core-server/index.js:5556:12)
-    at async buildDevStandalone (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/core-server/index.js:7582:66)
+[14:43:25.096] [INFO] storybook v10.1.5
+[14:43:25.686] [ERROR] [38;2;241;97;97mSB_CORE-COMMON_0001 (MissingFrameworkFieldError): Could not find a 'framework' field in Storybook config.
+
+Please run 'npx storybook automigrate' to automatically fix your config.
+
+More info: https://github.com/storybookjs/storybook/blob/next/MIGRATION.md#new-framework-api
+[39m
+    at validateFrameworkName (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/_node-chunks/chunk-RZ3SV46Y.js:12116:11)
+    at buildDevStandalone (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/core-server/index.js:7524:28)
     at async withTelemetry (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/_node-chunks/chunk-VGBOM5PD.js:209:12)
     at async dev (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/bin/core.js:2734:3)
     at async _Command.<anonymous> (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/bin/core.js:2801:92)
-[14:16:00.267] [WARN] Broken build, fix the error above.
+[14:43:25.688] [WARN] Broken build, fix the error above.
 You may need to refresh the browser.
-[14:16:00.269] [WARN] Could not resolve addon "@storybook/addon-essentials", skipping. Is it installed?

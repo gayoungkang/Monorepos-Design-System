@@ -1,27 +1,23 @@
-// .storybook/preview.ts
-
-import type { Preview } from '@storybook/react'
-import { withThemeByClassName } from '@storybook/addon-themes'
-import { ThemeProvider } from 'styled-components'
-import { GlobalStyle } from '../src/components/tokens/globalStyle'
-
-import { theme } from '../src/components/tokens/theme'
-import 'virtual:svg-icons-register'
-import React from 'react'
+import "virtual:svg-icons-register"
+import type { Preview } from "@storybook/react"
+import { withThemeByClassName } from "@storybook/addon-themes"
+import { ThemeProvider } from "styled-components"
+import { GlobalStyle } from "../src/components/tokens/globalStyle"
+import { theme } from "../src/components/tokens/theme"
+import React from "react"
 
 const preview: Preview = {
-
   parameters: {
     themes: {
-      defaultTheme: 'light',
+      defaultTheme: "light",
       list: [
         {
-          name: 'light',
-          class: 'light',
+          name: "light",
+          class: "light",
         },
         {
-          name: 'dark',
-          class: 'dark',
+          name: "dark",
+          class: "dark",
         },
       ],
     },
@@ -30,10 +26,10 @@ const preview: Preview = {
   decorators: [
     withThemeByClassName({
       themes: {
-        light: 'light',
-        dark: 'dark',
+        light: "light",
+        dark: "dark",
       },
-      defaultTheme: 'light',
+      defaultTheme: "light",
     }),
     (Story) => (
       <ThemeProvider theme={theme}>

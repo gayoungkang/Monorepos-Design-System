@@ -1,9 +1,10 @@
 import type { StorybookConfig } from "@storybook/react-vite"
-import { dirname, join } from "node:path"
+import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { createSvgIconsPlugin } from "vite-plugin-svg-icons"
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.stories.@(js|jsx|ts|tsx)"],
@@ -24,8 +25,8 @@ const config: StorybookConfig = {
     config.plugins = [
       ...(config.plugins ?? []),
       createSvgIconsPlugin({
-        iconDirs: [join(__dirname, "../src/components/Icon/svg")],
-        symbolId: "icon-[dir]-[name]",
+        iconDirs: [resolve(__dirname, "../src/components/atoms/Icon/svgs")],
+        symbolId: "icon-[name]",
       }),
     ]
 

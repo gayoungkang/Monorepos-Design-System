@@ -1,15 +1,14 @@
-import { forwardRef } from "react";
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin";
-import { IconName } from "./icon-loader";
-import { styled } from "../../tokens/customStyled";
-
+import { forwardRef } from "react"
+import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
+import { IconName } from "./icon-loader"
+import { styled } from "../../tokens/customStyled"
 
 export type IconProps = BaseMixinProps & {
-  name: IconName;
-  size?: string | number;
-  color?: string;
-  strokeWidth?: number;
-};
+  name: IconName
+  size?: string | number
+  color?: string
+  strokeWidth?: number
+}
 /**
  * @module Icon
  * 다양한 아이콘을 렌더링할 수 있는 재사용 가능한 `Icon` 컴포넌트로, SVG 아이콘을 기반으로 하며
@@ -37,20 +36,14 @@ export type IconProps = BaseMixinProps & {
  */
 
 const Icon = forwardRef<SVGSVGElement, IconProps>(
-  ({ name, size, color, strokeWidth,  ...others }, ref) => {
+  ({ name, size, color, strokeWidth, ...others }, ref) => {
     return (
-      <StyledIcon
-        ref={ref}
-        width={size}
-        height={size}
-        color={color}
-        {...others}
-      >
-        <use href={`#icon-${name}`} stroke={color} strokeWidth={strokeWidth}/>
+      <StyledIcon ref={ref} width={size} height={size} color={color} {...others}>
+        <use href={`#icon-${name}`} stroke={color} strokeWidth={strokeWidth} />
       </StyledIcon>
-    );
-  }
-);
+    )
+  },
+)
 
 const StyledIcon = styled.svg<{ color?: string }>`
   flex-shrink: 0;
@@ -58,11 +51,8 @@ const StyledIcon = styled.svg<{ color?: string }>`
   vertical-align: middle;
   color: ${({ color }) => color};
   ${BaseMixin}
-`;
+`
 
+Icon.displayName = "Icon"
 
-Icon.displayName = "Icon";
-
-
-
-export default Icon;
+export default Icon
