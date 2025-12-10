@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+      "noEmit": true,
+      "allowImportingTsExtensions": true,
+      "target": "ESNext",
+      "module": "ESNext",
+      "moduleResolution": "Bundler",
+      "jsx": "react-jsx",
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "allowSyntheticDefaultImports": true,
+      "resolveJsonModule": true,
+      "baseUrl": ".",
+      "paths": {
+        "@acme/ui/*": ["packages/ui/src/*"]
+      },
+      "types": ["node", "vite/client"]
+    }
+  }
+  
