@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import Icon, { type IconProps } from "./Icon"
 import { ThemeProvider } from "styled-components"
-import { theme } from "../tokens/theme"
+import { theme } from "../../tokens/theme"
 import { IconNames } from "./icon-loader"
 
 const meta: Meta<IconProps> = {
-  title: "Atoms/Icon",
+  title: "components/Icon",
   component: Icon,
   args: {
     name: "ClipboardLine",

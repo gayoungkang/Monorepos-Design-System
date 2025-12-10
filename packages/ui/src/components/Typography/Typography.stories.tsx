@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import { Typography, type TypographyProps } from "./Typography"
 import { ThemeProvider } from "styled-components"
-import { theme, typographyVariants } from "../tokens/theme"
+import { theme, typographyVariants } from "../../tokens/theme"
 
 const variantOptions = Object.keys(typographyVariants)
 
 const meta: Meta<TypographyProps> = {
-  title: "Atoms/Typography",
+  title: "components/Typography",
   component: Typography,
   args: {
     variant: "b1Regular",

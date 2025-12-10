@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react"
 
-import { theme } from "../tokens/theme"
-import { circularIndeterminate, indeterminateAnimation } from "../tokens/keyframes"
-import { BaseMixinProps } from "../tokens/baseMixin"
+import { theme } from "../../tokens/theme"
+import { circularIndeterminate, indeterminateAnimation } from "../../tokens/keyframes"
+import { BaseMixinProps } from "../../tokens/baseMixin"
 import { Typography } from "../Typography/Typography"
 import Box from "../Box/Box"
-import { styled } from "../tokens/customStyled"
+import { styled } from "../../tokens/customStyled"
 
 export type ProgressProps = BaseMixinProps & {
   type?: "bar" | "Circular"

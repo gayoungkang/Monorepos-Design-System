@@ -149,7 +149,7 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import ToggleButton, { type ToggleButtonProps } from "./ToggleButton"
 import { ThemeProvider } from "styled-components"
-import { theme } from "../tokens/theme"
+import { theme } from "../../tokens/theme"
 import { useState } from "react"
 import { IconNames } from "../Icon/icon-loader"
 
@@ -160,7 +160,7 @@ const sampleButtons = [
 ]
 
 const meta: Meta<ToggleButtonProps> = {
-  title: "Atoms/Controls/ToggleButton",
+  title: "components/ToggleButton",
   component: ToggleButton,
   args: {
     buttons: sampleButtons,

@@ -1,14 +1,30 @@
-[14:43:25.096] [INFO] storybook v10.1.5
-[14:43:25.686] [ERROR] [38;2;241;97;97mSB_CORE-COMMON_0001 (MissingFrameworkFieldError): Could not find a 'framework' field in Storybook config.
+[18:09:45.976] [INFO] storybook v10.1.5
+[18:09:46.079] [ERROR] [38;2;241;97;97mSB_CORE-SERVER_0007 (MainFileEvaluationError): Storybook couldn't evaluate your [33m.storybook/main.ts[39m file.
 
-Please run 'npx storybook automigrate' to automatically fix your config.
-
-More info: https://github.com/storybookjs/storybook/blob/next/MIGRATION.md#new-framework-api
-[39m
-    at validateFrameworkName (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/_node-chunks/chunk-RZ3SV46Y.js:12116:11)
-    at buildDevStandalone (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/core-server/index.js:7524:28)
+Original error:
+[37mError [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/config/icon.paths' imported from /.storybook/main.ts
+    at finalizeResolution (node:internal/modules/esm/resolve:283:11)
+    at moduleResolve (node:internal/modules/esm/resolve:952:10)
+    at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+    at nextResolve (node:internal/modules/esm/hooks:864:28)
+    at Hooks.resolve (node:internal/modules/esm/hooks:306:30)
+    at handleMessage (node:internal/modules/esm/worker:196:24)
+    at Immediate.checkForMessages (node:internal/modules/esm/worker:138:28)
+    at process.processImmediate (node:internal/timers:483:21)[39m[39m
+    at loadMainConfig (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/_node-chunks/chunk-RZ3SV46Y.js:11701:11)
+    at async buildDevStandalone (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/core-server/index.js:7523:16)
     at async withTelemetry (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/_node-chunks/chunk-VGBOM5PD.js:209:12)
     at async dev (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/bin/core.js:2734:3)
     at async _Command.<anonymous> (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/bin/core.js:2801:92)
-[14:43:25.688] [WARN] Broken build, fix the error above.
+[18:09:46.081] [WARN] Broken build, fix the error above.
 You may need to refresh the browser.
+[18:09:46.084] [WARN]   Failed to load preset: "/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/packages/ui/.storybook/main.ts"
+[18:09:46.084] [ERROR] Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/config/icon.paths' imported from ./.storybook/main.ts
+    at finalizeResolution (node:internal/modules/esm/resolve:283:11)
+    at moduleResolve (node:internal/modules/esm/resolve:952:10)
+    at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+    at nextResolve (node:internal/modules/esm/hooks:864:28)
+    at Hooks.resolve (node:internal/modules/esm/hooks:306:30)
+    at handleMessage (node:internal/modules/esm/worker:196:24)
+    at Immediate.checkForMessages (node:internal/modules/esm/worker:138:28)
+    at process.processImmediate (node:internal/timers:483:21)

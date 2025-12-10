@@ -1,13 +1,13 @@
 import { DirectionType, LabelPlacement, SizeUiType } from "@acme/ui/types"
-import { BaseMixinProps } from "../tokens/baseMixin"
+import { BaseMixinProps } from "../../tokens/baseMixin"
 import { IconName } from "../Icon/icon-loader"
 import Label, { LabelProps } from "../Label/Label"
 import Icon, { IconProps } from "../Icon/Icon"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
-import { theme } from "../tokens/theme"
+import { theme } from "../../tokens/theme"
 import { Typography } from "../Typography/Typography"
-import { styled } from "../tokens/customStyled"
+import { styled } from "../../tokens/customStyled"
 
 export type ToggleButtonProps = BaseMixinProps & {
   orientation?: DirectionType

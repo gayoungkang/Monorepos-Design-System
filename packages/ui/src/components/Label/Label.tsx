@@ -1,4 +1,4 @@
-import { BaseMixinProps } from "../tokens/baseMixin"
+import { BaseMixinProps } from "../../tokens/baseMixin"
 import Flex from "../Flex/Flex"
 import { Typography, TypographyProps } from "../Typography/Typography"
 

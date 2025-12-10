@@ -2,8 +2,8 @@ import "virtual:svg-icons-register"
 import type { Preview } from "@storybook/react"
 import { withThemeByClassName } from "@storybook/addon-themes"
 import { ThemeProvider } from "styled-components"
-import { GlobalStyle } from "../src/components/tokens/globalStyle"
-import { theme } from "../src/components/tokens/theme"
+import { GlobalStyle } from "../src/tokens/globalStyle"
+import { theme } from "../src/tokens/theme"
 import React from "react"
 
 const preview: Preview = {

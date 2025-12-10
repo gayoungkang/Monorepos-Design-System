@@ -1,8 +1,8 @@
 import type React from "react"
 import { JSX, ReactNode } from "react"
-import { BaseMixin, BaseMixinProps } from "../tokens/baseMixin"
-import { TypographyVariant, typographyVariants } from "../tokens/theme"
-import { styled } from "../tokens/customStyled"
+import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
+import { TypographyVariant, typographyVariants } from "../../tokens/theme"
+import { styled } from "../../tokens/customStyled"
 
 export type TypographyProps = BaseMixinProps & {
   variant: TypographyVariant

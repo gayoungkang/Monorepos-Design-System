@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import Progress, { type ProgressProps } from "./Progress"
 import { ThemeProvider } from "styled-components"
-import { theme } from "../tokens/theme"
+import { theme } from "../../tokens/theme"
 
 const meta: Meta<ProgressProps> = {
-  title: "Atoms/Feedback/Progress",
+  title: "components/Progress",
   component: Progress,
   args: {
     type: "bar",

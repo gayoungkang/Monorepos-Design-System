@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import Button, { type ButtonProps } from "./Button"
 import { ThemeProvider } from "styled-components"
-import { theme } from "../tokens/theme"
+import { theme } from "../../tokens/theme"
 
 const meta: Meta<ButtonProps> = {
-  title: "Atoms/Controls/Button",
+  title: "components/Button",
   component: Button,
   args: {
     text: "Button",

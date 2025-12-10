@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useRef, useState } from "react"
-import { styled } from "../tokens/customStyled"
+import { styled } from "../../tokens/customStyled"
 
 export type TooltipProps = {
   children: ReactNode

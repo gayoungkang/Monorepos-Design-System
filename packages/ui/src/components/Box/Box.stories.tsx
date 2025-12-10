@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import Box, { type BoxProps } from "./Box"
 import { ThemeProvider } from "styled-components"
-import { theme } from "../tokens/theme"
+import { theme } from "../../tokens/theme"
 
 const meta: Meta<BoxProps> = {
-  title: "Atoms/Layout/Box",
+  title: "components/Box",
   component: Box,
   args: {
     as: "div",

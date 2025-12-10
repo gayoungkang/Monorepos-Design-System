@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import { Tooltip, type TooltipProps } from "./Tooltip"
 import { ThemeProvider } from "styled-components"
-import { theme } from "../tokens/theme"
+import { theme } from "../../tokens/theme"
 
 const meta: Meta<TooltipProps> = {
-  title: "Atoms/Tooltip",
+  title: "components/Tooltip",
   component: Tooltip,
   args: {
     content: "툴팁 내용",

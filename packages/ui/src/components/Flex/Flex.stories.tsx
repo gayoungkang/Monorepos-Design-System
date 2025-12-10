@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import Flex, { type FlexProps } from "./Flex"
 import { ThemeProvider } from "styled-components"
-import { theme } from "../tokens/theme"
+import { theme } from "../../tokens/theme"
 
 const meta: Meta<FlexProps> = {
-  title: "Atoms/Layout/Flex",
+  title: "components/Flex",
   component: Flex,
   args: {
     as: "div",

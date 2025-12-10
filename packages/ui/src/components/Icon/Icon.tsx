@@ -1,7 +1,7 @@
 import { forwardRef } from "react"
-import { BaseMixin, BaseMixinProps } from "../tokens/baseMixin"
+import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
 import { IconName } from "./icon-loader"
-import { styled } from "../tokens/customStyled"
+import { styled } from "../../tokens/customStyled"
 
 export type IconProps = BaseMixinProps & {
   name: IconName

@@ -1,6 +1,6 @@
 import { HTMLAttributes, JSX, ReactNode, forwardRef } from "react"
-import { BaseMixin, BaseMixinProps } from "../tokens/baseMixin"
-import { styled } from "../tokens/customStyled"
+import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
+import { styled } from "../../tokens/customStyled"
 
 export type BoxProps = HTMLAttributes<HTMLElement> &
   BaseMixinProps & {

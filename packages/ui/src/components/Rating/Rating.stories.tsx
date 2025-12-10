@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import Rating, { type RatingProps } from "./Rating"
 import { ThemeProvider } from "styled-components"
-import { theme } from "../tokens/theme"
+import { theme } from "../../tokens/theme"
 import { useState } from "react"
 
 const meta: Meta<RatingProps> = {
-  title: "Atoms/Input/Rating",
+  title: "components/Rating",
   component: Rating,
   args: {
     defaultValue: 2,

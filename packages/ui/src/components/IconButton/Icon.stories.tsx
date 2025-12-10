@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import IconButton, { type IconButtonProps } from "./IconButton"
 import { ThemeProvider } from "styled-components"
-import { theme } from "../tokens/theme"
+import { theme } from "../../tokens/theme"
 import { IconNames } from "../Icon/icon-loader"
 
 const meta: Meta<IconButtonProps> = {
-  title: "Atoms/Controls/IconButton",
+  title: "components/IconButton",
   component: IconButton,
   args: {
     icon: "ArrowLeft",

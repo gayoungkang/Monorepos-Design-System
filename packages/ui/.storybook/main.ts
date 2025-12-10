@@ -25,7 +25,7 @@ const config: StorybookConfig = {
     config.plugins = [
       ...(config.plugins ?? []),
       createSvgIconsPlugin({
-        iconDirs: [resolve(__dirname, "../src/components/atoms/Icon/svgs")],
+        iconDirs: [resolve(__dirname, "../src/components/Icon/svgs")],
         symbolId: "icon-[name]",
       }),
     ]

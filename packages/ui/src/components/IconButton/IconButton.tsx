@@ -1,11 +1,11 @@
 import { FocusEventHandler, MouseEventHandler, useState, MouseEvent } from "react"
-import { BaseMixin, BaseMixinProps } from "../tokens/baseMixin"
+import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
 import { IconName } from "../Icon/icon-loader"
 import { VariantUiType } from "@acme/ui/types"
 import Icon, { IconProps } from "../Icon/Icon"
 import { DefaultTheme } from "styled-components"
-import { styled } from "../tokens/customStyled"
-import { theme } from "../tokens/theme"
+import { styled } from "../../tokens/customStyled"
+import { theme } from "../../tokens/theme"
 
 export type IconButtonProps = BaseMixinProps & {
   icon: IconName
