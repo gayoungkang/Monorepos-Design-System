@@ -39,7 +39,12 @@ const Icon = forwardRef<SVGSVGElement, IconProps>(
   ({ name, size, color, strokeWidth, ...others }, ref) => {
     return (
       <StyledIcon ref={ref} width={size} height={size} color={color} {...others}>
-        <use href={`#icon-${name}`} stroke={color} strokeWidth={strokeWidth} />
+        <use
+          href={`#icon-${name}`}
+          fill={color ?? "currentColor"}
+          stroke={color ?? "currentColor"}
+          strokeWidth={strokeWidth}
+        />
       </StyledIcon>
     )
   },

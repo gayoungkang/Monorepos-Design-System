@@ -1,4 +1,4 @@
-import { css, CSSObject } from "styled-components";
+import { css, CSSObject } from "styled-components"
 
 /**
  * @typedef SxProps
@@ -27,8 +27,8 @@ import { css, CSSObject } from "styled-components";
  */
 
 export type SxProps = CSSObject & {
-  [K in `&:${string}` | `@${string}`]?: CSSObject;
-};
+  [K in `&:${string}` | `@${string}`]?: CSSObject
+}
 
 /**
  * @typedef BaseMixinProps
@@ -44,43 +44,45 @@ export type SxProps = CSSObject & {
  */
 export type BaseMixinProps = {
   /** padding */
-  p?: string;
+  p?: string
   /** padding-top */
-  pt?: string | number;
+  pt?: string | number
   /** padding-right */
-  pr?: string | number;
+  pr?: string | number
   /** padding-bottom */
-  pb?: string | number;
+  pb?: string | number
   /** padding-left */
-  pl?: string | number;
+  pl?: string | number
 
   /** 수평 padding (pr + pl) */
-  px?: string | number;
+  px?: string | number
   /** 수직 padding (pt + pb) */
-  py?: string | number;
+  py?: string | number
 
   /** margin */
-  m?: string;
+  m?: string
   /** margin-top */
-  mt?: string | number;
+  mt?: string | number
   /** margin-right */
-  mr?: string | number;
+  mr?: string | number
   /** margin-bottom */
-  mb?: string | number;
+  mb?: string | number
   /** margin-left */
-  ml?: string | number;
+  ml?: string | number
 
   /** 수평 margin (mr + ml) */
-  mx?: string | number;
+  mx?: string | number
   /** 수직 margin (mt + mb) */
-  my?: string | number;
+  my?: string | number
 
   /** sx 커스텀 스타일 */
-  sx?: SxProps;
+  sx?: SxProps
 
-  width?: string | number;
-  height?: string | number;
-};
+  width?: string | number
+  height?: string | number
+
+  backgroundColor?: string | number
+}
 
 export const omittedBaseProps = [
   "p",
@@ -100,11 +102,12 @@ export const omittedBaseProps = [
   "sx",
   "width",
   "height",
-] as const;
+  "backgroundColor",
+] as const
 
-type OmittedBaseProp = (typeof omittedBaseProps)[number];
+type OmittedBaseProp = (typeof omittedBaseProps)[number]
 export const shouldBlock = (prop: string): prop is OmittedBaseProp =>
-  (omittedBaseProps as readonly string[]).includes(prop);
+  (omittedBaseProps as readonly string[]).includes(prop)
 
 /**
  * @function BaseMixin
@@ -129,9 +132,9 @@ export const shouldBlock = (prop: string): prop is OmittedBaseProp =>
  * ```
  */
 const toCssValue = (value?: string | number): string | undefined => {
-  if (value === undefined) return undefined;
-  return typeof value === "number" ? `${value}px` : value;
-};
+  if (value === undefined) return undefined
+  return typeof value === "number" ? `${value}px` : value
+}
 
 /**
  * 주어진 CSSObject의 모든 속성 값에 !important를 붙입니다.
@@ -139,29 +142,27 @@ const toCssValue = (value?: string | number): string | undefined => {
  * @returns 모든 스타일 값에 !important가 붙은 새로운 객체
  */
 export function addImportantToSx(styles: SxProps): SxProps {
-  const result: SxProps = {};
+  const result: SxProps = {}
 
   for (const key in styles) {
-    const value = styles[key];
+    const value = styles[key]
 
     if (typeof value === "string") {
       // 이미 !important가 포함되어 있으면 그대로 둠
-      result[key] = value.includes("!important")
-        ? value
-        : `${value} !important`;
+      result[key] = value.includes("!important") ? value : `${value} !important`
     } else if (typeof value === "number") {
       // 숫자면 그냥 문자열로 변환 후 !important 붙이기 (px 단위가 필요한 경우 주의)
-      result[key] = `${value} !important`;
+      result[key] = `${value} !important`
     } else if (typeof value === "object" && value !== null) {
       // 중첩된 객체는 재귀 호출
-      result[key] = addImportantToSx(value as SxProps);
+      result[key] = addImportantToSx(value as SxProps)
     } else {
       // 그 외 타입은 그대로 둠
-      result[key] = value;
+      result[key] = value
     }
   }
 
-  return result;
+  return result
 }
 
 export const BaseMixin = (props: BaseMixinProps) => css`
@@ -186,5 +187,7 @@ export const BaseMixin = (props: BaseMixinProps) => css`
   width: ${toCssValue(props.width)};
   height: ${toCssValue(props.height)};
 
+  background-color: ${toCssValue(props.backgroundColor)};
+
   ${props.sx && css(addImportantToSx(props.sx))}
-`;
+`

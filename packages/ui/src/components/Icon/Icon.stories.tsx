@@ -2,20 +2,26 @@ import type { Meta, StoryObj } from "@storybook/react"
 import Icon, { type IconProps } from "./Icon"
 import { ThemeProvider } from "styled-components"
 import { theme } from "../../tokens/theme"
-import { IconNames } from "./icon-loader"
+import { IconName, IconNames } from "./icon-loader"
+import Flex from "../Flex/Flex"
+import { Typography } from "../Typography/Typography"
 
 const meta: Meta<IconProps> = {
   title: "components/Icon",
   component: Icon,
+
   args: {
-    name: "ClipboardLine",
-    size: "24px",
+    name: IconNames[0],
+    size: 24,
+    color: theme.colors.grayscale[700],
+    strokeWidth: 0,
   },
+
   argTypes: {
+    /* ---------------------------------- Icon Props ---------------------------------- */
     name: {
-      control: "select",
-      options: IconNames,
-      description: "아이콘 이름 (IconName)",
+      control: "text",
+      description: "아이콘 이름 (IconName union)",
     },
     size: {
       control: "text",
@@ -23,35 +29,36 @@ const meta: Meta<IconProps> = {
     },
     color: {
       control: "text",
-      description: "색상",
+      description: "아이콘 색상 (CSS color 또는 theme token)",
     },
     strokeWidth: {
       control: "number",
-      description: "stroke-width",
+      description: "SVG stroke-width",
     },
 
-    /* --- BaseMixinProps --- */
-    p: { control: "text", description: "padding" },
-    pt: { control: "text", description: "padding-top" },
-    pr: { control: "text", description: "padding-right" },
-    pb: { control: "text", description: "padding-bottom" },
-    pl: { control: "text", description: "padding-left" },
-    px: { control: "text", description: "padding X-axis" },
-    py: { control: "text", description: "padding Y-axis" },
+    /* ---------------------------------- BaseMixinProps ---------------------------------- */
+    p: { control: "text" },
+    pt: { control: "text" },
+    pr: { control: "text" },
+    pb: { control: "text" },
+    pl: { control: "text" },
+    px: { control: "text" },
+    py: { control: "text" },
 
-    m: { control: "text", description: "margin" },
-    mt: { control: "text", description: "margin-top" },
-    mr: { control: "text", description: "margin-right" },
-    mb: { control: "text", description: "margin-bottom" },
-    ml: { control: "text", description: "margin-left" },
-    mx: { control: "text", description: "margin X-axis" },
-    my: { control: "text", description: "margin Y-axis" },
+    m: { control: "text" },
+    mt: { control: "text" },
+    mr: { control: "text" },
+    mb: { control: "text" },
+    ml: { control: "text" },
+    mx: { control: "text" },
+    my: { control: "text" },
 
-    width: { control: "text", description: "width (overridden by size)" },
-    height: { control: "text", description: "height (overridden by size)" },
+    width: { control: "text" },
+    height: { control: "text" },
 
     sx: { control: false },
   },
+
   decorators: [
     (Story) => (
       <ThemeProvider theme={theme}>
@@ -59,47 +66,72 @@ const meta: Meta<IconProps> = {
       </ThemeProvider>
     ),
   ],
+
   tags: ["autodocs"],
 }
 
 export default meta
-
 type Story = StoryObj<IconProps>
 
 /* ─────────── Default ─────────── */
-export const Default: Story = {
-  args: {
-    name: "ClipboardLine",
-  },
+export const Default: Story = {}
+
+/* ─────────── Sizes ─────────── */
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+      <Icon name={IconNames[0]} size={12} />
+      <Icon name={IconNames[0]} size={16} />
+      <Icon name={IconNames[0]} size={24} />
+      <Icon name={IconNames[0]} size={32} />
+      <Icon name={IconNames[0]} size={48} />
+    </div>
+  ),
 }
 
 /* ─────────── Colors ─────────── */
 export const Colors: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 12 }}>
-      <Icon name="AlertTriangle" color="#000" />
-      <Icon name="ClipboardLine" color="#666" />
-      <Icon name="ArrowLeftCircleLine" color="#ff0000" />
+    <div style={{ display: "flex", gap: 24 }}>
+      <Icon name={IconNames[0]} size={24} color={theme.colors.primary[400]} />
+      <Icon name={IconNames[0]} size={24} color={theme.colors.success[500]} />
+      <Icon name={IconNames[0]} size={24} color={theme.colors.error[500]} />
+      <Icon name={IconNames[0]} size={24} color={theme.colors.grayscale[500]} />
     </div>
   ),
 }
 
-/* ─────────── Sizes ─────────── */
-export const Sizes: Story = {
+/* ─────────── StrokeWidth ─────────── */
+export const StrokeWidth: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 12 }}>
-      <Icon name="AlertTriangle" size="16px" />
-      <Icon name="AlertTriangle" size="24px" />
-      <Icon name="AlertTriangle" size="32px" />
+    <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+      <Icon name={IconNames[0]} size={32} strokeWidth={0} />
+      <Icon name={IconNames[0]} size={32} strokeWidth={1} />
+      <Icon name={IconNames[0]} size={32} strokeWidth={2} />
     </div>
   ),
 }
 
-/* ─────────── Padding ─────────── */
-export const WithPadding: Story = {
+/* ─────────── Icon Gallery (Optional) ─────────── */
+export const IconGallery: Story = {
   render: () => (
-    <div style={{ border: "1px solid #ddd" }}>
-      <Icon name="ClipboardLine" size="24px" p="8px" />
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
+      {IconNames.map((icon) => (
+        <div
+          key={icon}
+          style={{
+            width: 80,
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+            alignItems: "center",
+          }}
+        >
+          <Icon name={icon as IconName} size={24} />
+          <div style={{ fontSize: 12 }}>{icon}</div>
+        </div>
+      ))}
     </div>
   ),
 }

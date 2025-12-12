@@ -1,10 +1,10 @@
-import { LabelPlacement } from "@acme/ui/types"
 import { forwardRef, KeyboardEvent, MouseEvent, ReactNode, useState } from "react"
 import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import Flex from "../Flex/Flex"
 import { IconName } from "../Icon/icon-loader"
 import Label, { LabelProps } from "../Label/Label"
+import { LabelPlacement } from "../../types"
 
 export type RatingProps = BaseMixinProps & {
   value?: number | null
@@ -35,8 +35,8 @@ const Rating = forwardRef<HTMLDivElement, RatingProps>(
       precision = 1,
       disabled = false,
       readOnly = false,
-      icon = "★",
-      emptyIcon = "☆",
+      icon = "StarGlyph",
+      emptyIcon = "StarOutLine",
       size = 24,
       onChange,
       onChangeActive,

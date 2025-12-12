@@ -21,6 +21,13 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
+  staticDirs: [
+    {
+      from: resolve(__dirname, "../../../public"),
+      to: "/",
+    },
+  ],
+
   viteFinal(config) {
     config.plugins = [
       ...(config.plugins ?? []),

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react"
 import { Typography, type TypographyProps } from "./Typography"
 import { ThemeProvider } from "styled-components"
 import { theme, typographyVariants } from "../../tokens/theme"
+import Flex from "../Flex/Flex"
 
 const variantOptions = Object.keys(typographyVariants)
 
@@ -115,11 +116,11 @@ export const Ellipsis: Story = {
 /* ─────────── Italic / Underline ─────────── */
 export const StyleOptions: Story = {
   render: () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <Flex direction="column" gap="12px">
       <Typography variant="b1Regular" text="italic" italic />
       <Typography variant="b1Regular" text="underline" underline />
       <Typography variant="b1Regular" text="italic + underline" italic underline />
-    </div>
+    </Flex>
   ),
 }
 

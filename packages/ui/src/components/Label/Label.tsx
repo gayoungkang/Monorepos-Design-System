@@ -1,3 +1,4 @@
+import { theme } from "../../tokens/theme"
 import { BaseMixinProps } from "../../tokens/baseMixin"
 import Flex from "../Flex/Flex"
 import { Typography, TypographyProps } from "../Typography/Typography"
@@ -41,7 +42,7 @@ const Label = ({
     <Typography
       text="*"
       variant="b1Medium"
-      color="error.500"
+      color={theme.colors.error[500]}
       {...(placement === "left" ? { mr: 2 } : { ml: 2 })}
     />
   )

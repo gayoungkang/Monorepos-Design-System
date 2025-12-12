@@ -1,4 +1,3 @@
-import { DirectionType, LabelPlacement, SizeUiType } from "@acme/ui/types"
 import { BaseMixinProps } from "../../tokens/baseMixin"
 import { IconName } from "../Icon/icon-loader"
 import Label, { LabelProps } from "../Label/Label"
@@ -8,10 +7,11 @@ import Box from "../Box/Box"
 import { theme } from "../../tokens/theme"
 import { Typography } from "../Typography/Typography"
 import { styled } from "../../tokens/customStyled"
+import { DirectionType, SizeUiType } from "../../types"
 
 export type ToggleButtonProps = BaseMixinProps & {
   orientation?: DirectionType
-  buttons: { icon?: IconName; label?: string; value: string }[]
+  buttons: { startIcon?: IconName; endIcon?: IconName; label?: string; value: string }[]
   size?: SizeUiType
   selectedValue: string
   onClick: (value: string) => void
@@ -20,7 +20,6 @@ export type ToggleButtonProps = BaseMixinProps & {
   required?: boolean
   labelProps?: Partial<Omit<LabelProps, "text">>
   iconProps?: Partial<Omit<IconProps, "name">>
-  labelPlacement?: LabelPlacement
 }
 /**
  * @module ToggleButton
@@ -72,47 +71,25 @@ const ToggleButton = ({
   labelProps,
   iconProps,
   size = "M",
-  labelPlacement = "top",
   ...others
 }: ToggleButtonProps) => {
   // * size에 따라 icon size 및 font size 결정되는 함수
   const getSize = (size: SizeUiType): string => {
     switch (size) {
       case "S":
-        return "5px"
+        return "8px"
       case "M":
-        return "7px"
+        return "10px"
       case "L":
-        return "9px"
+        return "12px"
       default:
         return "7px"
     }
   }
 
-  // * 라벨 위치 렌더링 함수
-  const renderLabel = (position: "top" | "bottom") => {
-    if (!label) return null
-
-    if (labelPlacement === position) {
-      return (
-        <Flex justify="start">
-          <Label
-            text={label}
-            required={required}
-            mb={position === "top" ? 4 : 0}
-            mt={position === "bottom" ? 4 : 0}
-            {...labelProps}
-          />
-        </Flex>
-      )
-    }
-
-    return null
-  }
-
   return (
     <Box {...others}>
-      {renderLabel("top")}
+      {label && <Label text={label ?? ""} required={required} mb={4} {...labelProps} />}
       <Flex
         direction={orientation === "horizontal" ? "row" : "column"}
         align="center"
@@ -123,10 +100,7 @@ const ToggleButton = ({
           backgroundColor: theme.colors.grayscale[200],
         }}
       >
-        {labelPlacement === "left" && (
-          <Label text={label ?? ""} required={required} mr={4} {...labelProps} />
-        )}
-        {buttons.map(({ label, value, icon }) => (
+        {buttons.map(({ label, value, startIcon, endIcon }) => (
           <StyledButton
             key={value}
             selected={selectedValue === value}
@@ -134,21 +108,7 @@ const ToggleButton = ({
             size={size}
             disabled={disabled}
           >
-            {label && (
-              <Typography
-                variant={selectedValue === value ? "b2Medium" : "b2Regular"}
-                color={
-                  disabled
-                    ? "text.disabled"
-                    : selectedValue === value
-                      ? "text.secondary"
-                      : "text.tertiary"
-                }
-                text={label}
-                sx={{ fontSize: getSize(size) }}
-              />
-            )}
-            {icon && (
+            {startIcon && (
               <Icon
                 color={
                   disabled
@@ -157,18 +117,44 @@ const ToggleButton = ({
                       ? theme.colors.text.secondary
                       : theme.colors.text.tertiary
                 }
-                name={icon}
+                name={startIcon}
                 size={getSize(size)}
+                mr={4}
+                {...iconProps}
+              />
+            )}
+            {label && (
+              <Typography
+                variant={selectedValue === value ? "b2Medium" : "b2Regular"}
+                color={
+                  disabled
+                    ? theme.colors.text.disabled
+                    : selectedValue === value
+                      ? theme.colors.text.secondary
+                      : theme.colors.text.tertiary
+                }
+                text={label}
+                sx={{ fontSize: getSize(size) }}
+              />
+            )}
+            {endIcon && (
+              <Icon
+                color={
+                  disabled
+                    ? theme.colors.text.disabled
+                    : selectedValue === value
+                      ? theme.colors.text.secondary
+                      : theme.colors.text.tertiary
+                }
+                name={endIcon}
+                size={getSize(size)}
+                ml={4}
                 {...iconProps}
               />
             )}
           </StyledButton>
         ))}
-        {labelPlacement === "right" && (
-          <Label text={label ?? ""} required={required} ml={4} {...labelProps} />
-        )}
       </Flex>
-      {renderLabel("bottom")}
     </Box>
   )
 }

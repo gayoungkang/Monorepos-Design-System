@@ -2,17 +2,22 @@ import type { Meta, StoryObj } from "@storybook/react"
 import Button, { type ButtonProps } from "./Button"
 import { ThemeProvider } from "styled-components"
 import { theme } from "../../tokens/theme"
+import { IconNames } from "../Icon/icon-loader"
 
 const meta: Meta<ButtonProps> = {
   title: "components/Button",
   component: Button,
+
   args: {
     text: "Button",
     type: "button",
     colorVariant: "primary",
     variant: "contained",
     size: "M",
+    disabled: false,
+    loading: false,
   },
+
   argTypes: {
     /* ---------------------------------- UI ---------------------------------- */
     colorVariant: {
@@ -30,15 +35,28 @@ const meta: Meta<ButtonProps> = {
       options: ["S", "M", "L"],
       description: "버튼 크기",
     },
+    loading: {
+      control: "boolean",
+      description: "로딩 상태 (Progress 표시)",
+    },
+    disabled: {
+      control: "boolean",
+      description: "버튼 비활성화",
+    },
 
     /* ---------------------------------- Icons ---------------------------------- */
-    startIcon: { control: false, description: "시작 아이콘" },
-    endIcon: { control: false, description: "끝 아이콘" },
+    startIcon: { control: "text", description: "시작 아이콘" },
+    endIcon: { control: "text", description: "끝 아이콘" },
 
     /* ---------------------------------- SubComponents ---------------------------------- */
-    typographyProps: { control: false, description: "Typography 옵션" },
-    iconProps: { control: false, description: "Icon 옵션" },
-    progressProps: { control: false, description: "Progress 옵션" },
+    iconProps: { control: false, description: "Icon 컴포넌트 props" },
+    typographyProps: { control: false, description: "Typography props" },
+    progressProps: { control: false, description: "Progress props" },
+
+    /* ---------------------------------- Events ---------------------------------- */
+    onClick: { control: false },
+    fileUrl: { control: "text", description: "다운로드 파일 URL" },
+    fileName: { control: "text", description: "다운로드 파일명" },
 
     /* ---------------------------------- BaseMixinProps ---------------------------------- */
     p: { control: "text" },
@@ -75,7 +93,6 @@ const meta: Meta<ButtonProps> = {
 }
 
 export default meta
-
 type Story = StoryObj<ButtonProps>
 
 /* ─────────── Default ─────────── */
@@ -96,17 +113,6 @@ export const Variants: Story = {
   ),
 }
 
-/* ─────────── Sizes ─────────── */
-export const Sizes: Story = {
-  render: () => (
-    <div style={{ display: "flex", gap: 12 }}>
-      <Button text="Small" size="S" />
-      <Button text="Medium" size="M" />
-      <Button text="Large" size="L" />
-    </div>
-  ),
-}
-
 /* ─────────── Colors ─────────── */
 export const ColorVariants: Story = {
   render: () => (
@@ -118,27 +124,45 @@ export const ColorVariants: Story = {
   ),
 }
 
-/* ─────────── With Icon ─────────── */
+/* ─────────── Sizes ─────────── */
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: "flex", gap: 12 }}>
+      <Button text="Small" size="S" />
+      <Button text="Medium" size="M" />
+      <Button text="Large" size="L" />
+    </div>
+  ),
+}
+
+/* ─────────── With Icons ─────────── */
 export const WithStartIcon: Story = {
   args: {
-    text: "Clipboard",
-    startIcon: "ClipboardLine",
+    text: "Start Icon",
+    startIcon: IconNames[0],
   },
 }
 
 export const WithEndIcon: Story = {
   args: {
-    text: "BookmarkLine",
-    endIcon: "BookmarkLine",
+    text: "End Icon",
+    endIcon: IconNames[1],
   },
 }
 
-/* ─────────── Download ─────────── */
-export const FileDownload: Story = {
+export const WithBothIcons: Story = {
   args: {
-    text: "파일 다운로드",
-    fileUrl: "/sample.pdf",
-    fileName: "sample.pdf",
+    text: "Both Icons",
+    startIcon: IconNames[3],
+    endIcon: IconNames[3],
+  },
+}
+
+/* ─────────── Loading ─────────── */
+export const Loading: Story = {
+  args: {
+    text: "Loading...",
+    loading: true,
   },
 }
 
@@ -150,10 +174,11 @@ export const Disabled: Story = {
   },
 }
 
-/* ─────────── Loading ─────────── */
-export const Loading: Story = {
+/* ─────────── File Download ─────────── */
+export const FileDownload: Story = {
   args: {
-    text: "Loading...",
-    loading: true,
+    text: "파일 다운로드",
+    fileUrl: "/sample.pdf",
+    fileName: "sample.pdf",
   },
 }

@@ -248,13 +248,10 @@ const ButtonStyle = styled.button<Omit<ButtonProps, "text">>`
     const cv = colorVariant ?? "primary"
     const v = variant ?? "contained"
 
-    //
-    // base styles (normal + disabled)
-    //
     const base: Record<"primary" | "secondary" | "tertiary", Record<VariantUiType, string>> = {
       primary: {
         contained: `
-          background-color: ${disabled ? colors.primary[100] : colors.primary[400]};
+          background-color: ${disabled ? colors.text.disabled : colors.primary[400]};
           color: ${colors.grayscale.white};
         `,
         text: `

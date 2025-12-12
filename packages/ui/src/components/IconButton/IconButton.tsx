@@ -6,49 +6,35 @@ import Icon, { IconProps } from "../Icon/Icon"
 import { DefaultTheme } from "styled-components"
 import { styled } from "../../tokens/customStyled"
 import { theme } from "../../tokens/theme"
+import { Tooltip, TooltipProps } from "../Tooltip/Tooltip"
 
 export type IconButtonProps = BaseMixinProps & {
   icon: IconName
   onClick?: (e: MouseEvent<HTMLButtonElement>) => void
+  color?: string
   size?: number | string
   variant?: VariantUiType
   disabled?: boolean
   iconProps?: Partial<Omit<IconProps, "name">>
   disableInteraction?: boolean
+  toolTip?: string
+  toolTipProps?: TooltipProps
   onMouseDown?: (e: MouseEvent<HTMLButtonElement>) => void
   onMouseUp?: (e: MouseEvent<HTMLButtonElement>) => void
   onMouseLeave?: (e: MouseEvent<HTMLButtonElement>) => void
 }
 
-/**
- * @module IconButton
- * 재사용 가능한 아이콘 전용 버튼 컴포넌트입니다. 다양한 스타일(variant), 크기(size), 상태(disabled/hover/active),
- * 및 커스텀 아이콘 렌더링을 지원합니다.
- *
- * - `BaseMixin` 기반 공통 스타일 사용
- * - `contained`, `outlined` variant 지원
- * - hover 및 active 상태 색상 변화
- * - `disableInteraction` 옵션으로 hover/active 비활성화 가능
- * - 외부 onMouseDown, onMouseUp, onMouseLeave 핸들러 통합 지원
- *
- * @사용법
- * <IconButton
- *   icon="ArrowLeft"
- *   onClick={handleClick}
- *   onMouseDown={() => holdStart()}
- *   onMouseUp={holdEnd}
- *   onMouseLeave={holdEnd}
- * />
- */
-
 const IconButton = ({
   icon,
   onClick,
+  color,
   disabled = false,
   disableInteraction = false,
   size = 16,
   variant = "contained",
   iconProps,
+  toolTip,
+  toolTipProps,
   onMouseDown,
   onMouseUp,
   onMouseLeave,
@@ -57,35 +43,29 @@ const IconButton = ({
   const [isHover, setIsHover] = useState(false)
   const [isActive, setIsActive] = useState(false)
 
-  // * 클릭 핸들러
   const handleClick: MouseEventHandler<HTMLButtonElement> = (e) => {
     if (e.detail === 0) return
     e.preventDefault()
     if (!disabled) onClick?.(e)
   }
 
-  // * 마우스 hover 상태 제어
   const handleHover = (hover: boolean) => (e: MouseEvent<HTMLButtonElement>) => {
     if (!disableInteraction) setIsHover(hover)
     if (!hover) onMouseLeave?.(e)
   }
 
-  // * 마우스 active 상태 제어
   const handleMouseDown = (e: MouseEvent<HTMLButtonElement>) => {
     if (!disableInteraction) setIsActive(true)
     onMouseDown?.(e)
   }
 
-  // * 마우스 active 상태 제어
   const handleMouseUp = (e: MouseEvent<HTMLButtonElement>) => {
     if (!disableInteraction) setIsActive(false)
     onMouseUp?.(e)
   }
 
-  // * 포커스 해제 시 active 상태 초기화
   const handleBlur: FocusEventHandler<HTMLButtonElement> = () => setIsActive(false)
 
-  // * variant, 상태에 따른 아이콘 컬러 계산
   const getIconColorFromVariant = (
     variant: VariantUiType,
     theme: DefaultTheme,
@@ -99,7 +79,13 @@ const IconButton = ({
     return theme.colors.grayscale[500]
   }
 
-  return (
+  // ★ 최종 아이콘 컬러 결정 (툴팁 여부와 관계없이 동일)
+  const finalColor =
+    iconProps?.color ??
+    color ??
+    getIconColorFromVariant(variant, theme, disabled, isHover, isActive)
+
+  const ButtonContent = (
     <IconButtonStyle
       disabled={disabled}
       disableInteraction={disableInteraction}
@@ -113,13 +99,16 @@ const IconButton = ({
       p={"4px"}
       {...others}
     >
-      <Icon
-        color={getIconColorFromVariant(variant, theme, disabled, isHover, isActive) as `#${string}`}
-        name={icon}
-        size={size}
-        {...iconProps}
-      />
+      <Icon name={icon} size={size} color={finalColor} {...iconProps} />
     </IconButtonStyle>
+  )
+
+  return toolTip ? (
+    <Tooltip content={toolTip} {...toolTipProps}>
+      {ButtonContent}
+    </Tooltip>
+  ) : (
+    ButtonContent
   )
 }
 
@@ -134,7 +123,7 @@ export const IconButtonStyle = styled.button<Omit<IconButtonProps, "icon" | "onC
   border-radius: ${({ theme }) => theme.borderRadius[4]};
   transition: all 0.2s ease-in-out;
 
-  ${({ theme, disabled }) => `
+  ${({ disabled }) => `
     cursor: ${disabled ? "no-drop" : "pointer"};
   `}
 

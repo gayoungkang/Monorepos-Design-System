@@ -11,6 +11,7 @@ export type FlexProps = HTMLAttributes<HTMLElement> &
     align?: React.CSSProperties["alignItems"]
     wrap?: React.CSSProperties["flexWrap"]
     gap?: string
+    extraProps?: Record<string, any>
   }
 
 /**
@@ -46,7 +47,7 @@ export type FlexProps = HTMLAttributes<HTMLElement> &
  */
 
 const Flex = forwardRef<HTMLDivElement, FlexProps>(
-  ({ as = "div", children, direction, justify, align, wrap, gap, ...props }, ref) => {
+  ({ as = "div", children, direction, justify, align, wrap, gap, extraProps, ...props }, ref) => {
     return (
       <StyledFlex
         ref={ref}
@@ -57,6 +58,7 @@ const Flex = forwardRef<HTMLDivElement, FlexProps>(
         gap={gap}
         wrap={wrap}
         {...props}
+        {...extraProps}
       >
         {children}
       </StyledFlex>

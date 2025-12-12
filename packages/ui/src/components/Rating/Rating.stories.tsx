@@ -3,6 +3,7 @@ import Rating, { type RatingProps } from "./Rating"
 import { ThemeProvider } from "styled-components"
 import { theme } from "../../tokens/theme"
 import { useState } from "react"
+import Flex from "../Flex/Flex"
 
 const meta: Meta<RatingProps> = {
   title: "components/Rating",
@@ -97,12 +98,12 @@ export const HalfPrecision: Story = {
 /* ---------------- Label Placement ---------------- */
 export const LabelPlacements: Story = {
   render: (args) => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <Flex direction="column" gap="20px">
       <Rating {...args} label="위" LabelPlacement="top" />
       <Rating {...args} label="아래" LabelPlacement="bottom" />
       <Rating {...args} label="왼쪽" LabelPlacement="left" />
       <Rating {...args} label="오른쪽" LabelPlacement="right" />
-    </div>
+    </Flex>
   ),
 }
 

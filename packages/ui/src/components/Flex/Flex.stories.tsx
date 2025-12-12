@@ -2,33 +2,44 @@ import type { Meta, StoryObj } from "@storybook/react"
 import Flex, { type FlexProps } from "./Flex"
 import { ThemeProvider } from "styled-components"
 import { theme } from "../../tokens/theme"
+import Box from "../Box/Box"
 
 const meta: Meta<FlexProps> = {
   title: "components/Flex",
   component: Flex,
+
   args: {
     as: "div",
     direction: "row",
     justify: "flex-start",
     align: "stretch",
     wrap: "nowrap",
-    gap: "8px",
+    gap: "0px",
   },
+
   argTypes: {
-    /* --- Flex Props --- */
+    /* ---------------------------------- Flex Layout ---------------------------------- */
+    as: { control: "text", description: "렌더링할 HTML 태그명" },
     direction: {
       control: "radio",
       options: ["row", "column", "row-reverse", "column-reverse"],
-      description: "flex direction",
+      description: "flex-direction",
     },
     justify: {
       control: "radio",
-      options: ["flex-start", "center", "flex-end", "space-between", "space-around"],
+      options: [
+        "flex-start",
+        "center",
+        "flex-end",
+        "space-between",
+        "space-around",
+        "space-evenly",
+      ],
       description: "justify-content",
     },
     align: {
       control: "radio",
-      options: ["stretch", "center", "flex-start", "flex-end", "baseline"],
+      options: ["stretch", "flex-start", "center", "flex-end"],
       description: "align-items",
     },
     wrap: {
@@ -36,34 +47,32 @@ const meta: Meta<FlexProps> = {
       options: ["nowrap", "wrap", "wrap-reverse"],
       description: "flex-wrap",
     },
-    gap: {
-      control: "text",
-      description: "items gap",
-    },
+    gap: { control: "text", description: "아이템 간 간격" },
 
-    /* --- BaseMixinProps --- */
-    p: { control: "text", description: "padding shorthand" },
-    pt: { control: "text", description: "padding-top" },
-    pr: { control: "text", description: "padding-right" },
-    pb: { control: "text", description: "padding-bottom" },
-    pl: { control: "text", description: "padding-left" },
-    px: { control: "text", description: "padding X" },
-    py: { control: "text", description: "padding Y" },
+    /* ---------------------------------- BaseMixinProps ---------------------------------- */
+    p: { control: "text" },
+    pt: { control: "text" },
+    pr: { control: "text" },
+    pb: { control: "text" },
+    pl: { control: "text" },
+    px: { control: "text" },
+    py: { control: "text" },
 
-    m: { control: "text", description: "margin shorthand" },
-    mt: { control: "text", description: "margin-top" },
-    mr: { control: "text", description: "margin-right" },
-    mb: { control: "text", description: "margin-bottom" },
-    ml: { control: "text", description: "margin-left" },
-    mx: { control: "text", description: "margin X" },
-    my: { control: "text", description: "margin Y" },
+    m: { control: "text" },
+    mt: { control: "text" },
+    mr: { control: "text" },
+    mb: { control: "text" },
+    ml: { control: "text" },
+    mx: { control: "text" },
+    my: { control: "text" },
 
-    width: { control: "text", description: "component width" },
-    height: { control: "text", description: "component height" },
+    width: { control: "text" },
+    height: { control: "text" },
 
-    /* sx disable */
     sx: { control: false },
+    children: { control: false },
   },
+
   decorators: [
     (Story) => (
       <ThemeProvider theme={theme}>
@@ -71,59 +80,112 @@ const meta: Meta<FlexProps> = {
       </ThemeProvider>
     ),
   ],
+
   tags: ["autodocs"],
 }
 
 export default meta
-
 type Story = StoryObj<FlexProps>
 
 /* ─────────── Default ─────────── */
 export const Default: Story = {
-  render: (args) => (
-    <Flex {...args} p="16px" style={{ border: "1px solid #ddd" }}>
-      <div>Item 1</div>
-      <div>Item 2</div>
+  render: () => (
+    <Flex gap="8px" p="16px" backgroundColor={theme.colors.grayscale[100]}>
+      <Box p="8px" backgroundColor={theme.colors.primary[100]}>
+        Item 1
+      </Box>
+      <Box p="8px" backgroundColor={theme.colors.primary[100]}>
+        Item 2
+      </Box>
+      <Box p="8px" backgroundColor={theme.colors.primary[100]}>
+        Item 3
+      </Box>
     </Flex>
   ),
 }
 
-/* ─────────── Direction ─────────── */
-export const Direction: Story = {
+/* ─────────── Direction Variants ─────────── */
+export const Directions: Story = {
   render: () => (
-    <Flex direction="column" gap="8px" p="12px" style={{ border: "1px solid #ddd" }}>
-      <div>Column 1</div>
-      <div>Column 2</div>
+    <Flex gap="24px">
+      <Flex direction="row" gap="8px" p="8px" backgroundColor={theme.colors.grayscale[100]}>
+        <Box backgroundColor={theme.colors.primary[100]}>A</Box>
+        <Box backgroundColor={theme.colors.primary[200]}>B</Box>
+        <Box backgroundColor={theme.colors.primary[300]}>C</Box>
+      </Flex>
+
+      <Flex direction="column" gap="8px" p="8px" backgroundColor={theme.colors.grayscale[200]}>
+        <Box backgroundColor={theme.colors.primary[100]}>A</Box>
+        <Box backgroundColor={theme.colors.primary[200]}>B</Box>
+        <Box backgroundColor={theme.colors.primary[300]}>C</Box>
+      </Flex>
     </Flex>
   ),
 }
 
-/* ─────────── Justify ─────────── */
-export const Justify: Story = {
+/* ─────────── Justify & Align Variants ─────────── */
+export const Alignment: Story = {
   render: () => (
-    <Flex justify="space-between" p="12px" style={{ border: "1px solid #ddd" }}>
-      <div>A</div>
-      <div>B</div>
+    <Flex direction="column" gap="20px" width="100%">
+      <Flex justify="center" gap="8px" p="12px" backgroundColor={theme.colors.grayscale[100]}>
+        <Box backgroundColor={theme.colors.primary[100]}>Center</Box>
+      </Flex>
+
+      <Flex
+        align="center"
+        height="80px"
+        gap="8px"
+        p="12px"
+        backgroundColor={theme.colors.grayscale[200]}
+      >
+        <Box backgroundColor={theme.colors.primary[200]}>Align Center</Box>
+      </Flex>
+
+      <Flex
+        justify="space-between"
+        gap="8px"
+        p="12px"
+        backgroundColor={theme.colors.grayscale[300]}
+      >
+        <Box backgroundColor={theme.colors.primary[300]}>Left</Box>
+        <Box backgroundColor={theme.colors.primary[300]}>Right</Box>
+      </Flex>
     </Flex>
   ),
 }
 
-/* ─────────── Align ─────────── */
-export const Align: Story = {
+/* ─────────── Wrap Variants ─────────── */
+export const Wrap: Story = {
   render: () => (
-    <Flex align="center" height="100px" p="12px" style={{ border: "1px solid #ddd" }}>
-      <div>Align Center</div>
+    <Flex
+      wrap="wrap"
+      gap="8px"
+      width="200px"
+      p="12px"
+      backgroundColor={theme.colors.grayscale[100]}
+    >
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Box key={i} p="8px" backgroundColor={theme.colors.primary[100]}>
+          {i + 1}
+        </Box>
+      ))}
     </Flex>
   ),
 }
 
-/* ─────────── Gap ─────────── */
-export const Gap: Story = {
+/* ─────────── Gap Examples ─────────── */
+export const Gaps: Story = {
   render: () => (
-    <Flex gap="24px" p="12px" style={{ border: "1px solid #ddd" }}>
-      <div>Item 1</div>
-      <div>Item 2</div>
-      <div>Item 3</div>
+    <Flex direction="column" gap="20px">
+      <Flex gap="4px" backgroundColor={theme.colors.grayscale[100]}>
+        <Box backgroundColor={theme.colors.primary[100]}>gap 4</Box>
+        <Box backgroundColor={theme.colors.primary[100]}>gap 4</Box>
+      </Flex>
+
+      <Flex gap="16px" backgroundColor={theme.colors.grayscale[100]}>
+        <Box backgroundColor={theme.colors.primary[200]}>gap 16</Box>
+        <Box backgroundColor={theme.colors.primary[200]}>gap 16</Box>
+      </Flex>
     </Flex>
   ),
 }

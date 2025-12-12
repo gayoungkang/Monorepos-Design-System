@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react"
 import { Tooltip, type TooltipProps } from "./Tooltip"
 import { ThemeProvider } from "styled-components"
 import { theme } from "../../tokens/theme"
+import Flex from "../Flex/Flex"
+import Button from "../Button/Button"
 
 const meta: Meta<TooltipProps> = {
   title: "components/Tooltip",
@@ -56,20 +58,20 @@ export const Default: Story = {
 /* ─────────── Placements ─────────── */
 export const Placements: Story = {
   render: (args) => (
-    <div style={{ display: "flex", gap: 40, paddingTop: 100 }}>
+    <Flex gap="40px" pt="100px">
       <Tooltip {...args} placement="top">
-        <button>Top</button>
+        <Button text="top" />
       </Tooltip>
       <Tooltip {...args} placement="bottom">
-        <button>Bottom</button>
+        <Button text="Bottom" />
       </Tooltip>
       <Tooltip {...args} placement="left">
-        <button>Left</button>
+        <Button text="Left" />
       </Tooltip>
       <Tooltip {...args} placement="right">
-        <button>Right</button>
+        <Button text="Right" />
       </Tooltip>
-    </div>
+    </Flex>
   ),
 }
 
@@ -81,7 +83,7 @@ export const CustomWidth: Story = {
   },
   render: (args) => (
     <Tooltip {...args}>
-      <button>Hover me</button>
+      <Button text="Hover me" />
     </Tooltip>
   ),
 }

@@ -14,10 +14,9 @@
     "resolveJsonModule": true,
 
     "baseUrl": ".",
-    "paths": {
-      "@acme/ui/*": ["packages/ui/src/*"],
-      "@config/*": ["config/*"]
-    },
+    // "paths": {
+    //   "@acme/ui/*": ["packages/ui/src/*"]
+    // },
 
     "types": ["node", "vite/client"]
   }
