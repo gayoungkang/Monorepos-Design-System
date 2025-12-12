@@ -16,14 +16,16 @@ const CheckBoxGroupInteractive = (props: CheckBoxProps) => {
   const [value, setValue] = useState(props.value ?? [])
 
   return (
-    <CheckBoxGroup
-      {...props}
-      value={value}
-      onChange={(next) => {
-        setValue(next)
-        props.onChange?.(next)
-      }}
-    />
+    <Box>
+      <CheckBoxGroup
+        {...props}
+        value={value}
+        onChange={(next) => {
+          setValue(next)
+          props.onChange?.(next)
+        }}
+      />
+    </Box>
   )
 }
 

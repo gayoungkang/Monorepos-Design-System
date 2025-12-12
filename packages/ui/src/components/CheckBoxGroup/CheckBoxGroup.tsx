@@ -335,7 +335,7 @@ const StyledInput = styled.input<{ error?: boolean; size?: SizeUiType }>`
   ${({ size }) => getSizeStyle(size)}
 
   border: 1px solid
-    ${({ theme, error }) => (error ? theme.colors.primary[400] : theme.colors.border.thick)};
+    ${({ theme, error }) => (error ? theme.colors.error[300] : theme.colors.border.thick)};
   background-color: ${({ theme, disabled }) =>
     disabled ? theme.colors.background.default : theme.colors.grayscale.white};
 
