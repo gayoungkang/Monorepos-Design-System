@@ -204,7 +204,7 @@ const StyledPopper = styled.div<{
 }>`
   overflow-y: auto;
   background-color: ${({ theme }) => theme.colors.grayscale.white};
-  box-shadow: ${({ theme }) => theme.shadows.menuList};
+  box-shadow: ${({ theme }) => theme.shadows.elevation["8"]};
   border-radius: ${({ theme }) => theme.borderRadius[4]};
   transition: opacity 0.2s ease;
   padding: 4px;

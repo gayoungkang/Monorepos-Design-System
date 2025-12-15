@@ -38,6 +38,13 @@ const colors = {
     "100": "#B9C8F9",
     "50": "#E8EDFD",
   },
+  secondary: {
+    "400": "#2196F3",
+    "300": "#64B5F6",
+    "200": "#90CAF9",
+    "100": "#BBDEFB",
+    "50": "#E3F2FD",
+  },
   error: {
     "500": "#EC5555",
     "300": "#F58480",
@@ -71,11 +78,10 @@ const colors = {
 } as const
 
 const shadows = {
-  menuList: "0 0 20px 0 #18191B1A",
-  tooltip: "0 0 10px 0 #18191B0D",
   elevation: [
     "none",
     "0px 1px 3px rgba(0,0,0,0.2), 0px 1px 1px rgba(0,0,0,0.14), 0px 2px 1px rgba(0,0,0,0.12)",
+    "0px 1px 4px rgba(0, 0, 0, 0.18),0px 2px 8px rgba(0, 0, 0, 0.12)",
     "0px 1px 5px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.14), 0px 3px 1px rgba(0,0,0,0.12)",
     "0px 1px 8px rgba(0,0,0,0.2), 0px 3px 4px rgba(0,0,0,0.14), 0px 3px 3px rgba(0,0,0,0.12)",
     "0px 2px 4px rgba(0,0,0,0.2), 0px 4px 5px rgba(0,0,0,0.14), 0px 1px 10px rgba(0,0,0,0.12)",
