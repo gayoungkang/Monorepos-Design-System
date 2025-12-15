@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled from "styled-components"
 
 const STYLE_PROPS = new Set<string>([
   "placement",
@@ -25,7 +25,8 @@ const STYLE_PROPS = new Set<string>([
   "multipleMonth",
   "leftDisabled",
   "rightDisabled",
-]);
+  "loading",
+])
 
 /**
  * @module styled
@@ -48,40 +49,40 @@ const STYLE_PROPS = new Set<string>([
 
 // * DOM으로 보내지 말아야 하는 prop을 정의
 const isStyleProp = (prop: string) => {
-  if (prop.startsWith("$")) return true;
+  if (prop.startsWith("$")) return true
 
-  if (STYLE_PROPS.has(prop)) return true;
+  if (STYLE_PROPS.has(prop)) return true
 
-  return false;
-};
+  return false
+}
 
-const shouldForwardProp = (prop: string) => !isStyleProp(prop);
+const shouldForwardProp = (prop: string) => !isStyleProp(prop)
 
 // * Proxy로 감싼 커스텀 styled
 const customStyled = new Proxy(styled, {
   get(target, prop, receiver) {
-    const original = Reflect.get(target, prop, receiver);
+    const original = Reflect.get(target, prop, receiver)
 
     if (typeof original === "function") {
       return original.withConfig({
         shouldForwardProp,
-      });
+      })
     }
 
-    return original;
+    return original
   },
 
   apply(target, thisArg, argArray) {
-    const styledFn = Reflect.apply(target, thisArg, argArray);
+    const styledFn = Reflect.apply(target, thisArg, argArray)
 
     if (typeof styledFn === "function") {
       return styledFn.withConfig({
         shouldForwardProp,
-      });
+      })
     }
 
-    return styledFn;
+    return styledFn
   },
-});
+})
 
-export { customStyled as styled };
+export { customStyled as styled }

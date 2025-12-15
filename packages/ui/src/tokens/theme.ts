@@ -1,8 +1,4 @@
-import { css, DefaultTheme } from "styled-components";
-
-
-
-
+import { css, DefaultTheme } from "styled-components"
 
 const colors = {
   grayscale: {
@@ -72,7 +68,7 @@ const colors = {
     "100": "#C8CEDF",
     "50": "#D9DDE8",
   },
-} as const;
+} as const
 
 const shadows = {
   menuList: "0 0 20px 0 #18191B1A",
@@ -104,7 +100,7 @@ const shadows = {
     "0px 11px 14px rgba(0,0,0,0.2), 0px 23px 36px rgba(0,0,0,0.14), 0px 9px 44px rgba(0,0,0,0.12)",
     "0px 11px 15px rgba(0,0,0,0.2), 0px 24px 38px rgba(0,0,0,0.14), 0px 9px 46px rgba(0,0,0,0.12)",
   ],
-} as const;
+} as const
 
 export const zIndex = {
   base: 0,
@@ -116,7 +112,7 @@ export const zIndex = {
   toast: 1200,
   tooltip: 1300,
   loading: 2000,
-};
+}
 
 export const fonts = {
   heading: {
@@ -180,9 +176,10 @@ export const fonts = {
       `,
     },
   },
-};
+}
 
 const borderRadius = {
+  0: "0",
   1: "2px",
   4: "4px",
   6: "6px",
@@ -190,9 +187,9 @@ const borderRadius = {
   16: "16px",
   18: "18px",
   50: "50%",
-} as const;
+} as const
 
-export type TypographyVariant = keyof typeof typographyVariants;
+export type TypographyVariant = keyof typeof typographyVariants
 
 export const typographyVariants = {
   // heading
@@ -212,14 +209,14 @@ export const typographyVariants = {
   // body b3
   b3Medium: fonts.body.b3.Medium,
   b3Regular: fonts.body.b3.Regular,
-} as const;
+} as const
 
-export type ThemeVariantType = "WHITE" | "BLUE" | "BLACK";
-export type ColorsType = typeof colors;
-export type ZindexType = typeof zIndex;
-export type FontsType = typeof fonts;
-export type ShadowsType = typeof shadows;
-export type BorderRadiusType = typeof borderRadius;
+export type ThemeVariantType = "WHITE" | "BLUE" | "BLACK"
+export type ColorsType = typeof colors
+export type ZindexType = typeof zIndex
+export type FontsType = typeof fonts
+export type ShadowsType = typeof shadows
+export type BorderRadiusType = typeof borderRadius
 
 export const theme: DefaultTheme = {
   zIndex,
@@ -227,4 +224,4 @@ export const theme: DefaultTheme = {
   fonts,
   shadows,
   borderRadius,
-};
+}

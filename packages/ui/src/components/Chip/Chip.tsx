@@ -77,7 +77,7 @@ const Chip = ({
       case "L":
         return "12px"
       default:
-        return "7px"
+        return "10px"
     }
   }
 
