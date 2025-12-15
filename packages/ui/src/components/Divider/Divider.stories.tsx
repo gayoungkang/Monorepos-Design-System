@@ -4,6 +4,7 @@ import { ThemeProvider } from "styled-components"
 import { theme } from "../../tokens/theme"
 import Flex from "../Flex/Flex"
 import { Typography } from "../Typography/Typography"
+import Box from "../Box/Box"
 
 const meta: Meta<DividerProps> = {
   title: "components/Divider",
@@ -78,17 +79,17 @@ export const Default: Story = {}
 /* ─────────── Directions ─────────── */
 export const Directions: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-      <div style={{ flex: 1 }}>
-        <div>Horizontal</div>
+    <Flex gap={"24px"} align="center">
+      <Box>
+        <Typography text="Horizontal" variant="b1Bold" />
         <Divider mt="8px" />
-      </div>
+      </Box>
 
-      <div style={{ display: "flex", alignItems: "stretch", gap: 12 }}>
-        <div>Vertical</div>
+      <Flex align="stretch" gap="12px">
+        <Typography text="Vertical" variant="b1Bold" />
         <Divider direction="vertical" thickness="2px" height="40px" ml="8px" />
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   ),
 }
 

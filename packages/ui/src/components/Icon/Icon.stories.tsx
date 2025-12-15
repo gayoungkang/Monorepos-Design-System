@@ -79,59 +79,49 @@ export const Default: Story = {}
 /* ─────────── Sizes ─────────── */
 export const Sizes: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+    <Flex gap="20px" align="center">
       <Icon name={IconNames[0]} size={12} />
       <Icon name={IconNames[0]} size={16} />
       <Icon name={IconNames[0]} size={24} />
       <Icon name={IconNames[0]} size={32} />
       <Icon name={IconNames[0]} size={48} />
-    </div>
+    </Flex>
   ),
 }
 
 /* ─────────── Colors ─────────── */
 export const Colors: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 24 }}>
+    <Flex gap="24px">
       <Icon name={IconNames[0]} size={24} color={theme.colors.primary[400]} />
       <Icon name={IconNames[0]} size={24} color={theme.colors.success[500]} />
       <Icon name={IconNames[0]} size={24} color={theme.colors.error[500]} />
       <Icon name={IconNames[0]} size={24} color={theme.colors.grayscale[500]} />
-    </div>
+    </Flex>
   ),
 }
 
 /* ─────────── StrokeWidth ─────────── */
 export const StrokeWidth: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+    <Flex gap="20px" align="center">
       <Icon name={IconNames[0]} size={32} strokeWidth={0} />
       <Icon name={IconNames[0]} size={32} strokeWidth={1} />
       <Icon name={IconNames[0]} size={32} strokeWidth={2} />
-    </div>
+    </Flex>
   ),
 }
 
 /* ─────────── Icon Gallery (Optional) ─────────── */
 export const IconGallery: Story = {
   render: () => (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
+    <Flex style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
       {IconNames.map((icon) => (
-        <div
-          key={icon}
-          style={{
-            width: 80,
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            gap: 6,
-            alignItems: "center",
-          }}
-        >
+        <Flex key={icon} width={"80px"} align="center" direction="column" gap="6px">
           <Icon name={icon as IconName} size={24} />
-          <div style={{ fontSize: 12 }}>{icon}</div>
-        </div>
+          <Typography text={icon} />
+        </Flex>
       ))}
-    </div>
+    </Flex>
   ),
 }

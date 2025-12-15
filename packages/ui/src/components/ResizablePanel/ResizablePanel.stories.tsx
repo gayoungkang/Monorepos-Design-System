@@ -13,9 +13,6 @@ import Box from "../Box/Box"
 const PanelInteractive = (props: ResizablePanelProps) => {
   const [key, setKey] = useState(0)
 
-  // Storybook Controls로 size 조정 시 강제 remount
-  const reset = () => setKey((k) => k + 1)
-
   return (
     <Box width="100%" height="400px">
       <ResizablePanel key={key} {...props}>

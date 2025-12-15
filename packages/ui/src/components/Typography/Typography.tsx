@@ -5,7 +5,7 @@ import { TypographyVariant, typographyVariants } from "../../tokens/theme"
 import { styled } from "../../tokens/customStyled"
 
 export type TypographyProps = BaseMixinProps & {
-  variant: TypographyVariant
+  variant?: TypographyVariant
   text: string
   as?: keyof JSX.IntrinsicElements
   color?: string
@@ -55,7 +55,7 @@ export type TypographyProps = BaseMixinProps & {
  */
 
 export const Typography = ({
-  variant,
+  variant = "b1Medium",
   text,
   as = "p",
   color = "text.primary",
@@ -94,7 +94,7 @@ const StyledTypography = styled.p<Omit<TypographyProps, "text" | "as">>`
   width: max-content;
   color: ${({ color }) => color};
 
-  ${({ variant }) => typographyVariants[variant]};
+  ${({ variant }) => typographyVariants[variant ?? "b1Medium"]};
 
   font-style: ${({ italic }) => (italic ? "italic" : "normal")};
   white-space: ${({ ellipsis }) => (ellipsis ? "nowrap" : "normal")};

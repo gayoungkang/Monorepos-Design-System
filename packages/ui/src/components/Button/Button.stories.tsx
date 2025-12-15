@@ -3,6 +3,7 @@ import Button, { type ButtonProps } from "./Button"
 import { ThemeProvider } from "styled-components"
 import { theme } from "../../tokens/theme"
 import { IconNames } from "../Icon/icon-loader"
+import Flex from "../Flex/Flex"
 
 const meta: Meta<ButtonProps> = {
   title: "components/Button",
@@ -105,33 +106,33 @@ export const Default: Story = {
 /* ─────────── Variant ─────────── */
 export const Variants: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 12 }}>
+    <Flex gap={"12px"}>
       <Button text="Contained" variant="contained" />
       <Button text="Text" variant="text" />
       <Button text="Outlined" variant="outlined" />
-    </div>
+    </Flex>
   ),
 }
 
 /* ─────────── Colors ─────────── */
 export const ColorVariants: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 12 }}>
+    <Flex gap={"12px"}>
       <Button text="Primary" colorVariant="primary" />
       <Button text="Secondary" colorVariant="secondary" />
       <Button text="Tertiary" colorVariant="tertiary" />
-    </div>
+    </Flex>
   ),
 }
 
 /* ─────────── Sizes ─────────── */
 export const Sizes: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 12 }}>
+    <Flex gap={"12px"}>
       <Button text="Small" size="S" />
       <Button text="Medium" size="M" />
       <Button text="Large" size="L" />
-    </div>
+    </Flex>
   ),
 }
 

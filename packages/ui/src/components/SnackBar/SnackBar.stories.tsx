@@ -48,10 +48,8 @@ const meta: Meta<SnackBarProps> = {
   decorators: [
     (Story) => (
       <ThemeProvider theme={theme}>
-        <div style={{ padding: 40 }}>
-          <SnackBar.List />
-          <Story />
-        </div>
+        <SnackBar.List />
+        <Story />
       </ThemeProvider>
     ),
   ],

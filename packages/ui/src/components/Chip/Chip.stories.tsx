@@ -4,6 +4,7 @@ import Chip, { type ChipProps } from "./Chip"
 import { ThemeProvider } from "styled-components"
 import { theme } from "../../tokens/theme"
 import { IconNames } from "../Icon/icon-loader"
+import Flex from "../Flex/Flex"
 
 const meta: Meta<ChipProps> = {
   title: "components/Chip",
@@ -106,11 +107,11 @@ export const Variants: Story = {
 /* ─────────── Sizes ─────────── */
 export const Sizes: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 12 }}>
+    <Flex gap={"12px"}>
       <Chip label="Small" size="S" />
       <Chip label="Medium" size="M" />
       <Chip label="Lage" size="L" />
-    </div>
+    </Flex>
   ),
 }
 

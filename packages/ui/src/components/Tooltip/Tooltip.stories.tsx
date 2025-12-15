@@ -34,9 +34,7 @@ const meta: Meta<TooltipProps> = {
   decorators: [
     (Story) => (
       <ThemeProvider theme={theme}>
-        <div style={{ padding: 80 }}>
-          <Story />
-        </div>
+        <Story />
       </ThemeProvider>
     ),
   ],
@@ -50,7 +48,7 @@ type Story = StoryObj<TooltipProps>
 export const Default: Story = {
   render: (args) => (
     <Tooltip {...args}>
-      <button>Hover me</button>
+      <Button text="Hover me" />
     </Tooltip>
   ),
 }

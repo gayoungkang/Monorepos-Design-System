@@ -141,7 +141,7 @@ export const Sizes: Story = {
     ]
 
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <Flex direction="column" gap="16px">
         <ToggleButton
           size="S"
           buttons={buttons}
@@ -163,7 +163,7 @@ export const Sizes: Story = {
           onClick={setSelectedL}
           label="Size L"
         />
-      </div>
+      </Flex>
     )
   },
 }
@@ -181,7 +181,7 @@ export const Orientation: Story = {
     ]
 
     return (
-      <div style={{ display: "flex", gap: 24 }}>
+      <Flex gap="24px">
         <ToggleButton
           orientation="horizontal"
           buttons={buttons}
@@ -197,7 +197,7 @@ export const Orientation: Story = {
           onClick={setSelectedV}
           label="Vertical"
         />
-      </div>
+      </Flex>
     )
   },
 }

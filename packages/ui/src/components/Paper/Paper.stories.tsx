@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react"
 import { ThemeProvider } from "styled-components"
 import Paper from "./Paper"
 import { theme } from "../../tokens/theme"
+import Flex from "../Flex/Flex"
 
 const meta: Meta<typeof Paper> = {
   title: "components/Paper",
@@ -46,7 +47,7 @@ export const Default: Story = {
  */
 export const ElevationLevels: Story = {
   render: (args) => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <Flex direction="column" gap="16px">
       <Paper {...args} elevation={0} sx={{ backgroundColor: theme.colors.grayscale[100] }}>
         elevation 0
       </Paper>
@@ -59,7 +60,7 @@ export const ElevationLevels: Story = {
       <Paper {...args} elevation={16} sx={{ backgroundColor: theme.colors.grayscale[100] }}>
         elevation 16
       </Paper>
-    </div>
+    </Flex>
   ),
   args: {
     radius: 4,
@@ -71,7 +72,7 @@ export const ElevationLevels: Story = {
  */
 export const RadiusVariants: Story = {
   render: (args) => (
-    <div style={{ display: "flex", gap: 16 }}>
+    <Flex gap={"16px"}>
       <Paper {...args} radius={0}>
         radius 0
       </Paper>
@@ -81,7 +82,7 @@ export const RadiusVariants: Story = {
       <Paper {...args} radius={"16px"}>
         radius "16px"
       </Paper>
-    </div>
+    </Flex>
   ),
   args: {
     elevation: 2,

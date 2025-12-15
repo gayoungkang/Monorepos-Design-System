@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react"
 import HelperText, { type HelperTextProps } from "./HelperText"
 import { ThemeProvider } from "styled-components"
 import { theme } from "../../tokens/theme"
+import Flex from "../Flex/Flex"
 
 const meta: Meta<HelperTextProps> = {
   title: "components/HelperText",
@@ -71,12 +72,12 @@ export const Default: Story = {}
 /* ─────────── Status Variants ─────────── */
 export const StatusVariants: Story = {
   render: () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <Flex direction="column" gap="12px">
       <HelperText text="기본 상태 메시지" status="default" />
       <HelperText text="에러가 발생했습니다." status="error" />
       <HelperText text="성공적으로 완료되었습니다." status="success" />
       <HelperText text="추가 정보가 있습니다." status="info" />
-    </div>
+    </Flex>
   ),
 }
 

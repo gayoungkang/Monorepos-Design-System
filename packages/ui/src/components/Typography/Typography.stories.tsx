@@ -96,11 +96,11 @@ export const Default: Story = {}
 /* ─────────── Variants ─────────── */
 export const Variants: Story = {
   render: () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <Flex direction="column" gap="16px">
       {variantOptions.map((v) => (
         <Typography key={v} variant={v as any} text={v} />
       ))}
-    </div>
+    </Flex>
   ),
 }
 

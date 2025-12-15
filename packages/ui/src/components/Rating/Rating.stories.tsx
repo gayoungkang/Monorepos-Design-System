@@ -42,13 +42,11 @@ const meta: Meta<RatingProps> = {
     onChange: { action: "change" },
     onChangeActive: { action: "changeActive" },
 
-    // LabelProps는 객체라 control false
     labelProps: {
       control: false,
       description: "Label 컴포넌트에 직접 넘길 props",
     },
 
-    /* BaseMixinProps */
     p: { control: "text" },
     pt: { control: "text" },
     pr: { control: "text" },
