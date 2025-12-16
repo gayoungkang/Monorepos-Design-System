@@ -168,11 +168,15 @@ export const Loading: Story = {
 }
 
 /* ─────────── Disabled ─────────── */
+
 export const Disabled: Story = {
-  args: {
-    text: "Disabled",
-    disabled: true,
-  },
+  render: () => (
+    <Flex gap={"12px"}>
+      <Button variant="contained" text="Contained" disabled />
+      <Button variant="outlined" text="Outlined" disabled />
+      <Button variant="text" text="Text" disabled />
+    </Flex>
+  ),
 }
 
 /* ─────────── File Download ─────────── */

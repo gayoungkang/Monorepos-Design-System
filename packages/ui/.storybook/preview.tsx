@@ -30,9 +30,7 @@ const preview: Preview = {
     (Story) => (
       <ThemeProvider theme={theme}>
         <GlobalStyle />
-        {/* 포탈을 전역에서 렌더링해야 SnackBar가 동작함 */}
         <SnackBar.List />
-
         <div
           style={{
             display: "flex",

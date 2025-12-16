@@ -105,33 +105,6 @@ const Button = forwardRef(
       else onClick?.(e)
     }
 
-    // *  버튼 variant, colorVariant 상태에 따라 텍스트 색상 결정 함수
-    const getTypographyColor = (colorVariant: ButtonProps["color"], disabled: boolean): string => {
-      if (disabled) {
-        switch (colorVariant) {
-          case "primary":
-            return theme.colors.grayscale.white
-          case "secondary":
-            return theme.colors.grayscale.white
-          case "normal":
-            return theme.colors.text.disabled
-          default:
-            return theme.colors.text.disabled
-        }
-      } else {
-        switch (colorVariant) {
-          case "primary":
-            return theme.colors.grayscale.white
-          case "secondary":
-            return theme.colors.grayscale.white
-          case "normal":
-            return theme.colors.text.secondary
-          default:
-            return theme.colors.grayscale.white
-        }
-      }
-    }
-
     // * 버튼 variant, colorVariant 상태에 따라 아이콘 색상 결정 함수
     const getIconColor = (
       variant: VariantUiType,
@@ -212,12 +185,7 @@ const Button = forwardRef(
             {...progressProps}
           />
         ) : (
-          <Typography
-            variant="b1Bold"
-            text={text}
-            color={getTypographyColor(color, disabled)}
-            {...typographyProps}
-          />
+          <Typography variant="b1Bold" text={text} {...typographyProps} />
         )}
         {endIcon && !loading && <Icon size={12} name={endIcon} ml="2px" {...iconProps} />}
       </ButtonStyle>
@@ -249,7 +217,7 @@ const ButtonStyle = styled.button<Omit<ButtonProps, "text">>`
         `,
         text: `
           background-color: transparent;
-          color: ${disabled ? colors.primary[200] : colors.primary[400]};
+          color: ${disabled ? colors.text.disabled : colors.primary[400]};
         `,
         outlined: `
           background-color: ${colors.grayscale.white};
@@ -291,9 +259,6 @@ const ButtonStyle = styled.button<Omit<ButtonProps, "text">>`
       },
     }
 
-    //
-    // active styles (hover/active)
-    //
     const active = !disabled
       ? {
           primary: {
