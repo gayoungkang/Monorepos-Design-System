@@ -1,8 +1,7 @@
-import React from "react";
-import { HomePage } from "@acme/ui";
+import React from "react"
 
 const App: React.FC = () => {
-  return <HomePage />;
-};
+  return <></>
+}
 
-export default App;
+export default App

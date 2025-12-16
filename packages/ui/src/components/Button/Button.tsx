@@ -6,13 +6,13 @@ import Icon, { IconProps } from "../Icon/Icon"
 import { Typography, TypographyProps } from "../Typography/Typography"
 import { theme } from "../../tokens/theme"
 import { styled } from "../../tokens/customStyled"
-import { SizeUiType, VariantUiType } from "packages/ui/src/types"
+import { ColorUiType, SizeUiType, VariantUiType } from "packages/ui/src/types"
 import { DefaultTheme } from "styled-components"
 
 export type ButtonProps = BaseMixinProps & {
   text: string
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
-  colorVariant?: "primary" | "secondary" | "tertiary"
+  color?: ColorUiType
   variant?: VariantUiType
   size?: SizeUiType
   type?: "button" | "submit" | "reset"
@@ -68,7 +68,7 @@ const Button = forwardRef(
   (
     {
       text,
-      colorVariant = "primary",
+      color = "primary",
       variant = "contained",
       disabled = false,
       width,
@@ -106,31 +106,28 @@ const Button = forwardRef(
     }
 
     // *  버튼 variant, colorVariant 상태에 따라 텍스트 색상 결정 함수
-    const getTypographyColor = (
-      colorVariant: ButtonProps["colorVariant"],
-      disabled: boolean,
-    ): string => {
+    const getTypographyColor = (colorVariant: ButtonProps["color"], disabled: boolean): string => {
       if (disabled) {
         switch (colorVariant) {
           case "primary":
-            return "grayscale.white"
+            return theme.colors.grayscale.white
           case "secondary":
-            return "grayscale.white"
-          case "tertiary":
-            return "text.disabled"
+            return theme.colors.grayscale.white
+          case "normal":
+            return theme.colors.text.disabled
           default:
-            return "text.disabled"
+            return theme.colors.text.disabled
         }
       } else {
         switch (colorVariant) {
           case "primary":
-            return "grayscale.white"
+            return theme.colors.grayscale.white
           case "secondary":
-            return "grayscale.white"
-          case "tertiary":
-            return "text.secondary"
+            return theme.colors.grayscale.white
+          case "normal":
+            return theme.colors.text.secondary
           default:
-            return "grayscale.white"
+            return theme.colors.grayscale.white
         }
       }
     }
@@ -138,7 +135,7 @@ const Button = forwardRef(
     // * 버튼 variant, colorVariant 상태에 따라 아이콘 색상 결정 함수
     const getIconColor = (
       variant: VariantUiType,
-      colorVariant: ButtonProps["colorVariant"],
+      colorVariant: ButtonProps["color"],
       theme: DefaultTheme,
       disabled: boolean,
     ): string => {
@@ -150,7 +147,7 @@ const Button = forwardRef(
             return variant === "contained" ? grayscale.white : primary[200]
           case "secondary":
             return grayscale[200]
-          case "tertiary":
+          case "normal":
             return variant === "text" ? grayscale[300] : text.disabled
           default:
             return text.disabled
@@ -162,7 +159,7 @@ const Button = forwardRef(
           return grayscale.white
         case "secondary":
           return variant === "contained" ? grayscale.white : grayscale[700]
-        case "tertiary":
+        case "normal":
           return variant === "text" ? grayscale[600] : text.secondary
         default:
           return grayscale[900]
@@ -192,13 +189,13 @@ const Button = forwardRef(
         variant={variant}
         disabled={disabled}
         onClick={handleClick}
-        colorVariant={colorVariant}
+        color={color}
         p={getButtonSize(size)}
         {...others}
       >
         {startIcon && !loading && (
           <Icon
-            color={getIconColor(variant, colorVariant, theme, disabled) as `#${string}`}
+            color={getIconColor(variant, color, theme, disabled) as `#${string}`}
             size={12}
             name={startIcon}
             mr="2px"
@@ -208,11 +205,7 @@ const Button = forwardRef(
         {loading ? (
           <Progress
             size="12px"
-            color={
-              colorVariant === "tertiary"
-                ? theme.colors.grayscale[700]
-                : theme.colors.grayscale.white
-            }
+            color={color === "normal" ? theme.colors.grayscale[700] : theme.colors.grayscale.white}
             backgroundColor="transparent"
             type="Circular"
             variant="indeterminate"
@@ -222,7 +215,7 @@ const Button = forwardRef(
           <Typography
             variant="b1Bold"
             text={text}
-            color={getTypographyColor(colorVariant, disabled)}
+            color={getTypographyColor(color, disabled)}
             {...typographyProps}
           />
         )}
@@ -242,13 +235,13 @@ const ButtonStyle = styled.button<Omit<ButtonProps, "text">>`
   height: ${({ height }) => height ?? "auto"};
   transition: all 0.2s ease-in-out;
 
-  ${({ variant, theme, disabled, colorVariant }) => {
+  ${({ variant, theme, disabled, color }) => {
     const { colors } = theme
 
-    const cv = colorVariant ?? "primary"
+    const cv = color ?? "primary"
     const v = variant ?? "contained"
 
-    const base: Record<"primary" | "secondary" | "tertiary", Record<VariantUiType, string>> = {
+    const base: Record<ColorUiType, Record<VariantUiType, string>> = {
       primary: {
         contained: `
           background-color: ${disabled ? colors.text.disabled : colors.primary[400]};
@@ -281,7 +274,7 @@ const ButtonStyle = styled.button<Omit<ButtonProps, "text">>`
         `,
       },
 
-      tertiary: {
+      normal: {
         contained: `
           background-color: ${disabled ? colors.grayscale[200] : colors.border.thick};
           color: ${disabled ? colors.text.disabled : colors.text.secondary};
@@ -333,7 +326,7 @@ const ButtonStyle = styled.button<Omit<ButtonProps, "text">>`
             `,
           },
 
-          tertiary: {
+          normal: {
             contained: `
               &:hover { background-color: ${colors.grayscale[100]}; }
               &:active { background-color: ${colors.grayscale[50]}; }
@@ -357,7 +350,7 @@ const ButtonStyle = styled.button<Omit<ButtonProps, "text">>`
       : {
           primary: { contained: "", text: "", outlined: "" },
           secondary: { contained: "", text: "", outlined: "" },
-          tertiary: { contained: "", text: "", outlined: "" },
+          normal: { contained: "", text: "", outlined: "" },
         }
 
     const cursor = disabled ? "cursor: no-drop;" : "cursor: pointer;"

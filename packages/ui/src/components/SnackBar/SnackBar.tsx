@@ -86,7 +86,7 @@ const SnackBarBase = forwardRef<HTMLDivElement, SnackBarProps>(({ id, message, s
         position: "relative",
         backgroundColor: theme.colors.grayscale[800],
         borderRadius: theme.borderRadius[4],
-        boxShadow: theme.shadows.menuList,
+        boxShadow: theme.shadows.elevation[10],
         zIndex: SNACKBAR_ZINDEX,
       }}
     >

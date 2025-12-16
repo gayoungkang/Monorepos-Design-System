@@ -12,7 +12,7 @@ const meta: Meta<ButtonProps> = {
   args: {
     text: "Button",
     type: "button",
-    colorVariant: "primary",
+    color: "primary",
     variant: "contained",
     size: "M",
     disabled: false,
@@ -21,7 +21,7 @@ const meta: Meta<ButtonProps> = {
 
   argTypes: {
     /* ---------------------------------- UI ---------------------------------- */
-    colorVariant: {
+    color: {
       control: "radio",
       options: ["primary", "secondary", "tertiary"],
       description: "버튼 색상 테마",
@@ -118,9 +118,9 @@ export const Variants: Story = {
 export const ColorVariants: Story = {
   render: () => (
     <Flex gap={"12px"}>
-      <Button text="Primary" colorVariant="primary" />
-      <Button text="Secondary" colorVariant="secondary" />
-      <Button text="Tertiary" colorVariant="tertiary" />
+      <Button text="Primary" color="primary" />
+      <Button text="Secondary" color="secondary" />
+      <Button text="Normal" color="normal" />
     </Flex>
   ),
 }
