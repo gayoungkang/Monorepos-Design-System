@@ -4,14 +4,14 @@ import { styled } from "../../tokens/customStyled"
 import Flex from "../Flex/Flex"
 import { IconName } from "../Icon/icon-loader"
 import Label, { LabelProps } from "../Label/Label"
-import { LabelPlacement } from "../../types"
+import { AxisPlacement } from "../../types"
 
 export type RatingProps = BaseMixinProps & {
   value?: number | null
   defaultValue?: number
   label?: string
   labelProps?: LabelProps
-  LabelPlacement?: LabelPlacement
+  LabelPlacement?: AxisPlacement
   max?: number
   precision?: number
   disabled?: boolean

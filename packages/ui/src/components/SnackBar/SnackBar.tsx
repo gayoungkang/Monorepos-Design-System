@@ -6,7 +6,7 @@ import {
   RefAttributes,
   CSSProperties,
 } from "react"
-import { Placement, StatusUiType } from "../../types"
+import { DirectionalPlacement, StatusUiType } from "../../types"
 import { IconName } from "../Icon/icon-loader"
 import { theme } from "../../tokens/theme"
 import { useSnackBarStore } from "../../stores/useSnackBarStore"
@@ -22,7 +22,7 @@ export type SnackBarProps = {
   message: string
   status?: StatusUiType
   autoHideDuration?: number
-  placement?: Placement
+  placement?: DirectionalPlacement
 }
 
 const SNACKBAR_PORTAL_ID = "snackbar-root"
@@ -121,7 +121,7 @@ const SnackBarBase = forwardRef<HTMLDivElement, SnackBarProps>(({ id, message, s
 SnackBarBase.displayName = "SnackBar"
 
 // * placement에 따라 포지션 스타일 반환
-const getPlacementStyle = (placement: Placement): CSSProperties => {
+const getPlacementStyle = (placement: DirectionalPlacement): CSSProperties => {
   const base: CSSProperties = {
     position: "fixed",
     zIndex: SNACKBAR_ZINDEX,
@@ -131,7 +131,7 @@ const getPlacementStyle = (placement: Placement): CSSProperties => {
     pointerEvents: "none",
   }
 
-  const placements: Record<Placement, CSSProperties> = {
+  const placements: Record<DirectionalPlacement, CSSProperties> = {
     top: {
       top: "16px",
       left: "50%",
@@ -228,20 +228,20 @@ const SnackBarList = () => {
 
   if (!containerRef.current) return null
 
-  const grouped = snackbars.reduce<Record<Placement, SnackBarProps[]>>(
+  const grouped = snackbars.reduce<Record<DirectionalPlacement, SnackBarProps[]>>(
     (acc, snackbar) => {
       const placement = snackbar.placement ?? "top-end"
       if (!acc[placement]) acc[placement] = []
       acc[placement].push(snackbar)
       return acc
     },
-    {} as Record<Placement, SnackBarProps[]>,
+    {} as Record<DirectionalPlacement, SnackBarProps[]>,
   )
 
   return createPortal(
     <>
       {Object.entries(grouped).map(([placement, list]) => (
-        <div key={placement} style={getPlacementStyle(placement as Placement)}>
+        <div key={placement} style={getPlacementStyle(placement as DirectionalPlacement)}>
           {list.map((snackbar) => (
             <SnackBar key={snackbar.id} {...snackbar} />
           ))}

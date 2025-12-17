@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useRef, useState, FocusEventHandler } from "react"
 import { BaseMixinProps } from "../../tokens/baseMixin"
-import { LabelPlacement, SizeUiType, VariantFormType } from "../../types"
+import { AxisPlacement, SizeUiType, VariantFormType } from "../../types"
 import Label, { LabelProps } from "../Label/Label"
 import { Typography, TypographyProps } from "../Typography/Typography"
 import Chip from "../Chip/Chip"
@@ -48,7 +48,7 @@ export type SelectProps<T extends string | string[]> = BaseMixinProps & {
   isLoading?: boolean
   labelProps?: Partial<Omit<LabelProps, "text">>
   typographyProps?: Partial<TypographyProps>
-  labelPlacement?: LabelPlacement
+  labelPlacement?: AxisPlacement
   popperProps?: PopperProps
 }
 

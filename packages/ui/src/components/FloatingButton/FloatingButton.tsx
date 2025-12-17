@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react"
 import { BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import { theme } from "../../tokens/theme"
-import { ColorUiType, LabelPlacement, SizeUiType } from "../../types"
+import { ColorUiType, AxisPlacement, SizeUiType } from "../../types"
 import Icon from "../Icon/Icon"
 import { IconName } from "../Icon/icon-loader"
 import { Typography, TypographyProps } from "../Typography/Typography"
@@ -24,7 +24,7 @@ export type FloatingButtonProps = BaseMixinProps & {
   size?: SizeUiType
   color?: ColorUiType | string
   disabled?: boolean
-  placement?: LabelPlacement
+  placement?: AxisPlacement
   onClick?: () => void
 }
 
@@ -179,7 +179,7 @@ const Wrapper = styled.div`
 const FabItem = styled.button<{
   open: boolean
   offset: number
-  placement: LabelPlacement
+  placement: AxisPlacement
   size: SizeUiType
   color: ColorUiType | string
   extended: boolean

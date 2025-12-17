@@ -1,4 +1,4 @@
-export type Placement =
+export type DirectionalPlacement =
   | "top"
   | "top-start"
   | "top-end"
@@ -10,12 +10,8 @@ export type Placement =
   | "left-end"
   | "right"
   | "right-start"
-  | "right-end";
+  | "right-end"
 
-  export type LabelPlacement =
-  | "top"
-  | "bottom"
-  | "left"
-  | "right";
+export type AxisPlacement = "top" | "bottom" | "left" | "right"
 
-
+export type CornerPlacement = "top-right" | "top-left" | "bottom-right" | "bottom-left"

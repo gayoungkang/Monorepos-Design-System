@@ -6,7 +6,7 @@ import { theme } from "../../tokens/theme"
 import SwitchButton from "./SwitchButton"
 import Flex from "../Flex/Flex"
 
-import { SizeUiType, ColorUiType, LabelPlacement } from "../../types"
+import { SizeUiType, ColorUiType, AxisPlacement } from "../../types"
 
 /* -------------------------------------------------------------------------- */
 /*                                   META                                     */
@@ -34,7 +34,7 @@ const meta: Meta<typeof SwitchButton> = {
       options: ["primary", "secondary", "normal"] satisfies ColorUiType[],
     },
     label: { control: "text" },
-    labelPlacment: { control: "radio", options: ["left", "right"] satisfies LabelPlacement[] },
+    labelPlacment: { control: "radio", options: ["left", "right"] satisfies AxisPlacement[] },
   },
 
   decorators: [

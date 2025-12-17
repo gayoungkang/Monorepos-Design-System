@@ -2,7 +2,7 @@ import { css } from "styled-components"
 import { BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import { theme } from "../../tokens/theme"
-import { ColorUiType, LabelPlacement, SizeUiType } from "../../types"
+import { ColorUiType, AxisPlacement, SizeUiType } from "../../types"
 import Flex from "../Flex/Flex"
 import { Typography, TypographyProps } from "../Typography/Typography"
 
@@ -13,13 +13,13 @@ type SwitchButtonProps = BaseMixinProps & {
   size?: SizeUiType
   color?: ColorUiType | string
   label: string
-  labelPlacment?: LabelPlacement
+  labelPlacment?: AxisPlacement
   typographyProps?: Partial<TypographyProps>
 }
 
 const renderLabel = (
   label: string,
-  placement: LabelPlacement,
+  placement: AxisPlacement,
   checked: boolean,
   disabled: boolean,
   typographyProps?: Partial<TypographyProps>,

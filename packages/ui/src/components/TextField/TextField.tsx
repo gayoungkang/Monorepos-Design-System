@@ -12,7 +12,7 @@ import {
   useState,
 } from "react"
 import { BaseMixinProps } from "../../tokens/baseMixin"
-import { LabelPlacement, SizeUiType, VariantFormType } from "../../types"
+import { AxisPlacement, SizeUiType, VariantFormType } from "../../types"
 import Flex from "../Flex/Flex"
 import Label, { LabelProps } from "../Label/Label"
 import Box from "../Box/Box"
@@ -50,7 +50,7 @@ export type textFieldProps = BaseMixinProps & {
   endIcon?: IconName
   required?: boolean
   readOnly?: boolean
-  labelPlacement?: LabelPlacement
+  labelPlacement?: AxisPlacement
   labelProps?: Partial<Omit<LabelProps, "text">>
   iconProps?: Partial<Omit<IconProps, "name">>
   multiline?: boolean
@@ -454,7 +454,7 @@ const InputWrapper = styled.div<InputWrapperStyleProps>`
 const StyledInput = styled.input<{
   multiline?: boolean
   resizableMultiline?: boolean
-  labelPlacement?: LabelPlacement
+  labelPlacement?: AxisPlacement
 }>`
   flex: 1;
   border: none;

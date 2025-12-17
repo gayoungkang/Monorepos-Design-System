@@ -1,7 +1,7 @@
 import { ReactNode, RefObject, forwardRef, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { css } from "styled-components"
-import { Placement } from "../../types"
+import { DirectionalPlacement } from "../../types"
 import { POPOVER_ZINDEX } from "../../types/zindex"
 import { styled } from "../../tokens/customStyled"
 import { popover } from "../../tokens/keyframes"
@@ -9,7 +9,7 @@ import { popover } from "../../tokens/keyframes"
 export type PopperProps = {
   anchorRef: RefObject<HTMLElement | null>
   children: ReactNode
-  placement?: Placement
+  placement?: DirectionalPlacement
   offsetX?: number
   offsetY?: number
   open: boolean
@@ -199,7 +199,7 @@ const Popper = forwardRef<HTMLDivElement, PopperProps>(
 )
 
 const StyledPopper = styled.div<{
-  placement: Placement
+  placement: DirectionalPlacement
   height: string
 }>`
   overflow-y: auto;
@@ -213,7 +213,7 @@ const StyledPopper = styled.div<{
   animation: ${popover} 0.2s cubic-bezier(0.25, 2, 0.5, 1) forwards;
 `
 
-const Arrow = styled.div<{ placement: Placement }>`
+const Arrow = styled.div<{ placement: DirectionalPlacement }>`
   width: 10px;
   height: 10px;
   background-color: ${({ theme }) => theme.colors.grayscale.white};

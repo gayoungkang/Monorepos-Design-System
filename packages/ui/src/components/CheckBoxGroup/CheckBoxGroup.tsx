@@ -1,6 +1,6 @@
 import { ChangeEvent, FocusEventHandler, forwardRef, useEffect, useRef } from "react"
 import { BaseMixinProps } from "../../tokens/baseMixin"
-import { DirectionType, LabelPlacement, SizeUiType } from "../../types"
+import { DirectionType, AxisPlacement, SizeUiType } from "../../types"
 import Label, { LabelProps } from "../Label/Label"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
@@ -27,7 +27,7 @@ export type CheckBoxProps<Value extends string | number = string> = BaseMixinPro
   helperText?: string
   labelProps?: Partial<Omit<LabelProps, "text">>
   onBlur?: FocusEventHandler<HTMLInputElement>
-  labelPlacement?: LabelPlacement
+  labelPlacement?: AxisPlacement
   size?: SizeUiType
 }
 

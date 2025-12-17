@@ -1,6 +1,6 @@
 import { ChangeEvent } from "react"
 import { BaseMixinProps } from "../../tokens/baseMixin"
-import { DirectionType, LabelPlacement, SizeUiType } from "../../types"
+import { DirectionType, AxisPlacement, SizeUiType } from "../../types"
 import Label, { LabelProps } from "../Label/Label"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
@@ -25,7 +25,7 @@ type RadioButtonGroupProps<Value extends string | number> = BaseMixinProps & {
   error?: boolean
   helperText?: string
   labelProps?: Partial<Omit<LabelProps, "text">>
-  labelPlacement?: LabelPlacement
+  labelPlacement?: AxisPlacement
   size?: SizeUiType
 }
 /**
