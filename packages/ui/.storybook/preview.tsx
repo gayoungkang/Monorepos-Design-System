@@ -39,6 +39,8 @@ const preview: Preview = {
             flexDirection: "column",
             width: "100%",
             height: "100vh",
+            padding: 0,
+            backgroundColor: "#e8e8e8",
           }}
         >
           <Story />
