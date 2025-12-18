@@ -26,6 +26,7 @@ const STYLE_PROPS = new Set<string>([
   "leftDisabled",
   "rightDisabled",
   "loading",
+  "backgroundColor",
 ])
 
 /**
