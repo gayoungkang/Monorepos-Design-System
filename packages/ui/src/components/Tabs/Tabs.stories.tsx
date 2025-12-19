@@ -56,7 +56,7 @@ const meta: Meta<TabProps> = {
       description: "탭 선택 콜백",
     },
 
-    /* BaseMixin (일부만 노출) */
+    // BaseMixin 공통 (일부만 노출)
     width: { control: "text" },
     m: { control: "text" },
     mt: { control: "text" },
@@ -90,7 +90,7 @@ export default meta
 
 type Story = StoryObj<TabProps>
 
-/* 기본 동작 + Controls 연동 */
+// * 기본 동작 + Controls 연동
 export const Default: Story = {
   render: (args) => {
     const [current, setCurrent] = useState<string | null>(
@@ -158,7 +158,7 @@ export const Colors: Story = {
   },
 }
 
-/* 사이즈 비교 */
+// * 사이즈 비교
 export const Sizes: Story = {
   render: () => {
     const [small, setSmall] = useState("tab1")
@@ -208,7 +208,7 @@ export const Sizes: Story = {
   },
 }
 
-/* 스크롤 / 버튼 동작 확인용 (탭 많이 생성) */
+// * 스크롤 / 버튼 동작 확인용 (탭 많이 생성)
 export const ScrollAndButtons: Story = {
   render: (args) => {
     const [current, setCurrent] = useState("tab-1")
@@ -231,7 +231,7 @@ export const ScrollAndButtons: Story = {
   },
 }
 
-/* hidden / disabled 옵션 조합 */
+// * hidden / disabled 옵션 조합
 export const HiddenAndDisabled: Story = {
   render: () => {
     const [current, setCurrent] = useState("tab1")
