@@ -10,7 +10,7 @@ export type FlexProps = HTMLAttributes<HTMLElement> &
     justify?: React.CSSProperties["justifyContent"]
     align?: React.CSSProperties["alignItems"]
     wrap?: React.CSSProperties["flexWrap"]
-    gap?: string
+    gap?: string | number
     extraProps?: Record<string, any>
   }
 
@@ -47,7 +47,10 @@ export type FlexProps = HTMLAttributes<HTMLElement> &
  */
 
 const Flex = forwardRef<HTMLDivElement, FlexProps>(
-  ({ as = "div", children, direction, justify, align, wrap, gap, extraProps, ...props }, ref) => {
+  (
+    { as = "div", children, direction, justify, align, wrap, gap = "0px", extraProps, ...props },
+    ref,
+  ) => {
     return (
       <StyledFlex
         ref={ref}
@@ -74,7 +77,7 @@ const StyledFlex = styled.div<
     justify?: string
     align?: string
     wrap?: string
-    gap?: string
+    gap?: string | number
   }
 >`
   display: flex;
@@ -83,7 +86,7 @@ const StyledFlex = styled.div<
   justify-content: ${({ justify }) => justify ?? "flex-start"};
   align-items: ${({ align }) => align ?? "stretch"};
   flex-wrap: ${({ wrap }) => wrap ?? "nowrap"};
-  gap: ${({ gap }) => gap ?? "0px"};
+  gap: ${({ gap }) => (typeof gap === "number" ? gap + "px" : gap)};
   ${BaseMixin};
 `
 
