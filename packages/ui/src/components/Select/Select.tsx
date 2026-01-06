@@ -110,13 +110,11 @@ const Select = <T extends string | string[]>({
   const getSize = (size: SizeUiType): string => {
     switch (size) {
       case "S":
-        return "8px"
-      case "M":
         return "10px"
       case "L":
         return "12px"
       default:
-        return "10px"
+        return "11px"
     }
   }
 

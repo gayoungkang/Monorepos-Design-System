@@ -24,6 +24,34 @@ export type IconButtonProps = BaseMixinProps & {
   onMouseUp?: (e: MouseEvent<HTMLButtonElement>) => void
   onMouseLeave?: (e: MouseEvent<HTMLButtonElement>) => void
 }
+/**---------------------------------------------------------------------------/
+
+* ! IconButton
+*
+* * 아이콘만 렌더링하는 버튼 컴포넌트
+* * icon(IconName) 기반으로 내부 Icon 컴포넌트 렌더링
+* * variant(contained / outlined / text) 기반 스타일 분기 지원
+* * hover/active 상태를 내부 state로 관리하여 아이콘 색상 계산
+* * disableInteraction 옵션으로 hover/active 인터랙션 및 상태 업데이트 차단
+* * disabled 상태 지원 (클릭 차단 및 강제 disabled 컬러 적용)
+* * iconProps로 Icon 세부 옵션(size/color/paint 등) 부분 오버라이드 지원
+* * toolTip 제공 시 Tooltip 래핑 렌더링 지원
+* * 마우스 이벤트(onMouseDown/up/leave) passthrough 지원
+* * BaseMixin 기반 외부 스타일 확장 지원
+* * theme 기반 색상, borderRadius, transition 시스템 활용
+*
+* @module IconButton
+* 아이콘 단독 버튼 UI를 제공하는 컴포넌트입니다.
+* - 내부적으로 hover/active 상태를 추적하여 variant에 맞는 아이콘 색상을 계산합니다.
+* - disabled일 경우 iconProps/color 우선순위를 무시하고 disabled 컬러를 강제로 적용합니다.
+* - toolTip 문자열이 있으면 Tooltip로 감싸서 노출합니다.
+*
+* @usage
+* <IconButton icon="CloseLine" onClick={...} />
+* <IconButton icon="MoreLine" variant="outlined" toolTip="More" />
+* <IconButton icon="TrashLine" disabled disableInteraction />
+
+/---------------------------------------------------------------------------**/
 
 const IconButton = ({
   icon,
@@ -44,29 +72,35 @@ const IconButton = ({
   const [isHover, setIsHover] = useState(false)
   const [isActive, setIsActive] = useState(false)
 
+  // * 실제 클릭(마우스/터치)만 허용하고, disabled면 클릭을 차단
   const handleClick: MouseEventHandler<HTMLButtonElement> = (e) => {
     if (e.detail === 0) return
     e.preventDefault()
     if (!disabled) onClick?.(e)
   }
 
+  // * hover 상태를 내부에서 관리하고, hover 해제 시 외부 onMouseLeave를 동기화
   const handleHover = (hover: boolean) => (e: MouseEvent<HTMLButtonElement>) => {
     if (!disableInteraction) setIsHover(hover)
     if (!hover) onMouseLeave?.(e)
   }
 
+  // * active 상태를 내부에서 관리하고 외부 핸들러를 호출
   const handleMouseDown = (e: MouseEvent<HTMLButtonElement>) => {
     if (!disableInteraction) setIsActive(true)
     onMouseDown?.(e)
   }
 
+  // * active 해제 및 외부 핸들러 호출
   const handleMouseUp = (e: MouseEvent<HTMLButtonElement>) => {
     if (!disableInteraction) setIsActive(false)
     onMouseUp?.(e)
   }
 
+  // * 포커스 이탈 시 active 상태를 초기화
   const handleBlur: FocusEventHandler<HTMLButtonElement> = () => setIsActive(false)
 
+  // * variant/상태(disabled/hover/active)에 따라 기본 아이콘 색상을 계산
   const getIconColorFromVariant = (
     variant: VariantUiType,
     theme: DefaultTheme,
@@ -74,18 +108,17 @@ const IconButton = ({
     isHover: boolean,
     isActive: boolean,
   ): string => {
-    if (disabled) return theme.colors.grayscale[200]
+    if (disabled) return theme.colors.text.disabled
     if (isActive) return theme.colors.grayscale[500]
     if (variant === "outlined" && isHover) return theme.colors.grayscale[200]
     return theme.colors.grayscale[500]
   }
 
-  // ★ 최종 아이콘 컬러 결정 (툴팁 여부와 관계없이 동일)
-  const finalColor =
-    iconProps?.color ??
-    color ??
-    getIconColorFromVariant(variant, theme, disabled, isHover, isActive)
+  // * disabled일 때는 iconProps/color 우선순위를 무시하고 강제 disabled 색 적용
+  const computedColor = getIconColorFromVariant(variant, theme, disabled, isHover, isActive)
+  const finalColor = disabled ? computedColor : (iconProps?.color ?? color ?? computedColor)
 
+  // * tooltip 유무에 따라 버튼을 감싸서 렌더링
   const ButtonContent = (
     <IconButtonStyle
       disabled={disabled}
@@ -142,6 +175,7 @@ export const IconButtonStyle = styled.button<Omit<IconButtonProps, "icon" | "onC
   ${({ variant, theme, disabled }) => variantStyle({ variant, theme, disabled })}
 `
 
+// * variant/disabled 상태에 따른 배경/보더 스타일을 계산
 const variantStyle = ({
   variant,
   theme,
