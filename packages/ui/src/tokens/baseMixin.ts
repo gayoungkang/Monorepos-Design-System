@@ -44,7 +44,7 @@ export type SxProps = CSSObject & {
  */
 export type BaseMixinProps = {
   /** padding */
-  p?: string
+  p?: string | number
   /** padding-top */
   pt?: string | number
   /** padding-right */
@@ -60,7 +60,7 @@ export type BaseMixinProps = {
   py?: string | number
 
   /** margin */
-  m?: string
+  m?: string | number
   /** margin-top */
   mt?: string | number
   /** margin-right */
@@ -172,7 +172,7 @@ export const BaseMixin = (props: BaseMixinProps) => css`
   padding-left: ${toCssValue(props.pl ?? props.px)};
   ${props.p &&
   css`
-    padding: ${props.p ?? props.p};
+    padding: ${toCssValue(props.p ?? props.p)};
   `};
 
   margin-top: ${toCssValue(props.mt ?? props.my)};
@@ -181,7 +181,7 @@ export const BaseMixin = (props: BaseMixinProps) => css`
   margin-left: ${toCssValue(props.ml ?? props.mx)};
   ${props.m &&
   css`
-    margin: ${props.m ?? props.m};
+    margin: ${toCssValue(props.m ?? props.m)};
   `};
 
   width: ${toCssValue(props.width)};
