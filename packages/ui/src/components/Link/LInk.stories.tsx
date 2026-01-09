@@ -120,7 +120,7 @@ export const WithChildren: Story = {
     <Link>
       <Flex align="center" gap="6px">
         <span>아이콘 등 다양한 요소 포함 가능</span>
-        <Box width="6px" height="6px" backgroundColor="red" />
+        <Box width="6px" height="6px" bgColor="red" />
         <Avatar src="https://picsum.photos/200" name="Test" />
       </Flex>
     </Link>

@@ -5,15 +5,18 @@ import { ThemeProvider } from "styled-components"
 import { theme } from "../../tokens/theme"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
-import CheckBoxGroup, { CheckBoxProps } from "./CheckBoxGroup"
+
 import { Typography } from "../Typography/Typography"
+import CheckBoxGroup, { CheckBoxProps } from "./CheckBoxGroup"
 
 /* -------------------------------------------------------------------------- */
 /*                          Interactive Wrapper (핵심)                        */
 /* -------------------------------------------------------------------------- */
 
-const CheckBoxGroupInteractive = (props: CheckBoxProps) => {
-  const [value, setValue] = useState(props.value ?? [])
+const CheckBoxGroupInteractive = <Value extends string | number = string>(
+  props: CheckBoxProps<Value>,
+) => {
+  const [value, setValue] = useState<Value[]>((props.value ?? []) as Value[])
 
   return (
     <Box>
@@ -35,7 +38,7 @@ const CheckBoxGroupInteractive = (props: CheckBoxProps) => {
 
 const meta: Meta<CheckBoxProps> = {
   title: "components/CheckBoxGroup",
-  component: CheckBoxGroupInteractive,
+  component: CheckBoxGroupInteractive as any,
 
   args: {
     label: "옵션 선택",
@@ -43,6 +46,7 @@ const meta: Meta<CheckBoxProps> = {
     direction: "horizontal",
     disabled: false,
     allCheck: false,
+    allCheckText: "전체",
     helperText: "",
     error: false,
     data: [
@@ -109,7 +113,7 @@ const meta: Meta<CheckBoxProps> = {
 
     width: { control: "text" },
     height: { control: "text" },
-    backgroundColor: { control: "text" },
+    bgColor: { control: "text" },
 
     /* -------------------------------------- SxProps ------------------------------------- */
     sx: {
@@ -148,17 +152,17 @@ type Story = StoryObj<CheckBoxProps>
 /* -------------------------------------------------------------------------- */
 
 export const Default: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
 }
 
 /* ------------------------------ Direction Examples ------------------------------ */
 export const Horizontal: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
   args: { direction: "horizontal" },
 }
 
 export const Vertical: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
   args: { direction: "vertical" },
 }
 
@@ -172,7 +176,7 @@ export const Sizes: Story = {
       <Box>
         <Typography text="Size: S" variant="b2Regular" mb={6} />
         <CheckBoxGroupInteractive
-          {...args}
+          {...(args as any)}
           size="S"
           label="Small Checkbox"
           data={[
@@ -186,7 +190,7 @@ export const Sizes: Story = {
       <Box>
         <Typography text="Size: M" variant="b2Regular" mb={6} />
         <CheckBoxGroupInteractive
-          {...args}
+          {...(args as any)}
           size="M"
           label="Medium Checkbox"
           data={[
@@ -200,7 +204,7 @@ export const Sizes: Story = {
       <Box>
         <Typography text="Size: L" variant="b2Regular" mb={6} />
         <CheckBoxGroupInteractive
-          {...args}
+          {...(args as any)}
           size="L"
           label="Large Checkbox"
           data={[
@@ -216,52 +220,52 @@ export const Sizes: Story = {
 
 /* ---------------------------------- Label ---------------------------------- */
 export const WithLabel: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
   args: { label: "선택하세요", required: true },
 }
 
 /* --------------------------- Label Placement --------------------------- */
 export const LabelTop: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
   args: { labelPlacement: "top" },
 }
 
 export const LabelBottom: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
   args: { labelPlacement: "bottom" },
 }
 
 export const LabelLeft: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
   args: { labelPlacement: "left" },
 }
 
 export const LabelRight: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
   args: { labelPlacement: "right" },
 }
 
 /* ------------------------------ AllCheck ------------------------------ */
 export const WithAllCheck: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
   args: { allCheck: true, allCheckText: "전체 선택" },
 }
 
 /* ------------------------------ Disabled ------------------------------ */
 export const Disabled: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
   args: { disabled: true },
 }
 
 /* ------------------------------- Error -------------------------------- */
 export const ErrorState: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
   args: { error: true, helperText: "필수 항목입니다." },
 }
 
 /* ------------------------------ Custom Data ------------------------------ */
 export const CustomData: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
   args: {
     data: [
       { text: "Apple", value: "apple" },
@@ -273,7 +277,7 @@ export const CustomData: Story = {
 
 /* ----------------------------- Playground ----------------------------- */
 export const Playground: Story = {
-  render: (args) => <CheckBoxGroupInteractive {...args} />,
+  render: (args) => <CheckBoxGroupInteractive {...(args as any)} />,
   args: {
     allCheck: true,
     required: true,

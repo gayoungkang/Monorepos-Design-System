@@ -63,7 +63,7 @@ const meta: Meta<MenuProps> = {
 
     width: { control: "text" },
     height: { control: "text" },
-    backgroundColor: { control: "text" },
+    bgColor: { control: "text" },
 
     sx: { control: "object" },
   },

@@ -67,11 +67,11 @@ export const Default: Story = {}
 export const Spacing: Story = {
   render: () => (
     <div style={{ display: "flex", gap: 20 }}>
-      <Box p="16px" backgroundColor={theme.colors.primary[100]}>
+      <Box p="16px" bgColor={theme.colors.primary[100]}>
         Padding 16px
       </Box>
 
-      <Box m="16px" p="8px" backgroundColor={theme.colors.primary[200]}>
+      <Box m="16px" p="8px" bgColor={theme.colors.primary[200]}>
         Margin 16px + Padding 8px
       </Box>
     </div>
@@ -82,15 +82,15 @@ export const Spacing: Story = {
 export const AsProp: Story = {
   render: () => (
     <div style={{ display: "flex", gap: 20 }}>
-      <Box as="section" p="12px" backgroundColor={theme.colors.primary[100]}>
+      <Box as="section" p="12px" bgColor={theme.colors.primary[100]}>
         section 요소
       </Box>
 
-      <Box as="article" p="4px" backgroundColor={theme.colors.primary[200]}>
+      <Box as="article" p="4px" bgColor={theme.colors.primary[200]}>
         article 요소
       </Box>
 
-      <Box as="header" p="8px" backgroundColor={theme.colors.primary[300]}>
+      <Box as="header" p="8px" bgColor={theme.colors.primary[300]}>
         header 요소
       </Box>
     </div>
@@ -100,7 +100,7 @@ export const AsProp: Story = {
 /* ─────────── Custom Style (sx) ─────────── */
 export const CustomStyle: Story = {
   args: {
-    backgroundColor: theme.colors.primary[100],
+    bgColor: theme.colors.primary[100],
     sx: {
       borderRadius: "8px",
       padding: "12px",
@@ -113,7 +113,7 @@ export const CustomStyle: Story = {
 /* ─────────── Children Rendering ─────────── */
 export const ChildrenExample: Story = {
   render: () => (
-    <Box p="16px" backgroundColor={theme.colors.primary[100]}>
+    <Box p="16px" bgColor={theme.colors.primary[100]}>
       <h3>타이틀</h3>
       <p>박스 내부에 다양한 콘텐츠를 넣을 수 있습니다.</p>
     </Box>

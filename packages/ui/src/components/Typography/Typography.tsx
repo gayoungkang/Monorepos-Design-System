@@ -1,7 +1,7 @@
 import type React from "react"
 import { JSX, ReactNode } from "react"
 import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
-import { TypographyVariant, typographyVariants } from "../../tokens/theme"
+import { theme, TypographyVariant, typographyVariants } from "../../tokens/theme"
 import { styled } from "../../tokens/customStyled"
 
 export type TypographyProps = BaseMixinProps & {
@@ -58,7 +58,7 @@ export const Typography = ({
   variant = "b1Medium",
   text,
   as = "p",
-  color = "text.primary",
+  color = theme.colors.text.primary,
   italic,
   ellipsis = false,
   underline,

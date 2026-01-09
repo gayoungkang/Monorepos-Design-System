@@ -121,7 +121,7 @@ export const Playground: Story = {
 
         <Box
           p={"12px"}
-          backgroundColor={theme.colors.grayscale[50]}
+          bgColor={theme.colors.grayscale[50]}
           sx={{
             border: `1px solid ${theme.colors.border.default}`,
             borderRadius: theme.borderRadius[8],
@@ -218,7 +218,7 @@ export const AlternativeLabel: Story = {
 
         <Box
           p={"12px"}
-          backgroundColor={theme.colors.grayscale[50]}
+          bgColor={theme.colors.grayscale[50]}
           sx={{
             border: `1px solid ${theme.colors.border.default}`,
             borderRadius: theme.borderRadius[8],

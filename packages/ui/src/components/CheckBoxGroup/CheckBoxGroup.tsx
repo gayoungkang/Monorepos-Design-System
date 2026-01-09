@@ -1,4 +1,4 @@
-import { ChangeEvent, FocusEventHandler, forwardRef, useEffect, useRef } from "react"
+import { ChangeEvent, FocusEventHandler, forwardRef, useEffect, useMemo, useRef } from "react"
 import { BaseMixinProps } from "../../tokens/baseMixin"
 import { DirectionType, AxisPlacement, SizeUiType } from "../../types"
 import Label, { LabelProps } from "../Label/Label"
@@ -12,6 +12,7 @@ type DataType<Value extends string | number = string> = {
   text: string
   value: Value
 }
+
 export type CheckBoxProps<Value extends string | number = string> = BaseMixinProps & {
   value?: Value[]
   onChange?: (checkedValues: Value[]) => void
@@ -31,6 +32,22 @@ export type CheckBoxProps<Value extends string | number = string> = BaseMixinPro
   size?: SizeUiType
 }
 
+export type CheckBoxSingleProps = BaseMixinProps & {
+  checked?: boolean
+  onChange?: (checked: boolean) => void
+  disabled?: boolean
+  name?: string
+  required?: boolean
+  label?: string
+  error?: boolean
+  helperText?: string
+  labelProps?: Partial<Omit<LabelProps, "text">>
+  onBlur?: FocusEventHandler<HTMLInputElement>
+  labelPlacement?: AxisPlacement
+  size?: SizeUiType
+  indeterminate?: boolean
+}
+
 type CheckboxItemProps = {
   name?: string
   value: string | number
@@ -39,55 +56,136 @@ type CheckboxItemProps = {
   disabled: boolean
   onChange: (e: ChangeEvent<HTMLInputElement>) => void
   error?: boolean
-  helperText?: string
   indeterminate?: boolean
   direction?: DirectionType
   onBlur?: FocusEventHandler<HTMLInputElement>
   size?: SizeUiType
 }
-/**
- * @module CheckBoxGroup
- * 여러 개의 체크박스를 그룹화한 컴포넌트로, 개별 체크박스 선택 및 전체선택 기능을 제공합니다.
- * 수평(horizontal) 또는 수직(vertical) 방향 배치를 지원하며, 라벨, 헬퍼 텍스트, 에러 메시지 표시가 가능합니다.
- *
- * - data 배열을 기반으로 체크박스 항목을 렌더링
- * - value 배열로 선택된 체크박스 값을 관리하며 onChange로 변경 통지
- * - 전체선택(allCheck) 기능으로 모든 항목 선택/해제 가능
- * - 전체선택 체크박스는 2개 이상의 항목이 있을 때만 렌더링
- * - 전체선택 체크박스는 선택 상태와 일부 선택 상태(indeterminate)를 반영
- * - disabled, error 상태에 따른 UI 변화 지원
- * - name, required, label, helperText, labelProps 등 폼 UI 관련 옵션 제공
- * - onBlur 이벤트 지원으로 폼 유효성 검사와 연동 가능
- *
- * @props
- * - value: 선택된 체크박스 값 배열
- * - onChange: 체크 상태 변경 시 호출되는 콜백 (선택된 값 배열 전달)
- * - data: 체크박스 항목 배열 ({ text, value } 구조)
- * - direction: 체크박스 배치 방향 ("horizontal" | "vertical")
- * - disabled: 전체 체크박스 비활성화 여부
- * - name: 각 체크박스 input name 속성
- * - required: 필수 표기 여부
- * - label: 그룹 상단 라벨 텍스트
- * - allCheck: 전체선택 체크박스 활성화 여부
- * - allCheckText: 전체선택 체크박스 텍스트 지정
- * - error: 에러 상태 여부
- * - helperText: 에러 또는 안내 텍스트
- * - labelProps: Label 컴포넌트에 추가 전달할 props
- * - onBlur: 체크박스 onBlur 이벤트 핸들러
- * - labelPlacement : Label 컴포넌트 위치 변경
- *
- * @usage
- * <CheckBoxGroup
- *   label="선택하세요"
- *   name="options"
- *   value={selectedValues}
- *   onChange={setSelectedValues}
- *   data={[{ text: "옵션1", value: "1" }, { text: "옵션2", value: "2" }]}
- *   direction="vertical"
- *   allCheck
- *   allCheckText="모두 선택"
- * />
- */
+
+// * size에 따라 라벨 폰트 크기를 결정
+const getFontSize = (s: SizeUiType): string => {
+  switch (s) {
+    case "S":
+      return "7px"
+    case "M":
+      return "10px"
+    case "L":
+      return "13px"
+    default:
+      return "10px"
+  }
+}
+/**---------------------------------------------------------------------------/
+
+* ! CheckBox / CheckBoxGroup
+*
+* * 단일(CheckBox) 및 그룹(CheckBoxGroup) 체크박스 컴포넌트
+* * BaseMixin 기반 외부 스타일 확장 지원
+* * label / required / helperText / error 상태 표현 지원
+* * labelPlacement(top/bottom/left/right) 기반 라벨 배치 지원
+* * size(S/M/L) 기반 체크박스 크기 및 라벨 폰트 크기 동기화
+*
+* * CheckBox (Single)
+*   * checked/indeterminate 상태 지원 (indeterminate는 checked=false일 때만 적용)
+*   * indeterminate 속성은 inputRef를 통해 DOM property로 제어
+*   * labelPlacement 기준으로 라벨을 체크박스 상/하/좌/우에 배치
+*   * error=true일 때 HelperText(error) 렌더링
+*
+* * CheckBoxGroup
+*   * data 목록 기반 다중 체크박스 렌더링
+*   * value 배열을 기준으로 체크 상태 계산 및 onChange로 선택값 배열 전달
+*   * allCheck 옵션으로 전체선택 체크박스 제공 (데이터 2개 이상일 때만 노출)
+*   * 전체선택 상태(isAllChecked) 및 부분선택(indeterminate) 상태 계산
+*   * 전체선택 indeterminate는 allCheckRef로 DOM property 제어
+*   * direction(horizontal/vertical)에 따라 아이템 간 margin 및 배치 방향 처리
+*   * error=true일 때 HelperText(error) 렌더링
+*
+* * CheckboxItem (internal)
+*   * forwardRef로 input ref 전달 (indeterminate 제어 및 외부 접근용)
+*   * size에 따라 input 크기 및 after(체크/인디터미네이트) 스타일 분기
+*   * checked/indeterminate 상태에 따라 border/background 및 표시 요소(::after) 처리
+*   * 체크 상태에서는 svg(체크 이미지) 기반 표시
+*
+* @module CheckBox
+* 단일 체크박스 UI를 제공하며, indeterminate/label/helperText를 지원합니다.
+*
+* @module CheckBoxGroup
+* 여러 체크박스를 그룹으로 제공하며, 전체선택(allCheck) 및 다중 선택 값을 관리합니다.
+*
+* @usage
+* <CheckBox checked={checked} onChange={setChecked} label="Label" />
+* <CheckBox indeterminate checked={false} label="Partial" />
+* <CheckBoxGroup value={values} data={data} onChange={setValues} allCheck />
+
+/---------------------------------------------------------------------------**/
+
+export const CheckBox = ({
+  checked = false,
+  onChange,
+  disabled = false,
+  name,
+  required,
+  label,
+  error,
+  helperText,
+  labelProps,
+  onBlur,
+  labelPlacement = "top",
+  size = "M",
+  indeterminate = false,
+  ...others
+}: CheckBoxSingleProps) => {
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  // * indeterminate 상태를 DOM input 속성으로 동기화
+  useEffect(() => {
+    if (!inputRef.current) return
+    inputRef.current.indeterminate = !!indeterminate && !checked
+  }, [indeterminate, checked])
+
+  // * 단일 체크박스 체크 변경을 boolean으로 변환해 전달
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    onChange?.(e.target.checked)
+  }
+
+  // * 상/하 배치 여부를 placement prefix로 판별
+  const isTop = labelPlacement?.startsWith("top")
+  const isBottom = labelPlacement?.startsWith("bottom")
+
+  return (
+    <Box width="100%" sx={{ position: "relative", backgroundColor: "transparent" }} {...others}>
+      {label && isTop && <Label text={label} required={required} mb={4} {...labelProps} />}
+
+      <Flex width="fit-content" align="center">
+        {label && labelPlacement === "left" && (
+          <Label text={label} required={required} mr={4} {...labelProps} />
+        )}
+
+        <CheckboxItem
+          ref={inputRef}
+          name={name}
+          value="__single__"
+          text={""}
+          checked={checked}
+          disabled={disabled}
+          onChange={handleChange}
+          indeterminate={indeterminate}
+          direction={"horizontal"}
+          onBlur={onBlur}
+          error={error}
+          size={size}
+        />
+
+        {label && labelPlacement === "right" && (
+          <Label text={label} required={required} ml={4} {...labelProps} />
+        )}
+      </Flex>
+
+      {label && isBottom && <Label text={label} required={required} mt={4} {...labelProps} />}
+      {error && <HelperText status="error" text={helperText ?? ""} mt={6} />}
+    </Box>
+  )
+}
 
 const CheckBoxGroup = <Value extends string | number>({
   value = [],
@@ -105,11 +203,11 @@ const CheckBoxGroup = <Value extends string | number>({
   error,
   onBlur,
   labelPlacement = "top",
-  size,
+  size = "M",
   ...others
 }: CheckBoxProps<Value>) => {
-  const filteredData = data.filter((item) => item.value !== null)
-  const allValues = filteredData.map((item) => item.value)
+  const filteredData = useMemo(() => data.filter((item) => item.value !== null), [data])
+  const allValues = useMemo(() => filteredData.map((item) => item.value), [filteredData])
 
   // * 전체선택 체크박스 렌더링 조건(allCheck 활성 & 데이터 2개 이상)
   const shouldRenderAllCheck = allCheck && filteredData.length > 1
@@ -122,17 +220,15 @@ const CheckBoxGroup = <Value extends string | number>({
   const isIndeterminate =
     shouldRenderAllCheck && !isAllChecked && allValues.some((v) => value.includes(v))
 
-  // * 전체선택 체크박스 참조 (indeterminate 속성 제어용)
   const allCheckRef = useRef<HTMLInputElement | null>(null)
 
-  // * indeterminate 상태 반영
+  // * 전체선택 체크박스 indeterminate 속성 동기화
   useEffect(() => {
-    if (allCheckRef.current) {
-      allCheckRef.current.indeterminate = isIndeterminate
-    }
+    if (!allCheckRef.current) return
+    allCheckRef.current.indeterminate = isIndeterminate
   }, [isIndeterminate])
 
-  // *  개별 체크박스 변경 이벤트 핸들러
+  // * 개별 체크박스 변경 시 value 배열을 추가/제거하여 전달
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedValue = e.target.value as Value
     const isChecked = e.target.checked
@@ -142,7 +238,7 @@ const CheckBoxGroup = <Value extends string | number>({
     onChange?.(newValues)
   }
 
-  // * 전체선택 체크박스 변경 이벤트 핸들러
+  // * 전체선택 변경 시 전체 값 또는 빈 배열을 전달
   const handleAllChange = (e: ChangeEvent<HTMLInputElement>) => {
     onChange?.(e.target.checked ? allValues : [])
   }
@@ -154,6 +250,7 @@ const CheckBoxGroup = <Value extends string | number>({
       {label && labelPlacement === "top" && (
         <Label text={label} required={required} mb={4} {...labelProps} />
       )}
+
       <Flex
         width="fit-content"
         height={others.height}
@@ -164,6 +261,7 @@ const CheckBoxGroup = <Value extends string | number>({
         {label && labelPlacement === "left" && (
           <Label text={label} required={required} mr={4} {...labelProps} />
         )}
+
         {shouldRenderAllCheck && (
           <CheckboxItem
             error={error}
@@ -177,8 +275,10 @@ const CheckBoxGroup = <Value extends string | number>({
             indeterminate={isIndeterminate}
             direction={direction}
             onBlur={onBlur}
+            size={size}
           />
         )}
+
         {filteredData.map((item) => (
           <CheckboxItem
             key={item.value}
@@ -194,6 +294,7 @@ const CheckBoxGroup = <Value extends string | number>({
             size={size}
           />
         ))}
+
         {label && labelPlacement === "right" && (
           <Label text={label} required={required} ml={4} {...labelProps} />
         )}
@@ -220,25 +321,13 @@ const CheckboxItem = forwardRef<HTMLInputElement, CheckboxItemProps>(
       onBlur,
       indeterminate,
       direction,
-      size = "M",
+      size,
     },
     ref,
   ) => {
-    const id = `${name}-${value}`
+    // * input id를 name/value 조합으로 생성해 label htmlFor와 연결
+    const id = `${name ?? "checkbox"}-${value}`
 
-    // *  size에 따라  결정되는 함수
-    const getFontSize = (size: SizeUiType): string => {
-      switch (size) {
-        case "S":
-          return "7px"
-        case "M":
-          return "10px"
-        case "L":
-          return "13px"
-        default:
-          return "10px"
-      }
-    }
     return (
       <Flex
         gap="4px"
@@ -262,46 +351,38 @@ const CheckboxItem = forwardRef<HTMLInputElement, CheckboxItemProps>(
           size={size}
           data-indeterminate={indeterminate ? "true" : undefined}
         />
-        <Typography
-          text={text}
-          variant="b2Regular"
-          color="text.secondary"
-          sx={{ fontSize: getFontSize(size) }}
-        />
+
+        {text ? (
+          <Typography
+            text={text}
+            variant="b2Regular"
+            color="text.secondary"
+            sx={{ fontSize: getFontSize(size ?? "M") }}
+          />
+        ) : null}
       </Flex>
     )
   },
 )
 
+// * size에 따른 체크박스 박스/체크 아이콘/indeterminate 바 크기 스타일을 생성
 const getSizeStyle = (size?: SizeUiType) => {
   switch (size) {
     case "S":
       return `
         width: 14px;
         height: 14px;
-        
-        &::after {
-          background-size: 8px 8px;
-        }
 
-        &[data-indeterminate="true"]::after {
-          width: 8px;
-          height: 1px;
-        }
+        &::after { background-size: 8px 8px; }
+        &[data-indeterminate="true"]::after { width: 8px; height: 1px; }
       `
     case "L":
       return `
         width: 20px;
         height: 20px;
 
-        &::after {
-          background-size: 12px 12px;
-        }
-
-        &[data-indeterminate="true"]::after {
-          width: 12px;
-          height: 2px;
-        }
+        &::after { background-size: 12px 12px; }
+        &[data-indeterminate="true"]::after { width: 12px; height: 2px; }
       `
     case "M":
     default:
@@ -309,14 +390,8 @@ const getSizeStyle = (size?: SizeUiType) => {
         width: 16px;
         height: 16px;
 
-        &::after {
-          background-size: 10px 10px;
-        }
-
-        &[data-indeterminate="true"]::after {
-          width: 10px;
-          height: 2px;
-        }
+        &::after { background-size: 10px 10px; }
+        &[data-indeterminate="true"]::after { width: 10px; height: 2px; }
       `
   }
 }

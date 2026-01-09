@@ -81,7 +81,7 @@ export type BaseMixinProps = {
   width?: string | number
   height?: string | number
 
-  backgroundColor?: string | number
+  bgColor?: string | number
 }
 
 export const omittedBaseProps = [
@@ -131,7 +131,7 @@ export const shouldBlock = (prop: string): prop is OmittedBaseProp =>
  * // margin-right: 16px;
  * ```
  */
-const toCssValue = (value?: string | number): string | undefined => {
+export const toCssValue = (value?: string | number): string | undefined => {
   if (value === undefined) return undefined
   return typeof value === "number" ? `${value}px` : value
 }
@@ -187,7 +187,7 @@ export const BaseMixin = (props: BaseMixinProps) => css`
   width: ${toCssValue(props.width)};
   height: ${toCssValue(props.height)};
 
-  background-color: ${toCssValue(props.backgroundColor)};
+  background-color: ${toCssValue(props.bgColor)};
 
   ${props.sx && css(addImportantToSx(props.sx))}
 `

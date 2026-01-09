@@ -61,7 +61,7 @@ const meta: Meta<typeof Pagination> = {
   },
   decorators: [
     (Story) => (
-      <Box p={24} backgroundColor={theme.colors.background.default} width="100%">
+      <Box p={24} bgColor={theme.colors.background.default} width="100%">
         <Story />
       </Box>
     ),
@@ -140,7 +140,7 @@ export const Playground: Story = {
 
         <Box
           p={12}
-          backgroundColor={theme.colors.grayscale[50]}
+          bgColor={theme.colors.grayscale[50]}
           sx={{
             border: `1px solid ${theme.colors.border.default}`,
             borderRadius: theme.borderRadius[8],
@@ -174,7 +174,7 @@ export const RowsPerPage: Story = {
 
         <Box
           p={12}
-          backgroundColor={theme.colors.grayscale[50]}
+          bgColor={theme.colors.grayscale[50]}
           sx={{
             border: `1px solid ${theme.colors.border.default}`,
             borderRadius: theme.borderRadius[8],
@@ -221,7 +221,7 @@ export const Table: Story = {
 
         <Box
           p={12}
-          backgroundColor={theme.colors.grayscale[50]}
+          bgColor={theme.colors.grayscale[50]}
           sx={{
             border: `1px solid ${theme.colors.border.default}`,
             borderRadius: theme.borderRadius[8],
@@ -274,7 +274,7 @@ export const Basic: Story = {
 
         <Box
           p={12}
-          backgroundColor={theme.colors.grayscale[50]}
+          bgColor={theme.colors.grayscale[50]}
           sx={{
             border: `1px solid ${theme.colors.border.default}`,
             borderRadius: theme.borderRadius[8],

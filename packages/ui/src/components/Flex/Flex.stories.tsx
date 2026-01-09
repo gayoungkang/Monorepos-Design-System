@@ -90,14 +90,14 @@ type Story = StoryObj<FlexProps>
 /* ─────────── Default ─────────── */
 export const Default: Story = {
   render: () => (
-    <Flex gap="8px" p="16px" backgroundColor={theme.colors.grayscale[100]}>
-      <Box p="8px" backgroundColor={theme.colors.primary[100]}>
+    <Flex gap="8px" p="16px" bgColor={theme.colors.grayscale[100]}>
+      <Box p="8px" bgColor={theme.colors.primary[100]}>
         Item 1
       </Box>
-      <Box p="8px" backgroundColor={theme.colors.primary[100]}>
+      <Box p="8px" bgColor={theme.colors.primary[100]}>
         Item 2
       </Box>
-      <Box p="8px" backgroundColor={theme.colors.primary[100]}>
+      <Box p="8px" bgColor={theme.colors.primary[100]}>
         Item 3
       </Box>
     </Flex>
@@ -108,16 +108,16 @@ export const Default: Story = {
 export const Directions: Story = {
   render: () => (
     <Flex gap="24px">
-      <Flex direction="row" gap="8px" p="8px" backgroundColor={theme.colors.grayscale[100]}>
-        <Box backgroundColor={theme.colors.primary[100]}>A</Box>
-        <Box backgroundColor={theme.colors.primary[200]}>B</Box>
-        <Box backgroundColor={theme.colors.primary[300]}>C</Box>
+      <Flex direction="row" gap="8px" p="8px" bgColor={theme.colors.grayscale[100]}>
+        <Box bgColor={theme.colors.primary[100]}>A</Box>
+        <Box bgColor={theme.colors.primary[200]}>B</Box>
+        <Box bgColor={theme.colors.primary[300]}>C</Box>
       </Flex>
 
-      <Flex direction="column" gap="8px" p="8px" backgroundColor={theme.colors.grayscale[200]}>
-        <Box backgroundColor={theme.colors.primary[100]}>A</Box>
-        <Box backgroundColor={theme.colors.primary[200]}>B</Box>
-        <Box backgroundColor={theme.colors.primary[300]}>C</Box>
+      <Flex direction="column" gap="8px" p="8px" bgColor={theme.colors.grayscale[200]}>
+        <Box bgColor={theme.colors.primary[100]}>A</Box>
+        <Box bgColor={theme.colors.primary[200]}>B</Box>
+        <Box bgColor={theme.colors.primary[300]}>C</Box>
       </Flex>
     </Flex>
   ),
@@ -127,28 +127,17 @@ export const Directions: Story = {
 export const Alignment: Story = {
   render: () => (
     <Flex direction="column" gap="20px" width="100%">
-      <Flex justify="center" gap="8px" p="12px" backgroundColor={theme.colors.grayscale[100]}>
-        <Box backgroundColor={theme.colors.primary[100]}>Center</Box>
+      <Flex justify="center" gap="8px" p="12px" bgColor={theme.colors.grayscale[100]}>
+        <Box bgColor={theme.colors.primary[100]}>Center</Box>
       </Flex>
 
-      <Flex
-        align="center"
-        height="80px"
-        gap="8px"
-        p="12px"
-        backgroundColor={theme.colors.grayscale[200]}
-      >
-        <Box backgroundColor={theme.colors.primary[200]}>Align Center</Box>
+      <Flex align="center" height="80px" gap="8px" p="12px" bgColor={theme.colors.grayscale[200]}>
+        <Box bgColor={theme.colors.primary[200]}>Align Center</Box>
       </Flex>
 
-      <Flex
-        justify="space-between"
-        gap="8px"
-        p="12px"
-        backgroundColor={theme.colors.grayscale[300]}
-      >
-        <Box backgroundColor={theme.colors.primary[300]}>Left</Box>
-        <Box backgroundColor={theme.colors.primary[300]}>Right</Box>
+      <Flex justify="space-between" gap="8px" p="12px" bgColor={theme.colors.grayscale[300]}>
+        <Box bgColor={theme.colors.primary[300]}>Left</Box>
+        <Box bgColor={theme.colors.primary[300]}>Right</Box>
       </Flex>
     </Flex>
   ),
@@ -157,15 +146,9 @@ export const Alignment: Story = {
 /* ─────────── Wrap Variants ─────────── */
 export const Wrap: Story = {
   render: () => (
-    <Flex
-      wrap="wrap"
-      gap="8px"
-      width="200px"
-      p="12px"
-      backgroundColor={theme.colors.grayscale[100]}
-    >
+    <Flex wrap="wrap" gap="8px" width="200px" p="12px" bgColor={theme.colors.grayscale[100]}>
       {Array.from({ length: 8 }).map((_, i) => (
-        <Box key={i} p="8px" backgroundColor={theme.colors.primary[100]}>
+        <Box key={i} p="8px" bgColor={theme.colors.primary[100]}>
           {i + 1}
         </Box>
       ))}
@@ -177,14 +160,14 @@ export const Wrap: Story = {
 export const Gaps: Story = {
   render: () => (
     <Flex direction="column" gap="20px">
-      <Flex gap="4px" backgroundColor={theme.colors.grayscale[100]}>
-        <Box backgroundColor={theme.colors.primary[100]}>gap 4</Box>
-        <Box backgroundColor={theme.colors.primary[100]}>gap 4</Box>
+      <Flex gap="4px" bgColor={theme.colors.grayscale[100]}>
+        <Box bgColor={theme.colors.primary[100]}>gap 4</Box>
+        <Box bgColor={theme.colors.primary[100]}>gap 4</Box>
       </Flex>
 
-      <Flex gap="16px" backgroundColor={theme.colors.grayscale[100]}>
-        <Box backgroundColor={theme.colors.primary[200]}>gap 16</Box>
-        <Box backgroundColor={theme.colors.primary[200]}>gap 16</Box>
+      <Flex gap="16px" bgColor={theme.colors.grayscale[100]}>
+        <Box bgColor={theme.colors.primary[200]}>gap 16</Box>
+        <Box bgColor={theme.colors.primary[200]}>gap 16</Box>
       </Flex>
     </Flex>
   ),

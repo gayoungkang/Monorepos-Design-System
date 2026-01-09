@@ -234,8 +234,7 @@ const Pagination = ({
 
         <RowsSelectWrap>
           <Select
-            variant="standard"
-            size="M"
+            size="S"
             options={selectOptions as any}
             value={String(safeRowsPerPage)}
             disabled={disabled}
