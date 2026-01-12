@@ -1,14 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import { useMemo, useState } from "react"
 import { ThemeProvider } from "styled-components"
-
 import { theme } from "../../tokens/theme"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
 import { Typography } from "../Typography/Typography"
-
 import Table from "./Table"
 import type { TableProps, SortDirection, ColumnProps, ColumnOnChangeType } from "./@Types/table"
+import TextField from "../TextField/TextField"
+import { CheckBox } from "../CheckBoxGroup/CheckBoxGroup"
+import Link from "../Link/Link"
+import Accordion from "../Accordion/Accordion"
 
 /* -------------------------------------------------------------------------- */
 /*                          Interactive Wrapper (핵심)                        */
@@ -137,10 +139,8 @@ const sortRows = (rows: PersonRow[], key: keyof PersonRow, dir: SortDirection) =
   copy.sort((a, b) => {
     const av = a[key]
     const bv = b[key]
-
     const as = typeof av === "string" ? av : String(av ?? "")
     const bs = typeof bv === "string" ? bv : String(bv ?? "")
-
     if (as < bs) return dir === "ASC" ? -1 : 1
     if (as > bs) return dir === "ASC" ? 1 : -1
     return 0
@@ -153,7 +153,7 @@ const paginate = (rows: PersonRow[], page: number, rowsPerPage: number) => {
   return rows.slice(start, start + rowsPerPage)
 }
 
-const TableInteractive = (props: TableProps<PersonRow>) => {
+const TableInteractive = (props: TableProps<PersonRow> & { disabled?: boolean }) => {
   const [allRows, setAllRows] = useState<PersonRow[]>(makeRows())
 
   const [page, setPage] = useState<number>(props.tableConfig?.page ?? 1)
@@ -172,6 +172,8 @@ const TableInteractive = (props: TableProps<PersonRow>) => {
   const pageRows = useMemo(() => paginate(sorted, page, rowsPerPage), [sorted, page, rowsPerPage])
 
   const onCellChange = (c: ColumnOnChangeType<PersonRow>) => {
+    if (props.disabled) return
+
     if (c.type === "TextField") {
       setAllRows((prev) =>
         prev.map((r, i) => (i === c.rowIndex ? { ...r, [c.key]: String(c.changeValue) } : r)),
@@ -186,80 +188,191 @@ const TableInteractive = (props: TableProps<PersonRow>) => {
     }
   }
 
-  const columnConfig: ColumnProps<PersonRow>[] = useMemo(
-    () => [
+  const columnConfig: ColumnProps<PersonRow>[] = useMemo(() => {
+    const isDisabled = Boolean(props.disabled)
+
+    return [
       {
         key: "id",
         title: "ID",
         type: "Default",
         width: "110px",
         textAlign: "left",
-        sort: true,
-        sortDirection: sortKey === "id" ? sortDirection : undefined,
-        onSortChange: (key, next) => {
-          setSortKey(key as keyof PersonRow)
-          setSortDirection(next)
-        },
+        sort: !isDisabled,
+        sortDirection: !isDisabled && sortKey === "id" ? sortDirection : undefined,
+        onSortChange: !isDisabled
+          ? (key, next) => {
+              setSortKey(key as keyof PersonRow)
+              setSortDirection(next)
+            }
+          : undefined,
+        renderCustomCell: (row) => (
+          <Typography
+            variant="b2Regular"
+            color={isDisabled ? theme.colors.text.disabled : theme.colors.text.primary}
+            text={row.id}
+          />
+        ),
       },
       {
         key: "name",
         title: "Name (TextField)",
         type: "TextField",
         textAlign: "left",
-        sort: true,
-        sortDirection: sortKey === "name" ? sortDirection : undefined,
-        onSortChange: (key, next) => {
-          setSortKey(key as keyof PersonRow)
-          setSortDirection(next)
-        },
-        onChange: onCellChange,
+        sort: !isDisabled,
+        sortDirection: !isDisabled && sortKey === "name" ? sortDirection : undefined,
+        onSortChange: !isDisabled
+          ? (key, next) => {
+              setSortKey(key as keyof PersonRow)
+              setSortDirection(next)
+            }
+          : undefined,
+        onChange: !isDisabled ? onCellChange : undefined,
+        renderCustomCell: (row) => (
+          <TextField
+            value={row.name}
+            disabled={isDisabled}
+            onChange={(e) => {
+              if (isDisabled) return
+              onCellChange({
+                type: "TextField",
+                rowIndex: 0 as any,
+                key: "name",
+                changeValue: e.target.value,
+              } as any)
+            }}
+          />
+        ),
       },
       {
         key: "role",
         title: "Role",
         type: "Default",
         width: "120px",
-        sort: true,
-        sortDirection: sortKey === "role" ? sortDirection : undefined,
-        onSortChange: (key, next) => {
-          setSortKey(key as keyof PersonRow)
-          setSortDirection(next)
-        },
+        sort: !isDisabled,
+        sortDirection: !isDisabled && sortKey === "role" ? sortDirection : undefined,
+        onSortChange: !isDisabled
+          ? (key, next) => {
+              setSortKey(key as keyof PersonRow)
+              setSortDirection(next)
+            }
+          : undefined,
+        renderCustomCell: (row) => (
+          <Typography
+            variant="b2Regular"
+            color={isDisabled ? theme.colors.text.disabled : theme.colors.text.primary}
+            text={row.role}
+          />
+        ),
       },
       {
         key: "active",
         title: "Active (CheckBox)",
         type: "CheckBox",
         width: "140px",
-        sort: true,
-        sortDirection: sortKey === "active" ? sortDirection : undefined,
-        onSortChange: (key, next) => {
-          setSortKey(key as keyof PersonRow)
-          setSortDirection(next)
-        },
-        onChange: onCellChange,
+        sort: !isDisabled,
+        sortDirection: !isDisabled && sortKey === "active" ? sortDirection : undefined,
+        onSortChange: !isDisabled
+          ? (key, next) => {
+              setSortKey(key as keyof PersonRow)
+              setSortDirection(next)
+            }
+          : undefined,
+        onChange: !isDisabled ? onCellChange : undefined,
+        renderCustomCell: (row) => (
+          <CheckBox
+            checked={row.active}
+            disabled={isDisabled}
+            onChange={(next) => {
+              if (isDisabled) return
+              onCellChange({
+                type: "CheckBox",
+                rowIndex: 0 as any,
+                key: "active",
+                changeValue: next,
+              } as any)
+            }}
+          />
+        ),
       },
+
+      // * Accordion 컬럼 (type을 중복으로 추가하지 않고 renderCustomCell로만 추가)
+      {
+        key: "email",
+        title: "Accordion",
+        type: "Default",
+        width: "360px",
+        renderCustomCell: (row) => (
+          <Accordion
+            disabled={isDisabled}
+            summary={
+              <Flex align="center" justify="space-between" width="100%">
+                <Typography
+                  variant="b3Regular"
+                  color={isDisabled ? theme.colors.text.disabled : theme.colors.text.primary}
+                  text={row.email}
+                />
+                <Typography
+                  variant="b3Regular"
+                  color={isDisabled ? theme.colors.text.disabled : theme.colors.text.secondary}
+                  text={row.role}
+                />
+              </Flex>
+            }
+          >
+            <Flex direction="column" gap={6}>
+              <Typography
+                variant="b3Regular"
+                color={isDisabled ? theme.colors.text.disabled : theme.colors.text.secondary}
+                text={`ID: ${row.id}`}
+              />
+              <Typography
+                variant="b3Regular"
+                color={isDisabled ? theme.colors.text.disabled : theme.colors.text.secondary}
+                text={`Name: ${row.name}`}
+              />
+              <Typography
+                variant="b3Regular"
+                color={isDisabled ? theme.colors.text.disabled : theme.colors.text.secondary}
+                text={`Active: ${row.active ? "true" : "false"}`}
+              />
+            </Flex>
+          </Accordion>
+        ),
+      },
+
       {
         key: "custom",
         title: "Custom (Link)",
         type: "Default",
         width: "140px",
-        onClick: (row, idx) => {
-          // eslint-disable-next-line no-console
-          console.log("Cell onClick:", { row, idx })
-        },
-        renderCellTitle: "Open",
+        onClick: isDisabled
+          ? undefined
+          : (row, idx) => {
+              // eslint-disable-next-line no-console
+              console.log("Cell onClick:", { row, idx })
+            },
+        renderCustomCell: (row) => (
+          <Link
+            disabled={isDisabled}
+            children={"Open"}
+            onClick={() => {
+              if (isDisabled) return
+              // eslint-disable-next-line no-console
+              console.log("Link click:", row.id)
+            }}
+          />
+        ),
       },
-    ],
-    [sortKey, sortDirection],
-  )
+    ]
+  }, [props.disabled, sortKey, sortDirection])
 
   return (
     <Box width="100%" p={12}>
       <Flex direction="column" gap={8} mb={12}>
         <Typography
           variant="b2Regular"
-          text={`page=${page} / rowsPerPage=${rowsPerPage} / total=${totalCount} / sort=${
+          text={`disabled=${Boolean(props.disabled)} / page=${page} / rowsPerPage=${rowsPerPage} / total=${totalCount} / sort=${
             sortKey ? `${String(sortKey)} ${sortDirection}` : "none"
           }`}
         />
@@ -280,13 +393,18 @@ const TableInteractive = (props: TableProps<PersonRow>) => {
           rowsPerPage,
           page,
           handleOnRowsPerPageChange: (e: any) => {
+            if (props.disabled) return
             const next = Number(e?.target?.value ?? 10)
             setRowsPerPage(next)
             setPage(1)
           },
         }}
-        onPageChange={(next) => setPage(next)}
+        onPageChange={(next) => {
+          if (props.disabled) return
+          setPage(next)
+        }}
         onRowsPerPageChange={(next) => {
+          if (props.disabled) return
           setRowsPerPage(next)
           setPage(1)
         }}
@@ -299,7 +417,7 @@ const TableInteractive = (props: TableProps<PersonRow>) => {
 /*                                  Meta 설정                                  */
 /* -------------------------------------------------------------------------- */
 
-const meta: Meta<TableProps<PersonRow>> = {
+const meta: Meta<TableProps<PersonRow> & { disabled?: boolean }> = {
   title: "components/Table",
   component: TableInteractive as any,
 
@@ -308,6 +426,7 @@ const meta: Meta<TableProps<PersonRow>> = {
     sticky: true,
     pagination: "Table",
     emptyRowText: "검색 결과가 없습니다.",
+    disabled: false,
     data: [],
     columnConfig: [] as any,
     tableConfig: {
@@ -321,11 +440,11 @@ const meta: Meta<TableProps<PersonRow>> = {
   argTypes: {
     tableKey: { control: "text" },
     sticky: { control: "boolean" },
+    disabled: { control: "boolean" },
 
     pagination: {
       control: "radio",
       options: [undefined, "RowsPerPage", "Table", "Basic"],
-      description: "페이지네이션 타입 (없으면 미노출)",
     },
 
     emptyRowText: { control: "text" },
@@ -351,7 +470,7 @@ const meta: Meta<TableProps<PersonRow>> = {
 
 export default meta
 
-type Story = StoryObj<TableProps<PersonRow>>
+type Story = StoryObj<TableProps<PersonRow> & { disabled?: boolean }>
 
 /* -------------------------------------------------------------------------- */
 /*                                   Stories                                   */
@@ -381,14 +500,6 @@ export const DisabledCellsPreview: Story = {
   render: (args) => <TableInteractive {...(args as any)} />,
   args: {
     pagination: "Table",
-  },
-}
-
-export const Playground: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: {
-    sticky: true,
-    pagination: "Table",
-    emptyRowText: "검색 결과가 없습니다.",
+    disabled: true,
   },
 }

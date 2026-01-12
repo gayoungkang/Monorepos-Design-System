@@ -30,6 +30,7 @@ const STYLE_PROPS = new Set<string>([
   "maxHeight",
   "minHeight",
   "minWidth",
+  "sticky",
 ])
 
 /**
