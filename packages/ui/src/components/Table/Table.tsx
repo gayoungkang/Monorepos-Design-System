@@ -1,49 +1,60 @@
-import { JSX, useEffect, useImperativeHandle, useMemo, useState } from "react"
-import { BaseMixinProps } from "../../tokens/baseMixin"
+import { JSX, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react"
 import Pagination from "../Pagination/Pagination"
 import { Typography } from "../Typography/Typography"
-import TableBody from "./TableBody"
 import { SortDirection, TableProps } from "./@Types/table"
-import TableContainer from "./TableContainer"
-import TableHead from "./TableHead"
-import TableRow from "./TableRow"
-import TableTd from "./TableTd"
-import TableTh from "./TableTh"
-import TableTr from "./TableTr"
+import TableContainer from "./_internal/TableContainer"
+import TableHead from "./_internal/TableHead"
+import TableRow from "./_internal/TableRow"
+import TableTd from "./_internal/TableTd"
+import TableTh from "./_internal/TableTh"
+import TableTr from "./_internal/TableTr"
 import Flex from "../Flex/Flex"
 import ScrollBox from "../ScrollBox/ScrollBox"
-import { renderCell } from "./TableCell"
+import { renderCell } from "./_internal/TableCell"
+import TableTotalRows from "./_internal/TableTotalRows"
+import TableRowsPerPage from "./TableRowsPerPage"
+import TableSummaryRow from "./_internal/TableSummaryRow"
+import TableToolbar, { ExportType } from "./_internal/TableToolbar"
+import Box from "../Box/Box"
+import { theme } from "../../tokens/theme"
 
-/**---------------------------------------------------------------------------/
+const parseWidthToPx = (w?: string) => {
+  if (!w) return undefined
+  const s = String(w).trim()
+  if (s.endsWith("px")) return Number(s.replace("px", ""))
+  const n = Number(s)
+  return Number.isFinite(n) ? n : undefined
+}
 
-* ! Table
-*
-* * 제네릭 데이터(T) 기반의 테이블 렌더링 컴포넌트
-* * columnConfig 기반 헤더/바디 구성 및 정렬(sort) UI 연동 지원
-* * tableConfig(page/rowsPerPage/totalCount) 기반 페이지네이션 계산 및 표시 지원
-* * page / rowsPerPage controlled/uncontrolled 모두 지원 (internal state fallback)
-* * Pagination 컴포넌트와 연동하여 RowsPerPage/Table/Basic 타입 렌더링 지원
-* * sticky 헤더(TableHead) 옵션 및 ScrollBox 기반 세로 스크롤(height) 지원
-* * 데이터 0건일 때 emptyRowText 안내 행 렌더링
-* * renderRow 커스터마이징 지원 (미지정 시 TableRow 기본 렌더링)
-* * insertRowActive 상태일 때 삽입 행 렌더링 및 renderCell(disabled) 사용
-* * innerRef(useImperativeHandle)로 insertRow/saveData imperative API 제공
-* * disabled 상태 지원 (정렬/페이지 변경/rowsPerPage 변경/삽입 동작 차단)
-*
-* @module Table
-* 컬럼 설정(columnConfig)과 데이터(data)를 기반으로 표 UI를 렌더링하는 Table 컴포넌트입니다.
-* - `tableConfig`로 totalCount, page, rowsPerPage, rowsPerPageOptions를 제어할 수 있습니다.
-* - page/rowsPerPage는 외부에서 제어(controlled)하거나 내부 상태로 관리(uncontrolled)할 수 있습니다.
-* - 정렬은 각 컬럼의 sort/sortDirection/onSortChange 설정에 따라 TableTh 정렬 토글을 연동합니다.
-* - pagination 옵션이 있으면 하단에 Pagination을 렌더링하며, 표 범위(from–to) 라벨을 계산합니다.
-* - innerRef를 통해 insertRow()로 임시 입력 행을 노출하고, saveData()로 해제할 수 있습니다.
-*
-* @usage
-* <Table tableKey="t1" columnConfig={cols} data={rows} pagination="Table" />
-* <Table tableKey="t2" columnConfig={cols} data={rows} sticky height={400} />
-* innerRef.current?.insertRow()
+const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
 
-/---------------------------------------------------------------------------**/
+const toCellText = (v: unknown) => {
+  if (v === null || v === undefined) return ""
+  if (typeof v === "string") return v
+  if (typeof v === "number" || typeof v === "boolean") return String(v)
+  try {
+    return JSON.stringify(v)
+  } catch {
+    return String(v)
+  }
+}
+
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+const escapeCsv = (s: string) => {
+  const v = s ?? ""
+  if (/[",\n\r]/.test(v)) return `"${v.replace(/"/g, '""')}"`
+  return v
+}
 
 const Table = <T extends Record<string, unknown>>({
   tableKey,
@@ -60,36 +71,46 @@ const Table = <T extends Record<string, unknown>>({
   onPageChange,
   onRowsPerPageChange,
   disabled = false,
+  totalRows = true,
+  rowsPer = true,
+  summaryRow,
+
+  mode = "client",
+
+  // search
+  searchEnabled = false,
+  searchPlaceholder,
+  searchKeys,
+  keyword: controlledKeyword,
+  onKeywordChange,
+  onQueryChange,
+
+  // export
+  exportEnabled = false,
+  exportScope = "all",
+  onExport,
+
   ...baseProps
-}: TableProps<T> &
-  BaseMixinProps & {
-    disabled?: boolean
-    onPageChange?: (page: number) => void
-    onRowsPerPageChange?: (rowsPerPage: number) => void
-    height?: number
-  }): JSX.Element => {
+}: TableProps<T> & {
+  onPageChange?: (page: number) => void
+  onRowsPerPageChange?: (rowsPerPage: number) => void
+  disabled?: boolean
+  height?: number
+  footer?: React.ReactNode
+  totalRows?: boolean
+  rowsPer?: boolean
+}): JSX.Element => {
   const [insertRowActive, setInsertRowActive] = useState(false)
 
-  // * 값을 min~max 범위로 고정
-  const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
-
-  // * 외부 ref로 insertRow/saveData 제어 API 제공
   useImperativeHandle(innerRef, () => ({
     insertRow: () => setInsertRowActive(true),
     saveData: () => setInsertRowActive(false),
   }))
 
-  // * rowsPerPage 옵션 목록 (config 우선)
   const rowsPerPageOptions = useMemo(
     () =>
       tableConfig?.rowsPerPageOptions?.length ? tableConfig.rowsPerPageOptions : [10, 25, 50, 100],
     [tableConfig?.rowsPerPageOptions],
-  )
-
-  // * 서버/클라이언트 totalCount 안전값 계산
-  const totalCount = useMemo(
-    () => Math.max(0, tableConfig?.totalCount ?? data.length ?? 0),
-    [tableConfig?.totalCount, data.length],
   )
 
   const [internalRowsPerPage, setInternalRowsPerPage] = useState<number>(
@@ -97,38 +118,95 @@ const Table = <T extends Record<string, unknown>>({
   )
   const [internalPage, setInternalPage] = useState<number>(Math.max(1, tableConfig?.page ?? 1))
 
-  // * rowsPerPage/page controlled 여부 판단
   const isControlledRowsPerPage = typeof tableConfig?.rowsPerPage === "number"
   const isControlledPage = typeof tableConfig?.page === "number"
 
-  // * 실제 rowsPerPage 값 계산 (controlled 우선)
-  const rowsPerPage = useMemo(() => {
+  const rowsPerPageValue = useMemo(() => {
     const rp = isControlledRowsPerPage ? (tableConfig?.rowsPerPage as number) : internalRowsPerPage
     return Math.max(1, rp || rowsPerPageOptions[0] || 10)
   }, [isControlledRowsPerPage, tableConfig?.rowsPerPage, internalRowsPerPage, rowsPerPageOptions])
 
-  // * totalCount/rowsPerPage 기반 총 페이지 수 계산
-  const pageCount = useMemo(() => {
-    if (totalCount <= 0) return 1
-    return Math.max(1, Math.ceil(totalCount / rowsPerPage))
-  }, [totalCount, rowsPerPage])
-
-  // * 실제 page 값 계산 (controlled 우선, 1~pageCount 보정)
   const page = useMemo(() => {
     const p = isControlledPage ? (tableConfig?.page as number) : internalPage
-    return clamp(Math.max(1, p || 1), 1, pageCount)
-  }, [isControlledPage, tableConfig?.page, internalPage, pageCount])
+    return Math.max(1, p || 1)
+  }, [isControlledPage, tableConfig?.page, internalPage])
 
-  // * pageCount 변경 시 page 범위를 벗어나면 보정
+  // ----- search state -----
+  const [internalKeyword, setInternalKeyword] = useState("")
+  const keyword = controlledKeyword ?? internalKeyword
+
+  const handleKeywordChange = (next: string) => {
+    if (disabled) return
+    onKeywordChange?.(next)
+    if (controlledKeyword === undefined) setInternalKeyword(next)
+
+    if (mode === "server") {
+      onQueryChange?.({
+        page: 1,
+        rowsPerPage: rowsPerPageValue,
+        keyword: next,
+      })
+      if (!isControlledPage) setInternalPage(1)
+      onPageChange?.(1)
+    }
+  }
+
+  // Table/Table.tsx (filteredRows useMemo 부분만 교체)
+  const filteredRows = useMemo(() => {
+    if (mode !== "client") return data
+
+    const q = (keyword ?? "").trim().toLowerCase()
+    if (!q) return data
+
+    const keys: (keyof T)[] = searchKeys?.length
+      ? (searchKeys as (keyof T)[])
+      : (columnConfig
+          .map((c) => c.key)
+          .filter((k): k is keyof T => k !== ("custom" as any)) as (keyof T)[])
+
+    return (data ?? []).filter((row) => {
+      return keys.some((k) => {
+        const txt = toCellText(row[k]).toLowerCase()
+        return txt.includes(q)
+      })
+    })
+  }, [mode, data, keyword, searchKeys, columnConfig])
+
+  const totalCount = useMemo(() => {
+    if (mode === "server") return Math.max(0, tableConfig?.totalCount ?? 0)
+    return Math.max(0, filteredRows.length ?? 0)
+  }, [mode, tableConfig?.totalCount, filteredRows.length])
+
+  const pageCount = useMemo(() => {
+    if (totalCount <= 0) return 1
+    return Math.max(1, Math.ceil(totalCount / rowsPerPageValue))
+  }, [totalCount, rowsPerPageValue])
+
+  const safePage = useMemo(() => clamp(page, 1, pageCount), [page, pageCount])
+
   useEffect(() => {
-    const next = clamp(page, 1, pageCount)
-    if (next !== page) {
+    const next = clamp(safePage, 1, pageCount)
+    if (next !== safePage) {
       if (onPageChange) onPageChange(next)
       else setInternalPage(next)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageCount])
 
-  // * 컬럼 sort 옵션을 TableTh sort 값으로 변환
+  const fromTo = useMemo(() => {
+    if (totalCount <= 0) return { from: 0, to: 0 }
+    const from = (safePage - 1) * rowsPerPageValue + 1
+    const to = Math.min(totalCount, safePage * rowsPerPageValue)
+    return { from, to }
+  }, [totalCount, safePage, rowsPerPageValue])
+
+  const pageRows = useMemo(() => {
+    if (mode === "server") return data
+    const start = (safePage - 1) * rowsPerPageValue
+    const end = start + rowsPerPageValue
+    return filteredRows.slice(start, end)
+  }, [mode, data, filteredRows, safePage, rowsPerPageValue])
+
   const getSortValue = (
     colSort?: boolean,
     colSortDirection?: SortDirection,
@@ -137,12 +215,207 @@ const Table = <T extends Record<string, unknown>>({
     return colSortDirection ?? "ASC"
   }
 
-  // * 테이블 헤더 렌더링 (정렬 포함)
+  // ---- column widths (grid) + drag resize ----
+  const [colPx, setColPx] = useState<number[]>(() => {
+    const initial = columnConfig.map((c) => parseWidthToPx(c.width) ?? 160)
+    return initial
+  })
+
+  useEffect(() => {
+    setColPx((prev) => {
+      if (prev.length === columnConfig.length) return prev
+      const next = columnConfig.map((c, i) => prev[i] ?? parseWidthToPx(c.width) ?? 160)
+      return next
+    })
+  }, [columnConfig])
+
+  const dragRef = useRef<{
+    active: boolean
+    colIndex: number
+    startX: number
+    startW: number
+  }>({ active: false, colIndex: -1, startX: 0, startW: 0 })
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!dragRef.current.active) return
+      const dx = e.clientX - dragRef.current.startX
+      const nextW = clamp(dragRef.current.startW + dx, 60, 2000)
+
+      setColPx((prev) => {
+        const next = [...prev]
+        next[dragRef.current.colIndex] = nextW
+        return next
+      })
+    }
+
+    const onUp = () => {
+      if (!dragRef.current.active) return
+      dragRef.current.active = false
+    }
+
+    window.addEventListener("mousemove", onMove)
+    window.addEventListener("mouseup", onUp)
+    return () => {
+      window.removeEventListener("mousemove", onMove)
+      window.removeEventListener("mouseup", onUp)
+    }
+  }, [])
+
+  const gridColumns = useMemo(() => colPx.map((w) => `${w}px`).join(" "), [colPx])
+
+  const startResize = (colIndex: number) => (e: React.MouseEvent<HTMLDivElement>) => {
+    if (disabled) return
+    e.preventDefault()
+    e.stopPropagation()
+    dragRef.current = {
+      active: true,
+      colIndex,
+      startX: e.clientX,
+      startW: colPx[colIndex] ?? 160,
+    }
+  }
+
+  // ----- query change hook (server mode) -----
+  useEffect(() => {
+    if (mode !== "server") return
+    onQueryChange?.({
+      page: safePage,
+      rowsPerPage: rowsPerPageValue,
+      keyword: keyword ?? "",
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, safePage, rowsPerPageValue])
+
+  const handleRowsPerPageChange = (nextRowsPerPage: number) => {
+    if (disabled) return
+
+    tableConfig?.handleOnRowsPerPageChange?.({ target: { value: nextRowsPerPage } as any } as any)
+    onRowsPerPageChange?.(nextRowsPerPage)
+
+    if (!isControlledRowsPerPage) setInternalRowsPerPage(nextRowsPerPage)
+
+    const nextPage = 1
+    if (!isControlledPage) setInternalPage(nextPage)
+    onPageChange?.(nextPage)
+
+    if (mode === "server") {
+      onQueryChange?.({
+        page: nextPage,
+        rowsPerPage: nextRowsPerPage,
+        keyword: keyword ?? "",
+      })
+    }
+  }
+
+  const handlePageChange = (nextPage: number) => {
+    if (disabled) return
+
+    const safeNext = clamp(nextPage, 1, pageCount)
+    onPageChange?.(safeNext)
+    if (!isControlledPage) setInternalPage(safeNext)
+
+    if (mode === "server") {
+      onQueryChange?.({
+        page: safeNext,
+        rowsPerPage: rowsPerPageValue,
+        keyword: keyword ?? "",
+      })
+    }
+  }
+
+  // ----- export (client/server) -----
+  const doExportClientCsv = (scope: "page" | "all") => {
+    const rowsForExport = scope === "page" ? pageRows : filteredRows
+    const cols = columnConfig.filter((c) => c.key !== ("custom" as any))
+
+    const header = cols.map((c) => escapeCsv(String(c.title ?? ""))).join(",")
+    const lines = rowsForExport.map((row) => {
+      return cols
+        .map((c) => {
+          const v = row[c.key as keyof T]
+          return escapeCsv(toCellText(v))
+        })
+        .join(",")
+    })
+
+    const csv = [header, ...lines].join("\r\n")
+    downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${tableKey}.csv`)
+  }
+
+  const doExportClientPrint = (scope: "page" | "all") => {
+    const rowsForExport = scope === "page" ? pageRows : filteredRows
+    const cols = columnConfig.filter((c) => c.key !== ("custom" as any))
+
+    const html = `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${tableKey}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 12px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; font-size: 12px; }
+            th { background: #f5f5f5; text-align: left; }
+          </style>
+        </head>
+        <body>
+          <table>
+            <thead>
+              <tr>
+                ${cols.map((c) => `<th>${String(c.title ?? "")}</th>`).join("")}
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsForExport
+                .map(
+                  (r) =>
+                    `<tr>${cols
+                      .map((c) => `<td>${toCellText(r[c.key as keyof T])}</td>`)
+                      .join("")}</tr>`,
+                )
+                .join("")}
+            </tbody>
+          </table>
+          <script>
+            window.onload = () => { window.print(); window.close(); }
+          </script>
+        </body>
+      </html>
+    `
+
+    const w = window.open("", "_blank", "noopener,noreferrer")
+    if (!w) return
+    w.document.open()
+    w.document.write(html)
+    w.document.close()
+  }
+
+  const handleExport = (type: ExportType) => {
+    if (!exportEnabled || disabled) return
+
+    const scope = exportScope ?? "all"
+    const payload = { scope, keyword: keyword ?? "" }
+
+    if (mode === "server") {
+      onExport?.(type, payload)
+      return
+    }
+
+    if (onExport) {
+      onExport(type, payload)
+      return
+    }
+
+    if (type === "csv") doExportClientCsv(scope)
+    if (type === "print") doExportClientPrint(scope)
+  }
+
   const renderHead = () => (
     <TableHead sticky={sticky} top={"0px"}>
       {customTableHeader?.length ? null : null}
 
-      <TableTr disabled={disabled}>
+      <TableTr columns={gridColumns} disabled={disabled}>
         {columnConfig.map((col, idx) => {
           const sortValue = getSortValue(col.sort, col.sortDirection)
           const sortEnabled = !disabled && col.sort && col.onSortChange
@@ -150,13 +423,16 @@ const Table = <T extends Record<string, unknown>>({
           return (
             <TableTh
               key={`${tableKey}_th_${String(col.title)}_${idx}`}
-              align={col.textAlign}
+              align={col.textAlign as any}
               sort={sortEnabled ? sortValue : undefined}
               onSortChange={
                 sortEnabled
                   ? (nextDirection) => col.onSortChange?.(col.key as keyof T, nextDirection)
                   : undefined
               }
+              resizable={!disabled}
+              onResizeStart={startResize(idx)}
+              sx={{ userSelect: "none" }}
             >
               {col.title}
             </TableTh>
@@ -166,25 +442,42 @@ const Table = <T extends Record<string, unknown>>({
     </TableHead>
   )
 
-  // * 테이블 바디 렌더링 (empty / row / insertRow)
+  const renderSummaryRows = () => {
+    if (!summaryRow?.enabled) return null
+    return (
+      <TableSummaryRow
+        tableKey={tableKey}
+        columns={columnConfig}
+        rows={mode === "client" ? filteredRows : data}
+        config={summaryRow}
+        disabled={disabled}
+        gridColumns={gridColumns}
+      />
+    )
+  }
+
   const renderBody = () => {
-    if (data.length === 0) {
+    if (pageRows.length === 0) {
       return (
-        <TableTr disabled={disabled}>
-          <TableTd colSpan={columnConfig.length} align="center" disabled={disabled}>
-            <Typography
-              text={emptyRowText ?? "검색 결과가 없습니다."}
-              align="center"
-              sx={{ display: "inline-block" }}
-            />
-          </TableTd>
-        </TableTr>
+        <>
+          <TableTr columns={gridColumns} disabled={disabled}>
+            <TableTd colSpan={columnConfig.length} align="center" disabled={disabled}>
+              <Typography
+                text={emptyRowText ?? "검색 결과가 없습니다."}
+                align="center"
+                sx={{ display: "inline-block" }}
+              />
+            </TableTd>
+          </TableTr>
+
+          {renderSummaryRows()}
+        </>
       )
     }
 
     return (
       <>
-        {data.map((row, ri) =>
+        {pageRows.map((row, ri) =>
           renderRow ? (
             renderRow(row, ri)
           ) : (
@@ -195,12 +488,13 @@ const Table = <T extends Record<string, unknown>>({
               index={ri}
               tableKey={tableKey}
               disabled={disabled}
+              columns={gridColumns}
             />
           ),
         )}
 
         {insertRowActive && (
-          <TableTr disabled={disabled}>
+          <TableTr columns={gridColumns} disabled={disabled}>
             {columnConfig.map((col, ci) => (
               <TableTd key={`${tableKey}_insert_${ci}`} disabled>
                 {renderCell(col, {} as T, -1, true)}
@@ -208,77 +502,76 @@ const Table = <T extends Record<string, unknown>>({
             ))}
           </TableTr>
         )}
+
+        {renderSummaryRows()}
       </>
     )
   }
 
-  // * colgroup 렌더링 (미지정 width는 균등 분배)
-  const renderColGroup = () => {
-    const noWidthCols = columnConfig.filter((c) => !c.width).length
-    const fallbackWidth = noWidthCols > 0 ? `${100 / noWidthCols}%` : undefined
-
-    return (
-      <colgroup>
-        {columnConfig.map((col, idx) => (
-          <col key={`col_${String(col.title)}_${idx}`} width={col.width ?? fallbackWidth} />
-        ))}
-      </colgroup>
-    )
-  }
-
-  // * rowsPerPage 변경 처리 (config handler + 내부 상태 + page 리셋)
-  const handleRowsPerPageChange = (nextRowsPerPage: number) => {
-    if (disabled) return
-
-    tableConfig?.handleOnRowsPerPageChange?.({ target: { value: nextRowsPerPage } as any } as any)
-    onRowsPerPageChange?.(nextRowsPerPage)
-
-    if (!isControlledRowsPerPage) setInternalRowsPerPage(nextRowsPerPage)
-    if (!isControlledPage) setInternalPage(1)
-    onPageChange?.(1)
-  }
-
-  // * page 변경 처리 (1~pageCount 보정 후 반영)
-  const handlePageChange = (nextPage: number) => {
-    if (disabled) return
-
-    const safeNext = clamp(nextPage, 1, pageCount)
-    onPageChange?.(safeNext)
-    if (!isControlledPage) setInternalPage(safeNext)
-  }
+  const paginationLabel = useMemo(
+    () => `${fromTo.from}–${fromTo.to} of ${totalCount}`,
+    [fromTo.from, fromTo.to, totalCount],
+  )
 
   return (
     <>
-      <ScrollBox maxHeight={height}>
-        <TableContainer {...baseProps}>
-          {renderColGroup()}
-          {renderHead()}
-          <TableBody>{renderBody()}</TableBody>
-        </TableContainer>
-      </ScrollBox>
+      {(searchEnabled || exportEnabled) && (
+        <TableToolbar
+          disabled={disabled}
+          searchEnabled={searchEnabled}
+          searchValue={keyword}
+          searchPlaceholder={searchPlaceholder}
+          onSearchChange={handleKeywordChange}
+          exportEnabled={exportEnabled}
+          onExport={handleExport}
+        />
+      )}
 
-      {pagination ? (
-        <Flex
-          width={"100%"}
-          align="center"
-          justify={pagination === "Basic" ? "center" : "flex-end"}
-          mt={5}
-        >
+      <TableContainer {...baseProps}>
+        <ScrollBox maxHeight={height}>
+          {renderHead()}
+          <Box>{renderBody()}</Box>
+        </ScrollBox>
+      </TableContainer>
+
+      <Flex
+        align="center"
+        justify="space-between"
+        mt={2}
+        p={"2px 5px"}
+        bgColor={theme.colors.grayscale.white}
+        sx={{
+          position: "relative",
+          borderRadius: theme.borderRadius[4],
+          border: `1px solid ${theme.colors.border.default}`,
+        }}
+      >
+        <Flex align="center" gap={4}>
+          {rowsPer && (
+            <TableRowsPerPage
+              rowsPerPage={rowsPerPageValue}
+              rowsPerPageOptions={rowsPerPageOptions}
+              onRowsPerPageChange={handleRowsPerPageChange}
+              disabled={disabled}
+            />
+          )}
+          {totalRows && <TableTotalRows ml={4} totalRows={totalCount} />}
+        </Flex>
+
+        {pagination && (
           <Pagination
-            type={pagination}
+            type={pagination as any}
             disabled={disabled}
             count={totalCount}
-            page={page}
-            rowsPerPage={rowsPerPage}
-            rowsPerPageOptions={rowsPerPageOptions}
-            onRowsPerPageChange={handleRowsPerPageChange}
+            page={safePage}
+            pageCount={pageCount}
             onPageChange={handlePageChange}
-            labelDisplayedRows={(from, to, count) => `${from}–${to} of ${count}`}
+            labelDisplayedRows={() => paginationLabel}
             showPrevNextButtons
             showFirstLastButtons
           />
-        </Flex>
-      ) : null}
+        )}
+      </Flex>
     </>
   )
 }

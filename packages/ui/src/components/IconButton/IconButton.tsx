@@ -1,4 +1,4 @@
-import { FocusEventHandler, MouseEventHandler, useState, MouseEvent } from "react"
+import { FocusEventHandler, MouseEventHandler, useState, MouseEvent, forwardRef } from "react"
 import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
 import { IconName } from "../Icon/icon-loader"
 
@@ -53,97 +53,123 @@ export type IconButtonProps = BaseMixinProps & {
 
 /---------------------------------------------------------------------------**/
 
-const IconButton = ({
-  icon,
-  onClick,
-  color,
-  disabled = false,
-  disableInteraction = false,
-  size = 16,
-  variant = "contained",
-  iconProps,
-  toolTip,
-  toolTipProps,
-  onMouseDown,
-  onMouseUp,
-  onMouseLeave,
-  ...others
-}: IconButtonProps) => {
-  const [isHover, setIsHover] = useState(false)
-  const [isActive, setIsActive] = useState(false)
+const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+  (
+    {
+      icon,
+      onClick,
+      color,
+      disabled = false,
+      disableInteraction = false,
+      size = 16,
+      variant = "contained",
+      iconProps,
+      toolTip,
+      toolTipProps,
+      onMouseDown,
+      onMouseUp,
+      onMouseLeave,
+      ...others
+    },
+    ref,
+  ) => {
+    const [isHover, setIsHover] = useState(false)
+    const [isActive, setIsActive] = useState(false)
 
-  // * 실제 클릭(마우스/터치)만 허용하고, disabled면 클릭을 차단
-  const handleClick: MouseEventHandler<HTMLButtonElement> = (e) => {
-    if (e.detail === 0) return
-    e.preventDefault()
-    if (!disabled) onClick?.(e)
-  }
+    // * 실제 클릭(마우스/터치)만 허용하고, disabled면 클릭을 차단
+    const handleClick: MouseEventHandler<HTMLButtonElement> = (e) => {
+      if (e.detail === 0) return
+      e.preventDefault()
+      if (!disabled) onClick?.(e)
+    }
 
-  // * hover 상태를 내부에서 관리하고, hover 해제 시 외부 onMouseLeave를 동기화
-  const handleHover = (hover: boolean) => (e: MouseEvent<HTMLButtonElement>) => {
-    if (!disableInteraction) setIsHover(hover)
-    if (!hover) onMouseLeave?.(e)
-  }
+    // * hover 상태를 내부에서 관리하고, hover 해제 시 외부 onMouseLeave를 동기화
+    const handleHover = (hover: boolean) => (e: MouseEvent<HTMLButtonElement>) => {
+      if (!disableInteraction) setIsHover(hover)
+      if (!hover) onMouseLeave?.(e)
+    }
 
-  // * active 상태를 내부에서 관리하고 외부 핸들러를 호출
-  const handleMouseDown = (e: MouseEvent<HTMLButtonElement>) => {
-    if (!disableInteraction) setIsActive(true)
-    onMouseDown?.(e)
-  }
+    // * active 상태를 내부에서 관리하고 외부 핸들러를 호출
+    const handleMouseDown = (e: MouseEvent<HTMLButtonElement>) => {
+      if (!disableInteraction) setIsActive(true)
+      onMouseDown?.(e)
+    }
 
-  // * active 해제 및 외부 핸들러 호출
-  const handleMouseUp = (e: MouseEvent<HTMLButtonElement>) => {
-    if (!disableInteraction) setIsActive(false)
-    onMouseUp?.(e)
-  }
+    // * active 해제 및 외부 핸들러 호출
+    const handleMouseUp = (e: MouseEvent<HTMLButtonElement>) => {
+      if (!disableInteraction) setIsActive(false)
+      onMouseUp?.(e)
+    }
 
-  // * 포커스 이탈 시 active 상태를 초기화
-  const handleBlur: FocusEventHandler<HTMLButtonElement> = () => setIsActive(false)
+    // * 포커스 이탈 시 active 상태를 초기화
+    const handleBlur: FocusEventHandler<HTMLButtonElement> = () => setIsActive(false)
 
-  // * variant/상태(disabled/hover/active)에 따라 기본 아이콘 색상을 계산
-  const getIconColorFromVariant = (
-    variant: VariantUiType,
-    theme: DefaultTheme,
-    disabled: boolean,
-    isHover: boolean,
-    isActive: boolean,
-  ): string => {
-    if (disabled) return theme.colors.text.disabled
-    if (isActive) return theme.colors.grayscale[500]
-    if (variant === "outlined" && isHover) return theme.colors.grayscale[200]
-    return theme.colors.grayscale[500]
-  }
+    // * variant/상태(disabled/hover/active)에 따라 기본 아이콘 색상을 계산
+    const getIconColorFromVariant = (
+      variant: VariantUiType,
+      theme: DefaultTheme,
+      disabled: boolean,
+      isHover: boolean,
+      isActive: boolean,
+    ): string => {
+      if (disabled) return theme.colors.text.disabled
+      if (isActive) return theme.colors.grayscale[500]
+      if (variant === "outlined" && isHover) return theme.colors.grayscale[200]
+      return theme.colors.grayscale[500]
+    }
 
-  // * disabled일 때는 iconProps/color 우선순위를 무시하고 강제 disabled 색 적용
-  const computedColor = getIconColorFromVariant(variant, theme, disabled, isHover, isActive)
-  const finalColor = disabled ? computedColor : (iconProps?.color ?? color ?? computedColor)
+    // * disabled일 때는 iconProps/color 우선순위를 무시하고 강제 disabled 색 적용
+    const computedColor = getIconColorFromVariant(variant, theme, disabled, isHover, isActive)
+    const finalColor = disabled ? computedColor : (iconProps?.color ?? color ?? computedColor)
 
-  // * tooltip 유무에 따라 버튼을 감싸서 렌더링
-  const ButtonContent = (
-    <IconButtonStyle
-      disabled={disabled}
-      disableInteraction={disableInteraction}
-      onClick={handleClick}
-      onMouseEnter={handleHover(true)}
-      onMouseLeave={handleHover(false)}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onBlur={handleBlur}
-      variant={variant}
-      p={"4px"}
-      {...others}
-    >
-      <Icon name={icon} size={size} color={finalColor} {...iconProps} />
-    </IconButtonStyle>
-  )
+    // * tooltip 유무에 따라 버튼을 감싸서 렌더링
+    const ButtonContent = (
+      <IconButtonStyle
+        ref={ref}
+        disabled={disabled}
+        disableInteraction={disableInteraction}
+        onClick={handleClick}
+        onMouseEnter={handleHover(true)}
+        onMouseLeave={handleHover(false)}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onBlur={handleBlur}
+        variant={variant}
+        p={"4px"}
+        {...others}
+      >
+        <Icon name={icon} size={size} color={finalColor} {...iconProps} />
+      </IconButtonStyle>
+    )
 
-  return toolTip ? (
-    <Tooltip content={toolTip} {...toolTipProps}>
-      {ButtonContent}
-    </Tooltip>
-  ) : (
-    ButtonContent
-  )
+    return toolTip ? (
+      <Tooltip content={toolTip} {...toolTipProps}>
+        {ButtonContent}
+      </Tooltip>
+    ) : (
+      ButtonContent
+    )
+  },
+)
+
+// * variant/disabled 상태에 따른 배경/보더 스타일을 계산
+const variantStyle = ({
+  variant,
+  theme,
+  disabled,
+}: {
+  variant?: VariantUiType
+  theme: DefaultTheme
+  disabled?: boolean
+}) => {
+  if (variant === "outlined")
+    return `
+      background-color: ${disabled ? theme.colors.background.dark : "transparent"};
+      border: 1px solid ${disabled ? theme.colors.background.dark : theme.colors.border.default};
+    `
+  return `
+    background-color: transparent;
+  `
 }
 
 export const IconButtonStyle = styled.button<Omit<IconButtonProps, "icon" | "onClick">>`
@@ -174,25 +200,5 @@ export const IconButtonStyle = styled.button<Omit<IconButtonProps, "icon" | "onC
 
   ${({ variant, theme, disabled }) => variantStyle({ variant, theme, disabled })}
 `
-
-// * variant/disabled 상태에 따른 배경/보더 스타일을 계산
-const variantStyle = ({
-  variant,
-  theme,
-  disabled,
-}: {
-  variant?: VariantUiType
-  theme: DefaultTheme
-  disabled?: boolean
-}) => {
-  if (variant === "outlined")
-    return `
-      background-color: ${disabled ? theme.colors.background.dark : "transparent"};
-      border: 1px solid ${disabled ? theme.colors.background.dark : theme.colors.border.default};
-    `
-  return `
-    background-color: transparent;
-  `
-}
-
+IconButton.displayName = "IconButton"
 export default IconButton

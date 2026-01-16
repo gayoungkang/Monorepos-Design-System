@@ -233,12 +233,12 @@ const ButtonStyle = styled.button<Omit<ButtonProps, "text">>`
         `,
         text: `
           background-color: transparent;
-          color: ${disabled ? colors.grayscale[200] : colors.grayscale[700]};
+          color: ${disabled ? colors.grayscale[200] : colors.secondary[400]};
         `,
         outlined: `
           background-color: ${colors.grayscale.white};
-          border: 1px solid ${disabled ? colors.grayscale[200] : colors.grayscale[700]};
-          color: ${disabled ? colors.grayscale[200] : colors.grayscale[700]};
+          border: 1px solid ${disabled ? colors.grayscale[200] : colors.secondary[400]};
+          color: ${disabled ? colors.grayscale[200] : colors.secondary[400]};
         `,
       },
 

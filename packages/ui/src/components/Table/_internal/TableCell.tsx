@@ -1,10 +1,10 @@
 import { ReactNode } from "react"
-import { ColumnProps } from "./@Types/table"
-import Button from "../Button/Button"
-import TextField from "../TextField/TextField"
-import { CheckBox } from "../CheckBoxGroup/CheckBoxGroup"
-import Link from "../Link/Link"
-import Accordion from "../Accordion/Accordion"
+import { ColumnProps } from "../@Types/table"
+import Button from "../../Button/Button"
+import TextField from "../../TextField/TextField"
+import { CheckBox } from "../../CheckBoxGroup/CheckBoxGroup"
+import Link from "../../Link/Link"
+import Accordion from "../../Accordion/Accordion"
 /**---------------------------------------------------------------------------/
 
 * ! renderCell

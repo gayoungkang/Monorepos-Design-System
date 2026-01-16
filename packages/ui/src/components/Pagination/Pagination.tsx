@@ -5,21 +5,14 @@ import { theme } from "../../tokens/theme"
 import Flex from "../Flex/Flex"
 import { IconName } from "../Icon/icon-loader"
 import { Typography } from "../Typography/Typography"
-import Select from "../Select/Select"
 import IconButton from "../IconButton/IconButton"
 
-export type PaginationType = "RowsPerPage" | "Table" | "Basic"
+export type PaginationType = "Table" | "Basic"
 
 export type PaginationProps = BaseMixinProps &
   Omit<HTMLAttributes<HTMLDivElement>, keyof BaseMixinProps> & {
     type: PaginationType
     disabled?: boolean
-
-    // * RowsPerPage: page size 제어
-    rowsPerPage?: number
-    rowsPerPageOptions?: number[]
-    onRowsPerPageChange?: (rowsPerPage: number) => void
-    rowsPerPageLabel?: ReactNode
 
     // * Table: from-to 표시 + prev/next
     count?: number
@@ -102,42 +95,33 @@ const getBasicItems = (
 
 * ! Pagination
 *
-* * 3가지 형태를 지원하는 Pagination 컴포넌트 (RowsPerPage / Table / Basic)
-* * disabled 상태 지원 (컨트롤 비활성화 및 클릭 차단)
+* * 2가지 형태를 지원하는 Pagination 컴포넌트 (Table / Basic)
+* * disabled 상태 지원 (버튼/페이지 이동 비활성화)
 *
-* * RowsPerPage 타입
-*   * rowsPerPage / rowsPerPageOptions 기반 페이지당 행 수 선택 UI 제공
-*   * rowsPerPageLabel 문자열 또는 ReactNode 지원
-*   * Select 컴포넌트를 통해 rowsPerPage 변경 콜백(onRowsPerPageChange) 호출
+* * 공통 로직
+*   * clamp로 page 값을 1~pageCount 범위로 보정
+*   * count 기반 총 페이지 수(computedPageCount) 계산 (기본 페이지 크기 10 고정)
+*   * from/to 계산을 통해 현재 페이지의 표시 범위 텍스트 생성
+*   * labelDisplayedRows로 표시 문구 커스터마이징 지원
+*   * icons(prev/next/first/last) 커스터마이징 지원 (기본 아이콘 포함)
 *
 * * Table 타입
-*   * count / page(1-based) / rowsPerPage 기반 표시 범위(from~to) 및 전체 건수 표기
-*   * labelDisplayedRows 커스텀 포맷 지원
-*   * prev/next 버튼으로 페이지 변경(onPageChange) 지원
+*   * "from–to of count" 형태의 요약 텍스트 표시
+*   * prev/next IconButton으로 페이지 이동(onPageChange) 제공
 *
 * * Basic 타입
-*   * pageCount 또는 count/rowsPerPage 기반 총 페이지 수 계산
-*   * siblingCount / boundaryCount 기반 페이지 버튼/ellipsis 구성
+*   * siblingCount / boundaryCount 규칙 기반 페이지 번호/ellipsis 목록 계산(getBasicItems)
 *   * first/last, prev/next 버튼 노출 옵션 제어
 *   * 현재 페이지는 aria-current 및 선택 스타일 적용
 *
-* * 안전 처리
-*   * count/rowsPerPage/page/pageCount 값 보정(clamp) 및 최소 1페이지 보장
-*   * from/to 계산 시 count=0 케이스 처리
-*
-* * icons
-*   * first/last/prev/next 아이콘 커스터마이징 지원 (기본값 포함)
-*
 * @module Pagination
-* 페이지 이동 및 페이지당 항목 수 선택 UI를 제공하는 Pagination 컴포넌트입니다.
-* - `type`에 따라 서로 다른 레이아웃/기능을 렌더링합니다.
-* - `Table`/`Basic` 모드에서는 `onPageChange`를 통해 외부 페이지 상태를 제어합니다.
-* - `RowsPerPage` 모드에서는 `onRowsPerPageChange`를 통해 페이지당 행 수를 변경합니다.
-* - `Basic` 모드의 페이지 버튼은 boundary/sibling 규칙에 따라 ellipsis를 포함한 목록으로 구성됩니다.
+* 테이블/리스트 페이지 이동 UI를 제공하는 Pagination 컴포넌트입니다.
+* - `type`에 따라 요약형(Table) 또는 번호형(Basic) UI를 렌더링합니다.
+* - `count`와 `page`를 기반으로 현재 표시 구간을 계산하며, 페이지 크기는 10으로 고정됩니다.
+* - `Basic` 모드에서는 boundary/sibling 규칙에 따라 페이지 버튼과 ellipsis를 구성합니다.
 *
 * @usage
-* <Pagination type="RowsPerPage" rowsPerPage={10} onRowsPerPageChange={...} />
-* <Pagination type="Table" count={120} page={1} rowsPerPage={10} onPageChange={...} />
+* <Pagination type="Table" count={120} page={1} onPageChange={...} />
 * <Pagination type="Basic" page={3} pageCount={20} onPageChange={...} />
 
 /---------------------------------------------------------------------------**/
@@ -145,11 +129,6 @@ const getBasicItems = (
 const Pagination = ({
   type,
   disabled = false,
-
-  rowsPerPage,
-  rowsPerPageOptions = [10, 25, 50, 100],
-  onRowsPerPageChange,
-  rowsPerPageLabel = "Rows per page:",
 
   count,
   page,
@@ -172,16 +151,15 @@ const Pagination = ({
   const iconFirst = icons?.first ?? ("FirstPageArrow" as IconName)
   const iconLast = icons?.last ?? ("LastPageArrow" as IconName)
 
-  // * count/rowsPerPage 안전값 보정
+  // * count 안전값 보정
   const safeCount = typeof count === "number" ? Math.max(0, count) : 0
-  const safeRowsPerPage = typeof rowsPerPage === "number" && rowsPerPage > 0 ? rowsPerPage : 10
 
-  // * pageCount 우선, 없으면 count/rowsPerPage 기반으로 페이지 수 계산
+  // * pageCount 우선, 없으면 count 기반으로 페이지 수 계산 (Table 타입 기본 10개 단위)
   const computedPageCount = useMemo(() => {
     if (typeof pageCount === "number" && pageCount > 0) return Math.floor(pageCount)
     if (safeCount <= 0) return 1
-    return Math.max(1, Math.ceil(safeCount / safeRowsPerPage))
-  }, [pageCount, safeCount, safeRowsPerPage])
+    return Math.max(1, Math.ceil(safeCount / 10))
+  }, [pageCount, safeCount])
 
   // * 입력 page를 1~computedPageCount 범위로 보정
   const safePage = useMemo(() => {
@@ -189,13 +167,13 @@ const Pagination = ({
     return clamp(p, 1, computedPageCount)
   }, [page, computedPageCount])
 
-  // * Table 타입의 from/to 계산
+  // * Table 타입의 from/to 계산 (기본 10개 단위)
   const fromTo = useMemo(() => {
     if (safeCount <= 0) return { from: 0, to: 0 }
-    const from = (safePage - 1) * safeRowsPerPage + 1
-    const to = Math.min(safeCount, safePage * safeRowsPerPage)
+    const from = (safePage - 1) * 10 + 1
+    const to = Math.min(safeCount, safePage * 10)
     return { from, to }
-  }, [safeCount, safePage, safeRowsPerPage])
+  }, [safeCount, safePage])
 
   // * Table 타입 표시 문구 계산 (사용자 formatter 우선)
   const displayedRows = useMemo(() => {
@@ -213,66 +191,30 @@ const Pagination = ({
   const canPrev = safePage > 1
   const canNext = safePage < computedPageCount
 
-  // * RowsPerPage 타입 렌더링
-  const renderRowsPerPage = () => {
-    const selectOptions = rowsPerPageOptions.map((n) => ({
-      value: String(n),
-      label: String(n),
-    }))
-
-    return (
-      <Flex align="center" gap={12} width={"fit-content"}>
-        {typeof rowsPerPageLabel === "string" ? (
-          <Typography
-            text={rowsPerPageLabel}
-            variant="b1Medium"
-            color={theme.colors.text.primary}
-          />
-        ) : (
-          rowsPerPageLabel
-        )}
-
-        <RowsSelectWrap>
-          <Select
-            size="S"
-            options={selectOptions as any}
-            value={String(safeRowsPerPage)}
-            disabled={disabled}
-            readOnly={disabled}
-            onChange={(v) => onRowsPerPageChange?.(Number(v))}
-            typographyProps={{ sx: { lineHeight: "inherit" } }}
-          />
-        </RowsSelectWrap>
-      </Flex>
-    )
-  }
-
   // * Table 타입 렌더링
-  const renderTable = () => {
-    return (
-      <Flex align="center" gap={12} width={"fit-content"}>
-        <Typography
-          text={displayedRows as string}
-          variant="b1Bold"
-          color={theme.colors.text.primary}
+  const renderTable = () => (
+    <Flex align="center" gap={12} width={"fit-content"}>
+      <Typography
+        text={displayedRows as string}
+        variant="b1Bold"
+        color={theme.colors.text.primary}
+      />
+
+      <Flex align="center" gap={4}>
+        <IconButton
+          onClick={() => onPageChange?.(safePage - 1)}
+          disabled={disabled || !canPrev}
+          icon={iconPrev}
         />
 
-        <Flex align="center" gap={4}>
-          <IconButton
-            onClick={() => onPageChange?.(safePage - 1)}
-            disabled={disabled || !canPrev}
-            icon={iconPrev}
-          />
-
-          <IconButton
-            onClick={() => onPageChange?.(safePage + 1)}
-            disabled={disabled || !canNext}
-            icon={iconNext}
-          />
-        </Flex>
+        <IconButton
+          onClick={() => onPageChange?.(safePage + 1)}
+          disabled={disabled || !canNext}
+          icon={iconNext}
+        />
       </Flex>
-    )
-  }
+    </Flex>
+  )
 
   // * Basic 타입 렌더링
   const renderBasic = () => {
@@ -352,24 +294,11 @@ const Pagination = ({
 
   return (
     <Flex {...baseProps}>
-      {type === "RowsPerPage" ? renderRowsPerPage() : null}
       {type === "Table" ? renderTable() : null}
       {type === "Basic" ? renderBasic() : null}
     </Flex>
   )
 }
-
-const RowsSelectWrap = styled.div`
-  width: 90px;
-
-  & > * {
-    width: 100%;
-  }
-
-  & [data-typography-root] {
-    line-height: inherit;
-  }
-`
 
 const PageButton = styled.button<{ $selected: boolean }>`
   border: none;

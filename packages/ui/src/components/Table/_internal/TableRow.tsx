@@ -1,14 +1,16 @@
 import TableTr from "./TableTr"
 import TableTd from "./TableTd"
 import { JSX } from "react"
-import { ColumnProps } from "./@Types/table"
+import { ColumnProps } from "../@Types/table"
 import { renderCell } from "./TableCell"
+import { normalizeAlign } from "../@utils/table"
 
 type TableRowProps<T extends Record<string, unknown>> = {
   tableKey: string
   index: number
   data: T & { children?: T[] }
   columnConfig: ColumnProps<T>[]
+  columns: string
   onRowSelect?: (data: T, index: number, selected: boolean) => void
   onDoubleClick?: (row: T | null) => void
   selected?: boolean
@@ -18,7 +20,8 @@ type TableRowProps<T extends Record<string, unknown>> = {
 
 * ! TableRow
 *
-* * 테이블 바디의 단일 행(row)을 렌더링하는 컴포넌트
+* * Grid/Div 기반 테이블 구조에서 단일 행(row)을 렌더링하는 컴포넌트
+* * columns(gridTemplateColumns) 값을 TableTr로 전달하여 행 레이아웃을 그리드로 구성
 * * columnConfig 기반으로 각 셀(TableTd)을 생성하고 renderCell로 셀 콘텐츠 렌더링
 * * 행 선택(onRowSelect) 기능 지원 (row click 시 selected 토글)
 * * 셀 단위 클릭(column.onClick) 지원 (셀 클릭 시 이벤트 전파 차단)
@@ -35,14 +38,14 @@ type TableRowProps<T extends Record<string, unknown>> = {
 *   * column.onClick 존재 + 셀 비활성 아님 -> clickable 스타일/핸들러 적용
 *
 * @module TableRow
-* 테이블 데이터 행을 구성하며, 행 선택/셀 클릭/더블클릭 인터랙션을 함께 처리합니다.
+* Grid 기반 테이블에서 데이터 행을 구성하며, 행 선택/셀 클릭/더블클릭 인터랙션을 처리합니다.
+* - columns 값을 통해 행의 그리드 컬럼 폭을 상위 TableConfig와 동기화합니다.
 *
 * @usage
-* <TableRow tableKey="t1" index={0} data={row} columnConfig={cols} />
-* <TableRow onRowSelect={...} selected={selected} disabled={false} />
+* <TableRow tableKey="t1" index={0} data={row} columnConfig={cols} columns={columns} />
+* <TableRow onRowSelect={...} selected={selected} disabled={false} columns={columns} />
 
 /---------------------------------------------------------------------------**/
-
 const TableRow = <T extends Record<string, unknown>>({
   tableKey,
   index,
@@ -52,6 +55,7 @@ const TableRow = <T extends Record<string, unknown>>({
   selected,
   disabled,
   onDoubleClick,
+  columns,
 }: TableRowProps<T>): JSX.Element => {
   // * row 클릭 시 선택 토글 및 컬럼 onClick을 실행 (rowSelect 사용 시)
   const handleRowClick = () => {
@@ -68,6 +72,7 @@ const TableRow = <T extends Record<string, unknown>>({
 
   return (
     <TableTr
+      columns={columns}
       selected={onRowSelect ? true : false}
       disabled={disabled}
       onClick={onRowSelect && !disabled ? handleRowClick : undefined}
@@ -97,7 +102,7 @@ const TableRow = <T extends Record<string, unknown>>({
                   }
                 : undefined
             }
-            align={column.textAlign}
+            align={normalizeAlign(column.textAlign)}
             selected={onRowSelect ? selected : false}
             disabled={isCellDisabled}
           >

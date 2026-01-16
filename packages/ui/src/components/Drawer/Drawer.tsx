@@ -5,6 +5,7 @@ import { styled } from "../../tokens/customStyled"
 import { AxisPlacement } from "../../types"
 import { theme } from "../../tokens/theme"
 import Box from "../Box/Box"
+import { cssValue } from "../../utils/string"
 
 export type DrawerVariant = "fixed" | "absolute" | "flex"
 export type DrawerCloseBehavior = "hidden" | "collapsed"
@@ -161,13 +162,13 @@ const DrawerContainer = styled(Box)<{
   ${({ placement, width, height }) => {
     switch (placement) {
       case "left":
-        return `left:0; top:0; width:${cssSize(width)}; height:100%;`
+        return `left:0; top:0; width:${cssValue(width)}; height:100%;`
       case "right":
-        return `right:0; top:0; width:${cssSize(width)}; height:100%;`
+        return `right:0; top:0; width:${cssValue(width)}; height:100%;`
       case "top":
-        return `top:0; left:0; width:100%; height:${cssSize(height)};`
+        return `top:0; left:0; width:100%; height:${cssValue(height)};`
       case "bottom":
-        return `bottom:0; left:0; width:100%; height:${cssSize(height)};`
+        return `bottom:0; left:0; width:100%; height:${cssValue(height)};`
     }
   }}
 
@@ -180,8 +181,8 @@ const DrawerContainer = styled(Box)<{
     // * collapsed 모드일 경우 크기만 축소
     if (closeBehavior === "collapsed") {
       return placement === "left" || placement === "right"
-        ? `width:${cssSize(collapsedSize)};`
-        : `height:${cssSize(collapsedSize)};`
+        ? `width:${cssValue(collapsedSize)};`
+        : `height:${cssValue(collapsedSize)};`
     }
 
     // * hidden 모드일 경우 placement 방향으로 슬라이드 아웃
@@ -197,8 +198,5 @@ const DrawerContainer = styled(Box)<{
     }
   }}
 `
-
-// * number | string size 값을 css에 사용 가능한 문자열로 변환
-const cssSize = (v: number | string) => (typeof v === "number" ? `${v}px` : v)
 
 export default Drawer

@@ -40,7 +40,7 @@ const preview: Preview = {
             width: "100%",
             height: "100vh",
             padding: 0,
-            backgroundColor: "#e8e8e8",
+            backgroundColor: "#f4f4f4",
           }}
         >
           <Story />

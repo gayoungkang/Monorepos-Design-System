@@ -42,7 +42,7 @@ export type LinkProps = BaseMixinProps &
 
 const Link = ({
   children,
-  underline = "hover",
+  underline = "always",
   color = theme.colors.text.primary,
   disabled = false,
   onClick,
@@ -70,6 +70,7 @@ const Link = ({
     >
       {typeof children === "string" ? (
         <Typography
+          variant="b1Bold"
           text={children}
           color={disabled ? theme.colors.text.disabled : color}
           sx={{ lineHeight: "inherit" }}
@@ -93,6 +94,7 @@ const StyledLink = styled.a<{
   text-decoration: ${({ underline }) => (underline === "always" ? "underline" : "none")};
 
   &:hover {
+    color: ${({ theme }) => theme.colors.primary[400]};
     text-decoration: ${({ underline }) => (underline === "hover" ? "underline" : "none")};
   }
 `

@@ -1,4 +1,5 @@
 import { css, CSSObject } from "styled-components"
+import { toCssValue } from "../utils/string"
 
 /**
  * @typedef SxProps
@@ -131,10 +132,6 @@ export const shouldBlock = (prop: string): prop is OmittedBaseProp =>
  * // margin-right: 16px;
  * ```
  */
-export const toCssValue = (value?: string | number): string | undefined => {
-  if (value === undefined) return undefined
-  return typeof value === "number" ? `${value}px` : value
-}
 
 /**
  * 주어진 CSSObject의 모든 속성 값에 !important를 붙입니다.

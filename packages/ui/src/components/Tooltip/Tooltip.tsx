@@ -1,11 +1,13 @@
 import { ReactNode, useEffect, useRef, useState } from "react"
 import { styled } from "../../tokens/customStyled"
+import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
+import { AxisPlacement } from "../../types/placement"
 
-export type TooltipProps = {
+export type TooltipProps = BaseMixinProps & {
   children: ReactNode
   content: string
   maxWidth?: string
-  placement?: "top" | "bottom" | "left" | "right"
+  placement?: AxisPlacement
 }
 /** ---------------------------------------------------------------------------
 
@@ -16,6 +18,7 @@ export type TooltipProps = {
 * * 스크롤이 발생해도 위치를 자동으로 재계산하여 툴팁의 정확한 위치를 유지합니다.
 * * `placement` 속성을 통해 툴팁이 표시될 방향을 설정할 수 있으며, 기본값은 `'bottom'`입니다.
 * * 스타일은 `styled-components`를 사용해 동적으로 적용되며, 테마 색상 및 여백을 지원합니다.
+* * `BaseMixin` 기반 스타일 확장
 
 * 주요 Props:
 * - `children`: 툴팁이 적용될 요소 (마우스 호버 대상).
@@ -32,7 +35,14 @@ export type TooltipProps = {
 
 --------------------------------------------------------------------------- **/
 
-export const Tooltip = ({ children, content, maxWidth, placement = "bottom" }: TooltipProps) => {
+export const Tooltip = ({
+  children,
+  content,
+  maxWidth,
+  width = "max-content",
+  placement = "bottom",
+  ...otehrs
+}: TooltipProps) => {
   const triggerRef = useRef<HTMLDivElement | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [coords, setCoords] = useState({ top: 0, left: 0 })
@@ -102,7 +112,9 @@ export const Tooltip = ({ children, content, maxWidth, placement = "bottom" }: T
         <FixedTooltipBubble
           maxWidth={maxWidth}
           placement={placement}
-          style={{ top: coords.top, left: coords.left }}
+          width={width}
+          sx={{ top: coords.top, left: coords.left }}
+          {...otehrs}
         >
           {content}
         </FixedTooltipBubble>
@@ -116,12 +128,15 @@ const TriggerWrapper = styled.div`
   position: relative;
 `
 
-const FixedTooltipBubble = styled.div<{
-  maxWidth?: string
-  placement?: TooltipProps["placement"]
-}>`
+const FixedTooltipBubble = styled.div<
+  BaseMixinProps & {
+    maxWidth?: string
+    placement?: TooltipProps["placement"]
+  }
+>`
+  ${BaseMixin}
   position: fixed;
-  z-index: ${({ theme }) => theme.zIndex.content};
+  z-index: ${({ theme }) => theme.zIndex.tooltip};
   background: ${({ theme }) => theme.colors.grayscale[600]};
   color: ${({ theme }) => theme.colors.grayscale.white};
   border-radius: ${({ theme }) => theme.borderRadius[4]};
