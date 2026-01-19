@@ -14,9 +14,10 @@ import { renderCell } from "./_internal/TableCell"
 import TableTotalRows from "./_internal/TableTotalRows"
 import TableRowsPerPage from "./TableRowsPerPage"
 import TableSummaryRow from "./_internal/TableSummaryRow"
-import TableToolbar, { ExportType } from "./_internal/TableToolbar"
 import Box from "../Box/Box"
 import { theme } from "../../tokens/theme"
+import { ExportType } from "./_internal/TableExport"
+import TableToolbar from "./_internal/TableToolbar"
 
 const parseWidthToPx = (w?: string) => {
   if (!w) return undefined

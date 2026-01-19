@@ -31,6 +31,9 @@ const STYLE_PROPS = new Set<string>([
   "minHeight",
   "minWidth",
   "sticky",
+  "boxShadow",
+  "closeBehavior",
+  "collapsedSize",
 ])
 
 /**

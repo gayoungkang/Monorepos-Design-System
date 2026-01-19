@@ -15,7 +15,7 @@ export type ButtonProps = BaseMixinProps & {
   color?: ColorUiType
   variant?: VariantUiType
   size?: SizeUiType
-  type?: "button" | "submit" | "reset"
+  type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"]
   disabled?: boolean
   startIcon?: IconName
   endIcon?: IconName
@@ -26,44 +26,78 @@ export type ButtonProps = BaseMixinProps & {
   iconProps?: Partial<Omit<IconProps, "name">>
   typographyProps?: Partial<TypographyProps>
 }
-/**
- * @module Button
- * 재사용 가능한 커스텀 Button 컴포넌트로, 다양한 스타일 변형(variant), 색상(colorVariant), 상태(disabled, loading 등),
- * 아이콘(startIcon, endIcon) 및 파일 다운로드 기능(fileUrl + fileName)을 지원합니다.
- *
- * - colorVariant
- * - `BaseMixin` 기반 스타일 확장
- * - 기본 텍스트 버튼, 로딩 인디케이터, 시작/끝 아이콘 포함 가능
- * - `contained`, `text`, `outlined` variant 지원
- * - `primary`, `secondary`, `tertiary` 색상계열 지원
- *
- * @props
- * - text : 버튼 텍스트
- * - colorVariant : 색상 테마
- * - variant : 버튼 스타일 (contained, text, outlined)
- * - size : 버튼 크기
- * - type : * HTML button type
- * - disabled: 비활성화 여부
- * - startIcon : 시작 아이콘
- * - endIcon: 끝 아이콘
- * - onClick : 클릭 핸들러
- * - fileUrl : 파일 다운로드 URL
- * - fileName : 다운로드 파일 이름
- * - loading : 로딩 상태
- * - progressProps : Progress 컴포넌트 props
- * - iconProps : Icon 컴포넌트 props 일부
- * - typographyProps : Typography 컴포넌트 props 일부
- *
- * @사용법
- * <Button
- *  startIcon="Building5Line"
- *  colorVariant="tertiary"
- *  variant="text"
- *  text="버튼"
- *  disabled
- *  />
- *
- */
+
+// * 버튼 variant, color, disabled 상태에 따라 텍스트 색상 결정 함수
+const getButtonTextColor = (
+  theme: DefaultTheme,
+  variant: VariantUiType,
+  color: ColorUiType,
+  disabled: boolean,
+): string => {
+  const { colors } = theme
+  const cv = color ?? "primary"
+  const v = variant ?? "contained"
+
+  const map: Record<ColorUiType, Record<VariantUiType, string>> = {
+    primary: {
+      contained: colors.grayscale.white,
+      text: disabled ? colors.text.disabled : colors.primary[400],
+      outlined: disabled ? colors.primary[100] : colors.primary[400],
+    },
+    secondary: {
+      contained: colors.grayscale.white,
+      text: disabled ? colors.grayscale[200] : colors.secondary[400],
+      outlined: disabled ? colors.grayscale[200] : colors.secondary[400],
+    },
+    normal: {
+      contained: disabled ? colors.text.disabled : colors.text.secondary,
+      text: disabled ? colors.text.disabled : colors.text.secondary,
+      outlined: disabled ? colors.text.disabled : colors.text.secondary,
+    },
+  }
+
+  return map[cv][v]
+}
+/**---------------------------------------------------------------------------/
+
+* ! Button
+*
+* * 텍스트/아이콘/로딩 상태를 지원하는 공통 버튼 컴포넌트
+* * variant(contained/text/outlined), color(primary/secondary/normal), size(S/M/L) 조합 지원
+* * disabled 상태에 따른 스타일/텍스트/아이콘 컬러 분기 처리
+* * startIcon/endIcon 렌더링 지원 (loading 중에는 아이콘 미표시)
+* * loading=true일 때 Progress(Circular, indeterminate)로 대체 렌더링
+* * fileUrl + fileName 제공 시 클릭 시점에 파일 다운로드 동작 지원
+* * BaseMixin 기반 외부 스타일 확장(width/height/p/sx 등) 지원
+* * forwardRef로 button DOM ref 전달 지원
+*
+* * 스타일/컬러 계산 유틸
+*   * getButtonTextColor: theme + variant + color + disabled 기반 텍스트 컬러 결정
+*   * getIconColor: variant + color + disabled 기반 아이콘 컬러 결정
+*   * getButtonSize: size(S/M/L) 기반 padding 값 결정
+*
+* * 클릭 처리
+*   * fileUrl/fileName이 있으면 handleDownload를 우선 실행(다운로드 링크 생성/클릭/제거)
+*   * 그 외에는 onClick 콜백 호출
+*
+* * ButtonStyle(스타일)
+*   * color/variant/disabled 조합으로 base 스타일(background/border/color) 매핑
+*   * disabled가 아니면 hover/active 스타일 매핑을 추가 적용
+*   * disabled 여부에 따라 cursor(no-drop/pointer) 분기
+*
+* @module Button
+* 디자인 시스템의 기본 버튼 컴포넌트입니다.
+* - 텍스트 기반 버튼을 중심으로 아이콘과 로딩 상태를 조합해 사용할 수 있습니다.
+* - fileUrl/fileName 조합으로 다운로드 버튼 패턴을 내장 지원합니다.
+*
+* @usage
+* <Button text="저장" onClick={...} />
+* <Button text="삭제" variant="outlined" color="secondary" />
+* <Button text="로딩" loading />
+* <Button text="다운로드" fileUrl="/a.xlsx" fileName="a.xlsx" />
+
+/---------------------------------------------------------------------------**/
+
 const Button = forwardRef(
   (
     {
@@ -88,7 +122,7 @@ const Button = forwardRef(
     }: ButtonProps,
     ref: ForwardedRef<HTMLButtonElement>,
   ) => {
-    // *  파일 다운로드 핸들러
+    // * fileUrl/fileName이 존재할 때 a 태그를 생성하여 다운로드를 트리거
     const handleDownload = () => {
       if (!fileUrl || !fileName) return
       const link = document.createElement("a")
@@ -99,13 +133,13 @@ const Button = forwardRef(
       document.body.removeChild(link)
     }
 
-    // *  onClick 핸들러
+    // * 다운로드 버튼/일반 버튼 클릭을 분기하여 실행
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (fileUrl && fileName) handleDownload()
       else onClick?.(e)
     }
 
-    // * 버튼 variant, colorVariant 상태에 따라 아이콘 색상 결정 함수
+    // * variant/color/disabled 상태에 따라 아이콘 색상을 계산
     const getIconColor = (
       variant: VariantUiType,
       colorVariant: ButtonProps["color"],
@@ -139,7 +173,7 @@ const Button = forwardRef(
       }
     }
 
-    // * 버튼 size에 따라 padding 결정되는 함수
+    // * size(S/M/L)에 따라 padding 값을 반환
     const getButtonSize = (size: SizeUiType): string => {
       switch (size) {
         case "S":
@@ -152,6 +186,9 @@ const Button = forwardRef(
           return "5px 15px"
       }
     }
+
+    // * 텍스트 컬러는 variant/color/disabled 조합으로 계산
+    const textColor = getButtonTextColor(theme, variant, color, disabled)
 
     return (
       <ButtonStyle
@@ -175,6 +212,7 @@ const Button = forwardRef(
             {...iconProps}
           />
         )}
+
         {loading ? (
           <Progress
             size="12px"
@@ -185,8 +223,9 @@ const Button = forwardRef(
             {...progressProps}
           />
         ) : (
-          <Typography variant="b1Bold" text={text} {...typographyProps} />
+          <Typography variant="b1Bold" text={text} color={textColor} {...typographyProps} />
         )}
+
         {endIcon && !loading && <Icon size={12} name={endIcon} ml="2px" {...iconProps} />}
       </ButtonStyle>
     )
@@ -318,6 +357,7 @@ const ButtonStyle = styled.button<Omit<ButtonProps, "text">>`
           normal: { contained: "", text: "", outlined: "" },
         }
 
+    // * disabled 여부에 따라 커서 스타일을 결정
     const cursor = disabled ? "cursor: no-drop;" : "cursor: pointer;"
 
     return `

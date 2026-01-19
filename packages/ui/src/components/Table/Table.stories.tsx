@@ -15,7 +15,13 @@ import type {
   TableQuery,
 } from "./@Types/table"
 import TableToolbar from "./_internal/TableToolbar"
-import type { ExportType } from "./_internal/TableToolbar"
+
+import Select from "../Select/Select"
+import TextField from "../TextField/TextField"
+import IconButton from "../IconButton/IconButton"
+import Button from "../Button/Button"
+import Divider from "../Divider/Divider"
+import { ExportItem, ExportType } from "./_internal/TableExport"
 
 /* -------------------------------------------------------------------------- */
 /*                                    Types                                   */
@@ -273,7 +279,6 @@ type TableStoryExtraProps = {
   paginationType?: "Table" | "Basic"
   stickyHeader?: boolean
 
-  // mode/search/export
   mode?: TableMode
   searchEnabled?: boolean
   exportEnabled?: boolean
@@ -281,6 +286,10 @@ type TableStoryExtraProps = {
 
   columnVisibilityEnabled?: boolean
   filterEnabled?: boolean
+
+  // * NEW: export 확장/제외 테스트용
+  exportExcludePrint?: boolean
+  exportExtraEnabled?: boolean
 }
 
 const TableInteractive = (props: TableProps<PersonRow> & TableStoryExtraProps) => {
@@ -296,13 +305,15 @@ const TableInteractive = (props: TableProps<PersonRow> & TableStoryExtraProps) =
 
   const [visibleKeys, setVisibleKeys] = useState<string[]>([])
 
-  const [filters, setFilters] = useState<FilterItem[]>([])
+  const [filters, setFilters] = useState<FilterItem[]>([
+    { id: makeId(), columnKey: "name", operator: "contains", value: "" },
+  ])
+  const [filterOpen, setFilterOpen] = useState(false)
 
   const [serverRows, setServerRows] = useState<PersonRow[]>([])
   const [serverTotal, setServerTotal] = useState<number>(0)
 
   const mode: TableMode = props.mode ?? "client"
-  const totalCount = useMemo(() => allRows.length, [allRows])
 
   const sorted = useMemo(() => {
     if (!sortKey) return allRows
@@ -480,6 +491,7 @@ const TableInteractive = (props: TableProps<PersonRow> & TableStoryExtraProps) =
 
   useEffect(() => {
     if (!visibleKeys.length) setVisibleKeys(defaultVisibleKeys)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultVisibleKeys.join("|")])
 
   const columnConfig = useMemo(() => {
@@ -489,8 +501,6 @@ const TableInteractive = (props: TableProps<PersonRow> & TableStoryExtraProps) =
     const v = new Set(visibleKeys.length ? visibleKeys : defaultVisibleKeys)
     return baseColumnConfig.filter((c) => c.key === "custom" || v.has(String(c.key)))
   }, [props.columnVisibilityEnabled, baseColumnConfig, visibleKeys, defaultVisibleKeys])
-
-  const clientData = useMemo(() => filteredAll, [filteredAll])
 
   const runServerQuery = (q: TableQuery) => {
     const base = sorted
@@ -599,10 +609,29 @@ const TableInteractive = (props: TableProps<PersonRow> & TableStoryExtraProps) =
 
   const pagination = props.paginationType
 
-  const handleExport = (type: ExportType, payload: { scope: "page" | "all"; keyword: string }) => {
+  // * NEW: ExportType 확장 (Story에서만 "json" 추가)
+  type ExtraExport = "json"
+  const extraExportEnabled = Boolean(props.exportExtraEnabled)
+
+  const exportExclude = useMemo(() => {
+    const base: ExportType<ExtraExport>[] = []
+    if (props.exportExcludePrint) base.push("print")
+    return base
+  }, [props.exportExcludePrint])
+
+  const exportItems: ExportItem<ExportType<ExtraExport>>[] = useMemo(() => {
+    if (!extraExportEnabled) return []
+    return [{ type: "json", label: "JSON 다운로드" }]
+  }, [extraExportEnabled])
+
+  const handleExport = (
+    type: ExportType<ExtraExport>,
+    payload: { scope: "page" | "all"; keyword: string },
+  ) => {
     if (props.disabled) return
 
     if (mode === "server") {
+      // * 서버 모드는 "요청만" 확인(실제 다운로드는 서버 응답으로 처리하는 케이스)
       console.log("[SERVER EXPORT]", {
         type,
         payload,
@@ -632,9 +661,23 @@ const TableInteractive = (props: TableProps<PersonRow> & TableStoryExtraProps) =
       return
     }
 
+    if (type === "pdf") {
+      // * 데모: 실제 PDF 생성은 서버/라이브러리로 대체될 수 있음
+      console.log("[CLIENT PDF]", { rows: rowsForExport.length })
+      const text = `PDF DEMO\nrows=${rowsForExport.length}\nkeyword=${payload.keyword}\nfilters=${filters.length}`
+      downloadBlob(new Blob([text], { type: "application/pdf" }), "demo-table.pdf")
+      return
+    }
+
     if (type === "print") {
       console.log("[CLIENT PRINT]", { rows: rowsForExport.length })
       window.print()
+      return
+    }
+
+    if (type === "json") {
+      const json = JSON.stringify(rowsForExport, null, 2)
+      downloadBlob(new Blob([json], { type: "application/json" }), "demo-table.json")
     }
   }
 
@@ -643,6 +686,128 @@ const TableInteractive = (props: TableProps<PersonRow> & TableStoryExtraProps) =
     setFilters(next)
     setPage(1)
   }
+
+  const filterActiveCount = useMemo(
+    () => (filters ?? []).filter((f) => (f.value ?? "").trim().length > 0).length,
+    [filters],
+  )
+
+  const filterColumnOptions = useMemo(
+    () => toolbarColumns.map((c) => ({ value: c.key, label: c.title })),
+    [toolbarColumns],
+  )
+
+  const operatorOptions = useMemo(
+    () => [
+      { value: "startsWith", label: "startsWith" },
+      { value: "contains", label: "contains" },
+      { value: "endsWith", label: "endsWith" },
+      { value: "equals", label: "equals" },
+    ],
+    [],
+  )
+
+  // * NEW: filterContent (외부 렌더링) + 외부 onFilterSearch/onFilterReset 시뮬레이션
+  const filterContent = useMemo(() => {
+    return (
+      <Flex direction="column" gap={10}>
+        {(filters ?? []).map((f) => (
+          <Flex align="center" justify="flex-start" gap={10} key={f.id}>
+            <IconButton
+              icon="CloseLine"
+              toolTip="삭제"
+              disableInteraction={false}
+              disabled={props.disabled}
+              onClick={() => {
+                if (props.disabled) return
+                const next = (filters ?? []).filter((x) => x.id !== f.id)
+                handleFilterChange(next)
+              }}
+            />
+
+            <Select
+              label="Columns"
+              options={filterColumnOptions as any}
+              value={(f.columnKey ?? "") as any}
+              onChange={(v: any) => {
+                if (props.disabled) return
+                const next = (filters ?? []).map((x) =>
+                  x.id === f.id ? { ...x, columnKey: String(v) } : x,
+                )
+                handleFilterChange(next)
+              }}
+              placeholder="Select"
+              disabled={props.disabled}
+            />
+
+            <Select
+              label="Operator"
+              options={operatorOptions as any}
+              value={(f.operator ?? "contains") as any}
+              onChange={(v: any) => {
+                if (props.disabled) return
+                const next = (filters ?? []).map((x) =>
+                  x.id === f.id ? { ...x, operator: v as any } : x,
+                )
+                handleFilterChange(next)
+              }}
+              placeholder="contains"
+              disabled={props.disabled}
+            />
+
+            <TextField
+              label="Value"
+              disabled={props.disabled}
+              value={f.value ?? ""}
+              placeholder="Filter value"
+              onChange={(e) => {
+                if (props.disabled) return
+                const next = (filters ?? []).map((x) =>
+                  x.id === f.id ? { ...x, value: e.target.value } : x,
+                )
+                handleFilterChange(next)
+              }}
+            />
+          </Flex>
+        ))}
+
+        <Divider />
+
+        <Flex align="center" justify="space-between">
+          <Button
+            text="필터 추가"
+            variant="text"
+            color="secondary"
+            disabled={props.disabled}
+            onClick={() => {
+              if (props.disabled) return
+              const firstKey = filterColumnOptions[0]?.value
+              const next: FilterItem = {
+                id: makeId(),
+                columnKey: String(firstKey ?? ""),
+                operator: "contains",
+                value: "",
+              }
+              handleFilterChange([...(filters ?? []), next])
+            }}
+          />
+
+          <Button
+            text="모두 삭제"
+            variant="text"
+            color="secondary"
+            disabled={props.disabled || !(filters ?? []).length}
+            onClick={() => {
+              if (props.disabled) return
+              handleFilterChange([])
+            }}
+          />
+        </Flex>
+      </Flex>
+    )
+  }, [filters, props.disabled, filterColumnOptions, operatorOptions])
+
+  const clientData = useMemo(() => filteredAll, [filteredAll])
 
   return (
     <Box width="100%" p={12}>
@@ -663,14 +828,15 @@ const TableInteractive = (props: TableProps<PersonRow> & TableStoryExtraProps) =
             `total=${mode === "server" ? serverTotal : filteredAll.length}`,
             `sort=${sortKey ? `${String(sortKey)} ${sortDirection}` : "none"}`,
             `keyword="${keyword}"`,
-            `filters=${filters.filter((f) => (f.value ?? "").trim().length > 0).length}`,
-            `summary=${showSummary ? `on${multiRow ? "(multi)" : ""}${stickySummary ? "(sticky)" : ""}` : "off"}`,
+            `filters(active)=${filterActiveCount}`,
+            `export.excludePrint=${Boolean(props.exportExcludePrint)}`,
+            `export.extra(json)=${Boolean(props.exportExtraEnabled)}`,
           ].join(" / ")}
         />
       </Flex>
 
-      <TableToolbar
-        title="Table"
+      <TableToolbar<"json">
+        title="Table Demo"
         disabled={props.disabled}
         searchEnabled={Boolean(props.searchEnabled)}
         searchValue={keyword}
@@ -690,6 +856,10 @@ const TableInteractive = (props: TableProps<PersonRow> & TableStoryExtraProps) =
           }
         }}
         exportEnabled={Boolean(props.exportEnabled)}
+        // * NEW: 기본은 excel/csv/pdf/print 모두 노출, 외부에서 exclude 가능
+        excludeExportTypes={exportExclude as any}
+        // * NEW: 추가 export 타입(json) 데모
+        exportItems={exportItems as any}
         onExport={(t) =>
           handleExport(t as any, { scope: (props.exportScope ?? "all") as any, keyword })
         }
@@ -703,16 +873,38 @@ const TableInteractive = (props: TableProps<PersonRow> & TableStoryExtraProps) =
         }}
         columnsSkeletonEnabled={false}
         filterEnabled={props.filterEnabled !== false}
+        // * NEW: filter 외부 컨트롤
+        filterOpen={filterOpen}
+        onFilterOpenChange={(open) => {
+          if (props.disabled) return
+          setFilterOpen(open)
+        }}
+        filterActiveCount={filterActiveCount}
         filterDrawerVariant="flex"
         filterDrawerPlacement="top"
         filterDrawerCloseBehavior="hidden"
         filterDrawerHeight={220}
-        filterValue={filters as any}
-        defaultFilterValue={
-          [{ id: makeId(), columnKey: "name", operator: "contains", value: "" }] as any
-        }
-        onFilterChange={handleFilterChange as any}
         filterSkeletonEnabled={false}
+        onFilterSearch={() => {
+          // * 데모: 서버 모드면 "검색" 버튼이 서버 쿼리 트리거 역할
+          if (props.disabled) return
+          if (mode === "server") {
+            runServerQuery({
+              page: 1,
+              rowsPerPage,
+              keyword,
+              sortKey: sortKey ? String(sortKey) : undefined,
+              sortDirection,
+            })
+          }
+          console.log("[FILTER SEARCH]", { keyword, filters })
+        }}
+        onFilterReset={() => {
+          if (props.disabled) return
+          handleFilterChange([{ id: makeId(), columnKey: "name", operator: "contains", value: "" }])
+          console.log("[FILTER RESET]")
+        }}
+        filterContent={filterContent}
       />
 
       <Table
@@ -826,6 +1018,9 @@ const meta: Meta<TableProps<PersonRow> & TableStoryExtraProps> = {
     columnVisibilityEnabled: true,
     filterEnabled: true,
 
+    exportExcludePrint: false,
+    exportExtraEnabled: true,
+
     data: [] as any,
     columnConfig: [] as any,
     tableConfig: {
@@ -840,34 +1035,25 @@ const meta: Meta<TableProps<PersonRow> & TableStoryExtraProps> = {
     tableKey: { control: "text" },
     emptyRowText: { control: "text" },
 
-    disabled: {
-      control: "boolean",
-      description: "전체 인터랙션 비활성화(정렬/편집/페이지네이션 포함)",
-    },
+    disabled: { control: "boolean" },
+    stickyHeader: { control: "boolean" },
 
-    stickyHeader: { control: "boolean", description: "헤더 sticky" },
+    paginationType: { control: "radio", options: [undefined, "Table", "Basic"] },
 
-    paginationType: {
-      control: "radio",
-      options: [undefined, "Table", "Basic"],
-      description: "페이지네이션 타입",
-    },
+    summaryEnabled: { control: "boolean" },
+    summarySticky: { control: "boolean" },
+    summaryMultiRow: { control: "boolean" },
 
-    summaryEnabled: { control: "boolean", description: "요약(합산) 행 표시" },
-    summarySticky: { control: "boolean", description: "요약(합산) 행 stickyBottom" },
-    summaryMultiRow: { control: "boolean", description: "요약(합산) 멀티 행" },
+    mode: { control: "radio", options: ["client", "server"] },
+    searchEnabled: { control: "boolean" },
+    exportEnabled: { control: "boolean" },
+    exportScope: { control: "radio", options: ["page", "all"] },
 
-    mode: { control: "radio", options: ["client", "server"], description: "데이터 처리 모드" },
-    searchEnabled: { control: "boolean", description: "검색 툴바 표시" },
-    exportEnabled: { control: "boolean", description: "Export 메뉴 표시" },
-    exportScope: {
-      control: "radio",
-      options: ["page", "all"],
-      description: "Export 범위(현재 페이지/전체)",
-    },
+    columnVisibilityEnabled: { control: "boolean" },
+    filterEnabled: { control: "boolean" },
 
-    columnVisibilityEnabled: { control: "boolean", description: "컬럼 표시/숨기기" },
-    filterEnabled: { control: "boolean", description: "필터 드로어" },
+    exportExcludePrint: { control: "boolean", description: "export에서 print 제외" },
+    exportExtraEnabled: { control: "boolean", description: "export에 json 추가" },
 
     data: { control: false },
     columnConfig: { control: false },
@@ -908,6 +1094,8 @@ export const ServerMode: Story = {
     exportEnabled: true,
     columnVisibilityEnabled: true,
     filterEnabled: true,
+    exportExcludePrint: false,
+    exportExtraEnabled: true,
   },
 }
 
@@ -919,6 +1107,8 @@ export const ClientMode: Story = {
     exportEnabled: true,
     columnVisibilityEnabled: true,
     filterEnabled: true,
+    exportExcludePrint: true,
+    exportExtraEnabled: true,
   },
 }
 

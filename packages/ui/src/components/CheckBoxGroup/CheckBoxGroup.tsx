@@ -209,26 +209,21 @@ const CheckBoxGroup = <Value extends string | number>({
   const filteredData = useMemo(() => data.filter((item) => item.value !== null), [data])
   const allValues = useMemo(() => filteredData.map((item) => item.value), [filteredData])
 
-  // * 전체선택 체크박스 렌더링 조건(allCheck 활성 & 데이터 2개 이상)
   const shouldRenderAllCheck = allCheck && filteredData.length > 1
 
-  // * 전체선택 체크 여부 계산
   const isAllChecked =
     shouldRenderAllCheck && allValues.every((v) => value.includes(v)) && allValues.length > 0
 
-  // * 일부만 선택되어 있을 경우 인디터미네이트 상태
   const isIndeterminate =
     shouldRenderAllCheck && !isAllChecked && allValues.some((v) => value.includes(v))
 
   const allCheckRef = useRef<HTMLInputElement | null>(null)
 
-  // * 전체선택 체크박스 indeterminate 속성 동기화
   useEffect(() => {
     if (!allCheckRef.current) return
     allCheckRef.current.indeterminate = isIndeterminate
   }, [isIndeterminate])
 
-  // * 개별 체크박스 변경 시 value 배열을 추가/제거하여 전달
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedValue = e.target.value as Value
     const isChecked = e.target.checked
@@ -238,7 +233,6 @@ const CheckBoxGroup = <Value extends string | number>({
     onChange?.(newValues)
   }
 
-  // * 전체선택 변경 시 전체 값 또는 빈 배열을 전달
   const handleAllChange = (e: ChangeEvent<HTMLInputElement>) => {
     onChange?.(e.target.checked ? allValues : [])
   }
@@ -255,7 +249,7 @@ const CheckBoxGroup = <Value extends string | number>({
         width="fit-content"
         height={others.height}
         direction={isHorizontal ? "row" : "column"}
-        align="center"
+        align={isHorizontal ? "center" : "flex-start"}
         wrap="wrap"
       >
         {label && labelPlacement === "left" && (
@@ -325,17 +319,23 @@ const CheckboxItem = forwardRef<HTMLInputElement, CheckboxItemProps>(
     },
     ref,
   ) => {
-    // * input id를 name/value 조합으로 생성해 label htmlFor와 연결
     const id = `${name ?? "checkbox"}-${value}`
+    const isHorizontal = direction === "horizontal"
 
     return (
       <Flex
         gap="4px"
-        mr={direction === "horizontal" ? 12 : 0}
-        mb={direction === "vertical" ? 12 : 0}
+        mr={isHorizontal ? 12 : 0}
+        mb={!isHorizontal ? 12 : 0}
         align="center"
         as="label"
         extraProps={{ htmlFor: id }}
+        sx={{
+          "&:last-child": {
+            marginRight: 0,
+            marginBottom: 0,
+          },
+        }}
       >
         <StyledInput
           id={id}

@@ -21,6 +21,7 @@ export type DrawerProps = BaseMixinProps & {
   collapsedSize?: number | string
   container?: HTMLElement
   disableBackdrop?: boolean
+  boxShadow?: string
   children: ReactNode
 }
 /**---------------------------------------------------------------------------/
@@ -62,19 +63,15 @@ const Drawer = ({
   collapsedSize = 56,
   container,
   disableBackdrop = false,
+  boxShadow,
   children,
   ...others
 }: DrawerProps) => {
-  // * fixed variant 여부에 따라 overlay 동작 여부 판단
   const isOverlay = variant === "fixed"
-
-  // * overlay + hidden 조합일 때만 unmount 제어 적용
   const shouldUnmount = isOverlay && closeBehavior === "hidden"
 
-  // * close 애니메이션 이후 unmount를 위한 내부 mount 상태
   const [mounted, setMounted] = useState(open)
 
-  // * fixed + hidden 조합에서 open 변경에 따라 mount/unmount 타이밍 관리
   useEffect(() => {
     if (!shouldUnmount) return
 
@@ -87,10 +84,8 @@ const Drawer = ({
     return () => clearTimeout(timer)
   }, [open, shouldUnmount])
 
-  // * unmount 조건을 만족하면 렌더링 중단
   if (shouldUnmount && !mounted) return null
 
-  // * backdrop + drawer 본문 렌더링 구성
   const content = (
     <>
       {!disableBackdrop && isOverlay && open && <Backdrop onClick={onClose} />}
@@ -103,6 +98,7 @@ const Drawer = ({
         width={width}
         height={height}
         collapsedSize={collapsedSize}
+        boxShadow={boxShadow}
         {...others}
       >
         {children}
@@ -110,10 +106,8 @@ const Drawer = ({
     </>
   )
 
-  // * flex variant는 레이아웃 흐름에 포함되므로 portal 미사용
   if (variant === "flex") return content
 
-  // * fixed / absolute variant는 portal을 통해 body 또는 지정 container에 렌더링
   return createPortal(content, container ?? document.body)
 }
 
@@ -132,11 +126,12 @@ const DrawerContainer = styled(Box)<{
   width: number | string
   height: number | string
   collapsedSize: number | string
+  boxShadow?: string
 }>`
   ${BaseMixin};
 
   background-color: ${theme.colors.grayscale.white};
-  box-shadow: ${theme.shadows.elevation[8]};
+  box-shadow: ${({ boxShadow }) => boxShadow ?? theme.shadows.elevation[8]};
 
   transition:
     transform 0.3s ease,
@@ -173,19 +168,14 @@ const DrawerContainer = styled(Box)<{
   }}
 
   ${({ open, closeBehavior, placement, collapsedSize }) => {
-    // * open 상태일 때는 transform 없이 표시
-    if (open) {
-      return `transform: translate(0,0); opacity:1;`
-    }
+    if (open) return `transform: translate(0,0); opacity:1;`
 
-    // * collapsed 모드일 경우 크기만 축소
     if (closeBehavior === "collapsed") {
       return placement === "left" || placement === "right"
         ? `width:${cssValue(collapsedSize)};`
         : `height:${cssValue(collapsedSize)};`
     }
 
-    // * hidden 모드일 경우 placement 방향으로 슬라이드 아웃
     switch (placement) {
       case "left":
         return `transform: translateX(-100%); opacity:0;`
