@@ -4,8 +4,28 @@ import TableTr from "./TableTr"
 import TableTd from "./TableTd"
 import { buildSums, normalizeAlign } from "../@utils/table"
 import { Typography } from "../../Typography/Typography"
-import type { SummaryRowProps } from "../@Types/summaryRow"
 import { theme } from "../../../tokens/theme"
+
+import type { ReactNode } from "react"
+
+export type SummaryItem<T> = {
+  key: keyof T
+  label?: string
+  formatter?: (value: number) => string
+}
+
+export type SummaryRowLine<T> = {
+  items: SummaryItem<T>[]
+  label?: string
+  labelColumnKey?: keyof T
+  labelCell?: ReactNode
+}
+
+export type SummaryRowProps<T> = {
+  enabled?: boolean
+  sticky?: boolean
+  rows: SummaryRowLine<T>[]
+}
 
 type Props<T> = {
   tableKey: string

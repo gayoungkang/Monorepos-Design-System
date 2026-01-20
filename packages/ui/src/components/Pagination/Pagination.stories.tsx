@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
 import Pagination from "./Pagination"
 import type { PaginationType } from "./Pagination"
@@ -17,14 +17,9 @@ const meta: Meta<typeof Pagination> = {
   argTypes: {
     type: {
       control: "radio",
-      options: ["RowsPerPage", "Table", "Basic"] satisfies PaginationType[],
+      options: ["Table", "Basic"] satisfies PaginationType[],
     },
     disabled: { control: "boolean" },
-
-    rowsPerPage: { control: { type: "number", min: 1, step: 1 } },
-    rowsPerPageOptions: { control: false },
-    onRowsPerPageChange: { control: false },
-    rowsPerPageLabel: { control: "text" },
 
     count: { control: { type: "number", min: 0, step: 1 } },
     page: { control: { type: "number", min: 1, step: 1 } },
@@ -34,6 +29,7 @@ const meta: Meta<typeof Pagination> = {
     pageCount: { control: { type: "number", min: 1, step: 1 } },
     siblingCount: { control: { type: "number", min: 0, step: 1 } },
     boundaryCount: { control: { type: "number", min: 0, step: 1 } },
+
     hidePrevNextButtons: { control: "boolean" },
     hideFirstLastButtons: { control: "boolean" },
     showFirstLastButtons: { control: "boolean" },
@@ -45,15 +41,13 @@ const meta: Meta<typeof Pagination> = {
     type: "Basic",
     disabled: false,
 
-    rowsPerPage: 10,
-    rowsPerPageLabel: "Rows per page:",
-
     count: 128,
     page: 1,
 
     pageCount: 10,
     siblingCount: 1,
     boundaryCount: 1,
+
     hidePrevNextButtons: false,
     hideFirstLastButtons: false,
     showFirstLastButtons: false,
@@ -78,20 +72,16 @@ type Story = StoryObj<typeof Pagination>
 
 export const Playground: Story = {
   render: (args) => {
-    const [rowsPerPage, setRowsPerPage] = useState(args.rowsPerPage ?? 10)
     const [page, setPage] = useState(args.page ?? 1)
 
-    const rowsPerPageOptions = useMemo(() => [10, 25, 50, 100], [])
-    const count = typeof args.count === "number" ? args.count : 128
+    const count = typeof args.count === "number" ? Math.max(0, args.count) : 0
 
     const pageCount = useMemo(() => {
-      if (args.type === "Basic") {
-        if (typeof args.pageCount === "number" && args.pageCount > 0)
-          return Math.floor(args.pageCount)
-        return Math.max(1, Math.ceil(count / rowsPerPage))
-      }
-      return Math.max(1, Math.ceil(count / rowsPerPage))
-    }, [args.type, args.pageCount, count, rowsPerPage])
+      if (typeof args.pageCount === "number" && args.pageCount > 0)
+        return Math.floor(args.pageCount)
+      if (count <= 0) return 1
+      return Math.max(1, Math.ceil(count / 10))
+    }, [args.pageCount, count])
 
     const safePage = Math.min(Math.max(1, page), pageCount)
 
@@ -113,25 +103,10 @@ export const Playground: Story = {
           />
 
           <Button text="Last" variant="outlined" onClick={() => setPage(pageCount)} />
-
-          <Button
-            text="Reset"
-            variant="text"
-            onClick={() => {
-              setRowsPerPage(args.rowsPerPage ?? 10)
-              setPage(args.page ?? 1)
-            }}
-          />
         </Flex>
 
         <Pagination
           {...args}
-          rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={rowsPerPageOptions}
-          onRowsPerPageChange={(n) => {
-            setRowsPerPage(n)
-            setPage(1)
-          }}
           count={count}
           page={safePage}
           onPageChange={(p) => setPage(p)}
@@ -146,41 +121,7 @@ export const Playground: Story = {
             borderRadius: theme.borderRadius[8],
           }}
         >
-          type: {args.type} / page: {safePage} / rowsPerPage: {rowsPerPage} / pageCount: {pageCount}
-        </Box>
-      </Flex>
-    )
-  },
-}
-
-export const RowsPerPage: Story = {
-  args: {
-    type: "RowsPerPage",
-    disabled: false,
-    rowsPerPage: 25,
-    rowsPerPageLabel: "Rows per page:",
-  },
-  render: (args) => {
-    const [rowsPerPage, setRowsPerPage] = useState(args.rowsPerPage ?? 25)
-
-    return (
-      <Flex direction="column" gap={16} width="100%">
-        <Pagination
-          {...args}
-          rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[10, 25, 50, 100]}
-          onRowsPerPageChange={(n) => setRowsPerPage(n)}
-        />
-
-        <Box
-          p={12}
-          bgColor={theme.colors.grayscale[50]}
-          sx={{
-            border: `1px solid ${theme.colors.border.default}`,
-            borderRadius: theme.borderRadius[8],
-          }}
-        >
-          rowsPerPage: {rowsPerPage}
+          type: {args.type} / page: {safePage} / pageCount: {pageCount} / count: {count}
         </Box>
       </Flex>
     )
@@ -192,31 +133,23 @@ export const Table: Story = {
     type: "Table",
     disabled: false,
     count: 128,
-    rowsPerPage: 10,
     page: 1,
   },
   render: (args) => {
-    const [rowsPerPage, setRowsPerPage] = useState(args.rowsPerPage ?? 10)
     const [page, setPage] = useState(args.page ?? 1)
 
-    const count = typeof args.count === "number" ? args.count : 128
-    const pageCount = Math.max(1, Math.ceil(count / rowsPerPage))
+    const count = typeof args.count === "number" ? Math.max(0, args.count) : 0
+    const pageCount = Math.max(1, Math.ceil(count / 10))
     const safePage = Math.min(Math.max(1, page), pageCount)
 
     return (
       <Flex direction="column" gap={16} width="100%">
         <Pagination
           {...args}
-          rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[10, 25, 50, 100]}
-          onRowsPerPageChange={(n) => {
-            setRowsPerPage(n)
-            setPage(1)
-          }}
           count={count}
           page={safePage}
           onPageChange={(p) => setPage(p)}
-          labelDisplayedRows={(from, to, total) => `${from}–${to} of ${total}`}
+          labelDisplayedRows={(from, to, total) => `${from}–${to} / ${total}`}
         />
 
         <Box
@@ -227,7 +160,7 @@ export const Table: Story = {
             borderRadius: theme.borderRadius[8],
           }}
         >
-          page: {safePage} / rowsPerPage: {rowsPerPage} / count: {count}
+          page: {safePage} / pageCount: {pageCount} / count: {count}
         </Box>
       </Flex>
     )
@@ -239,7 +172,6 @@ export const Basic: Story = {
     type: "Basic",
     disabled: false,
     count: 128,
-    rowsPerPage: 10,
     page: 1,
     siblingCount: 1,
     boundaryCount: 1,
@@ -249,23 +181,22 @@ export const Basic: Story = {
     hideFirstLastButtons: false,
   },
   render: (args) => {
-    const [rowsPerPage, setRowsPerPage] = useState(args.rowsPerPage ?? 10)
     const [page, setPage] = useState(args.page ?? 1)
 
-    const count = typeof args.count === "number" ? args.count : 128
-    const pageCount = Math.max(1, Math.ceil(count / rowsPerPage))
+    const count = typeof args.count === "number" ? Math.max(0, args.count) : 0
+    const pageCount = useMemo(() => {
+      if (typeof args.pageCount === "number" && args.pageCount > 0)
+        return Math.floor(args.pageCount)
+      if (count <= 0) return 1
+      return Math.max(1, Math.ceil(count / 10))
+    }, [args.pageCount, count])
+
     const safePage = Math.min(Math.max(1, page), pageCount)
 
     return (
       <Flex direction="column" gap={16} width="100%">
         <Pagination
           {...args}
-          rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[10, 25, 50, 100]}
-          onRowsPerPageChange={(n) => {
-            setRowsPerPage(n)
-            setPage(1)
-          }}
           count={count}
           page={safePage}
           onPageChange={(p) => setPage(p)}

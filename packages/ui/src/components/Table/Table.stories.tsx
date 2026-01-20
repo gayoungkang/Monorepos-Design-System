@@ -14,7 +14,7 @@ import type {
   TableMode,
   TableQuery,
 } from "./@Types/table"
-import TableToolbar from "./_internal/TableToolbar"
+import TableToolbar from "./_internal/TableToolBar"
 
 import Select from "../Select/Select"
 import TextField from "../TextField/TextField"

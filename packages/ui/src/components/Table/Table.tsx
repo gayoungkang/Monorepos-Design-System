@@ -12,12 +12,12 @@ import Flex from "../Flex/Flex"
 import ScrollBox from "../ScrollBox/ScrollBox"
 import { renderCell } from "./_internal/TableCell"
 import TableTotalRows from "./_internal/TableTotalRows"
-import TableRowsPerPage from "./TableRowsPerPage"
+import TableRowsPerPage from "./_internal/TableRowsPerPage"
 import TableSummaryRow from "./_internal/TableSummaryRow"
 import Box from "../Box/Box"
 import { theme } from "../../tokens/theme"
 import { ExportType } from "./_internal/TableExport"
-import TableToolbar from "./_internal/TableToolbar"
+import TableToolBar from "./_internal/TableToolBar"
 
 const parseWidthToPx = (w?: string) => {
   if (!w) return undefined
@@ -517,7 +517,7 @@ const Table = <T extends Record<string, unknown>>({
   return (
     <>
       {(searchEnabled || exportEnabled) && (
-        <TableToolbar
+        <TableToolBar
           disabled={disabled}
           searchEnabled={searchEnabled}
           searchValue={keyword}

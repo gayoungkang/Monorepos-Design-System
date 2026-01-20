@@ -1,9 +1,9 @@
 import { HTMLAttributes, ReactNode, useMemo } from "react"
-import { BaseMixinProps } from "../../tokens/baseMixin"
-import { theme } from "../../tokens/theme"
-import Flex from "../Flex/Flex"
-import { Typography } from "../Typography/Typography"
-import Select from "../Select/Select"
+import { BaseMixinProps } from "../../../tokens/baseMixin"
+import { theme } from "../../../tokens/theme"
+import Flex from "../../Flex/Flex"
+import { Typography } from "../../Typography/Typography"
+import Select from "../../Select/Select"
 
 export type TableRowsPerPageProps = BaseMixinProps &
   Omit<HTMLAttributes<HTMLDivElement>, keyof BaseMixinProps> & {

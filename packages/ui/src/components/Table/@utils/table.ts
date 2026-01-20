@@ -1,4 +1,4 @@
-import { SummaryItem } from "../@Types/summaryRow"
+import { SummaryItem } from "../_internal/TableSummaryRow"
 
 export const normalizeAlign = (a: any): "left" | "center" | "right" | undefined => {
   if (a === "left" || a === "center" || a === "right") return a

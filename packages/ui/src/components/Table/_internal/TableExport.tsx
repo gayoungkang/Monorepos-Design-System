@@ -29,7 +29,16 @@ export type TableExportProps<TExtraExportType extends string = never> = {
   toolTip?: string
   icon?: any
 
-  /**---------------------------------------------------------------------------/
+  onBeforeOpen?: () => void
+}
+
+const DEFAULT_EXPORT_ITEMS: ExportItem<DefaultExportType>[] = [
+  { type: "excel", label: "Excel 다운로드" },
+  { type: "csv", label: "CSV 다운로드" },
+  { type: "pdf", label: "PDF 다운로드" },
+  { type: "print", label: "프린트" },
+]
+/**---------------------------------------------------------------------------/
 
 * ! TableExport
 *
@@ -72,17 +81,6 @@ export type TableExportProps<TExtraExportType extends string = never> = {
 * <TableExport open={open} onOpenChange={setOpen} onBeforeOpen={closeOther} />
 
 /---------------------------------------------------------------------------**/
-
-  onBeforeOpen?: () => void
-}
-
-const DEFAULT_EXPORT_ITEMS: ExportItem<DefaultExportType>[] = [
-  { type: "excel", label: "Excel 다운로드" },
-  { type: "csv", label: "CSV 다운로드" },
-  { type: "pdf", label: "PDF 다운로드" },
-  { type: "print", label: "프린트" },
-]
-
 const TableExport = <TExtraExportType extends string = never>({
   disabled,
 
