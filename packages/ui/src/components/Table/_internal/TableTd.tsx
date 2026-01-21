@@ -20,35 +20,47 @@ export type TableTdProps = BaseMixinProps &
  *
  * ! TableTd
  *
- * * Grid 기반 Table 레이아웃에서 개별 셀(Cell)을 표현하는 컴포넌트
- * * BaseMixinProps를 확장하여 padding, margin, width, sx 등 공통 스타일 속성 지원
+ * * Grid 기반 Table에서 단일 셀(Td) 역할을 하는 컴포넌트
+ * * BaseMixinProps를 지원하며, 컨텐츠/정렬/비활성/colSpan/stickyBottom 등을 처리
  *
  * * 정렬 처리
- *   * align(TableCellAlign)을 normalizeAlign 유틸로 보정하여 사용
- *   * justify-content 기반으로 셀 내부 정렬 제어
+ *   * align(TableCellAlign)을 normalizeAlign로 CSS align 값으로 변환
+ *   * Root에서는 justify-content로 정렬을 적용(좌/중/우)
  *
- * * colspan 처리
- *   * colSpan 값이 1보다 큰 경우 gridColumn: span N 형태로 동적 적용
- *   * Grid 레이아웃 환경에서 table colspan 역할을 대체
+ * * colSpan 처리
+ *   * colSpan > 1 인 경우 style에 gridColumn: `span ${colSpan}`를 주입하여
+ *     grid 레이아웃에서 셀 병합을 구현
  *
- * * sticky bottom 지원 (SummaryRow 용도)
+ * * disabled 처리
+ *   * disabled=true 인 경우 텍스트 컬러를 theme.colors.text.disabled로 변경
+ *   * 클릭 가능 상태($clickable)는 disabled일 때 무시(커서 미적용)
+ *
+ * * clickable 처리
+ *   * clickable=true && !disabled 인 경우 cursor: pointer 적용
+ *   * 실제 클릭 핸들러는 상위(TableRow 등)에서 Root에 전달되는 onClick으로 처리
+ *
+ * * stickyBottom 처리(하단 고정 요약/합계 행 지원)
  *   * stickyBottom=true 인 경우 position: sticky + bottom 적용
- *   * stickyBottomOffset으로 하단 고정 위치를 누적 계산 가능
- *   * SummaryRow 다중 라인 스택 시 하단에서 위로 밀려 올라가는 구조 지원
+ *   * stickyBottomOffset은 number|string 모두 지원
+ *     - number면 `${n}px`로 변환
+ *     - string이면 그대로 사용
+ *   * z-index는 theme.zIndex?.sticky를 사용
  *
- * * 상태 표현
- *   * disabled=true: 텍스트 색상 비활성화, 인터랙션 차단
- *   * clickable=true && !disabled: pointer 커서 적용
- *   * selected 플래그는 외부 스타일 확장 여지로 전달만 유지
- *
- * * 스타일 구조
- *   * inline-flex 기반 셀
- *   * 우측 border 기본 적용, 마지막 셀은 border 제거
- *   * word-wrap / pre-wrap으로 줄바꿈 허용
+ * * 스타일 기본값
+ *   * display: inline-flex + padding: 10px 12px
+ *   * border-right로 셀 구분선을 만들고 마지막 셀은 제거
+ *   * word-wrap/white-space/pre-wrap 및 min-width:0으로 텍스트/오버플로우 안정화
+ *   * 배경은 theme.colors.grayscale.white 고정
  *
  * @module TableTd
- * Grid 기반 테이블에서 셀 단위를 표현하며,
- * summary row, sticky bottom, colspan 등 확장 요구사항을 지원합니다.
+ * Grid 기반 테이블 셀을 렌더링합니다.
+ * - align/colSpan/disabled/stickyBottom 옵션을 제공하며, BaseMixin 스타일을 적용합니다.
+ * - 합계/요약 행의 하단 고정(stickyBottom) 및 컬럼 병합(colSpan)을 지원합니다.
+ *
+ * @usage
+ * <TableTd align="right">123</TableTd>
+ * <TableTd colSpan={2}>Merged</TableTd>
+ * <TableTd stickyBottom stickyBottomOffset={32}>SUM</TableTd>
  *
 /---------------------------------------------------------------------------**/
 
@@ -85,7 +97,7 @@ const TableTd = forwardRef<HTMLDivElement, TableTdProps>(
         $align={safeAlign}
         $disabled={disabled}
         $stickyBottom={stickyBottom}
-        $stickyBottomOffset={bottom}
+        $stickyBottomOffset={bottom ?? "0px"}
         $clickable={clickable}
         $selected={selected}
         style={{
@@ -104,7 +116,7 @@ const Root = styled.div<
     $align?: TableCellAlign
     $disabled?: boolean
     $stickyBottom?: boolean
-    $stickyBottomOffset?: string
+    $stickyBottomOffset: string
     $clickable?: boolean
     $selected?: boolean
   }
@@ -132,8 +144,8 @@ const Root = styled.div<
     $stickyBottom
       ? `
         position: sticky;
-        bottom: ${$stickyBottomOffset ?? "0px"};
-        z-index: ${theme.zIndex?.sticky};
+        bottom: ${$stickyBottomOffset};
+        z-index: ${theme.zIndex?.sticky ?? 700};
       `
       : ""}
 
@@ -141,5 +153,6 @@ const Root = styled.div<
     border-right: none;
   }
 `
+
 TableTd.displayName = "TableTd"
 export default TableTd

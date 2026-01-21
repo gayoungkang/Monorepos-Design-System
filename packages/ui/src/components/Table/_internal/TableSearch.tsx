@@ -13,37 +13,37 @@ export type TableSearchProps = {
   onBeforeOpen?: () => void
 }
 /**---------------------------------------------------------------------------/
-
-* ! TableSearch
-*
-* * 테이블 툴바에서 검색 입력 UI를 토글로 제공하는 컴포넌트
-* * searchEnabled=false 인 경우 렌더링하지 않음(null 반환)
-* * IconButton 클릭으로 검색 입력 영역(SearchSlot)을 열고/닫음
-* * 열림 시 onBeforeOpen 훅을 1회 호출(닫힘→열림 전환 시점)
-* * open 상태일 때 requestAnimationFrame 기반으로 입력 포커스 처리
-*   (disabled 상태에서는 포커스/오픈 동작을 차단)
-* * 외부 제어값(searchValue) 기반 controlled 입력을 사용하며
-*   onSearchChange로 입력 문자열을 상위로 전달
-*
-* * 애니메이션 레이아웃
-*   * SearchSlot: width(0px ↔ 280px) 트랜지션으로 슬롯 확장/축소
-*   * SearchInner: scaleX/opacity 트랜지션으로 부드러운 등장 효과
-*
-* @module TableSearch
-* 테이블 검색을 위한 토글형 입력 영역을 제공합니다.
-* - 검색 버튼 클릭 시 입력 필드가 확장되며, 자동 포커스를 적용합니다.
-* - 값은 searchValue로 제어하고, 변경은 onSearchChange로 전달합니다.
-*
-* @usage
-* <TableSearch
-*   searchEnabled
-*   searchValue={q}
-*   onSearchChange={setQ}
-*   onBeforeOpen={() => closeOtherPanels()}
-* />
-*
-* <TableSearch disabled searchEnabled />
-
+ *
+ * ! TableSearch
+ *
+ * * 테이블 툴바에서 검색 입력 UI를 토글로 제공하는 컴포넌트
+ * * searchEnabled=false 인 경우 렌더링하지 않음(null 반환)
+ * * IconButton 클릭으로 검색 입력 영역(SearchSlot)을 열고/닫음
+ * * 열림 시 onBeforeOpen 훅을 1회 호출(닫힘→열림 전환 시점)
+ * * open 상태일 때 requestAnimationFrame 기반으로 입력 포커스 처리
+ *   (disabled 상태에서는 포커스/오픈 동작을 차단)
+ * * 외부 제어값(searchValue) 기반 controlled 입력을 사용하며
+ *   onSearchChange로 입력 문자열을 상위로 전달
+ *
+ * * 애니메이션 레이아웃
+ *   * SearchSlot: width(0px ↔ 280px) 트랜지션으로 슬롯 확장/축소
+ *   * SearchInner: scaleX/opacity 트랜지션으로 부드러운 등장 효과
+ *
+ * @module TableSearch
+ * 테이블 검색을 위한 토글형 입력 영역을 제공합니다.
+ * - 검색 버튼 클릭 시 입력 필드가 확장되며, 자동 포커스를 적용합니다.
+ * - 값은 searchValue로 제어하고, 변경은 onSearchChange로 전달합니다.
+ *
+ * @usage
+ * <TableSearch
+ *   searchEnabled
+ *   searchValue={q}
+ *   onSearchChange={setQ}
+ *   onBeforeOpen={() => closeOtherPanels()}
+ * />
+ *
+ * <TableSearch disabled searchEnabled />
+ *
 /---------------------------------------------------------------------------**/
 
 const TableSearch = ({
@@ -66,8 +66,8 @@ const TableSearch = ({
     return () => cancelAnimationFrame(id)
   }, [searchOpen, disabled])
 
-  // * searchEnabled=false면 검색 UI 자체를 렌더링하지 않음
-  if (!searchEnabled) return null
+  // * disabled=true 또는 searchEnabled=false 시 검색 UI 비노출
+  if (!searchEnabled || disabled) return null
 
   return (
     <>
@@ -78,13 +78,12 @@ const TableSearch = ({
         disableInteraction={false}
         toolTip="검색"
         onClick={() => {
-          // * disabled 상태에서는 토글/훅 호출을 차단
           if (disabled) return
-          // * 열리는 순간에만 외부 훅으로 다른 오버레이/드로어 닫기 트리거
           if (!searchOpen) onBeforeOpen?.()
           setSearchOpen((v) => !v)
         }}
       />
+
       <SearchSlot $open={searchOpen}>
         <SearchInner $open={searchOpen}>
           <TextField

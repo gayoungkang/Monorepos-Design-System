@@ -16,6 +16,7 @@ export type PopperProps = {
   showArrow?: boolean
   height?: string
   width?: "auto" | "anchor" | "max-content"
+  onClose?: () => void
 }
 
 /**
@@ -33,16 +34,13 @@ export type PopperProps = {
  * - anchorRef: Popper의 기준 위치가 되는 HTMLElement의 ref
  * - children: Popper 내부에 표시될 콘텐츠
  * - placement: Popper가 열릴 위치 (기본값: "bottom")
- * - offset: 기준 요소와의 간격(px, 기본값: 8)
+ * - offsetX: X축 추가 오프셋(px, 기본값: 0)
+ * - offsetY: Y축 추가 오프셋(px, 기본값: 8)
  * - open: Popper 표시 여부
  * - showArrow: 화살표 표시 여부 (기본값: false)
- * - height: Popper 높이 (기본값: "300px")
+ * - height: Popper 최대 높이 (기본값: "300px")
  * - width: Popper 너비 지정 ("auto" | "anchor" | "max-content", 기본값: "auto")
- *
- * @사용법
- * <Popper anchorRef={ref} placement="bottom-start" open={true}>
- *   <MenuItem text="옵션 1" />
- * </Popper>
+ * - onClose: 외부 클릭 / ESC 등으로 닫기 트리거가 필요할 때 사용하는 콜백 (옵션)
  */
 
 const Popper = forwardRef<HTMLDivElement, PopperProps>(
@@ -57,6 +55,7 @@ const Popper = forwardRef<HTMLDivElement, PopperProps>(
       showArrow = false,
       height = "300px",
       width = "auto",
+      onClose,
     },
     ref,
   ) => {
@@ -95,10 +94,7 @@ const Popper = forwardRef<HTMLDivElement, PopperProps>(
                 top: anchorRect.bottom + offsetY,
               }
             case "bottom-start":
-              return {
-                left: anchorRect.left + offsetX,
-                top: anchorRect.bottom + offsetY,
-              }
+              return { left: anchorRect.left + offsetX, top: anchorRect.bottom + offsetY }
             case "bottom-end":
               return {
                 left: anchorRect.right - popperRect.width + offsetX,
@@ -125,10 +121,7 @@ const Popper = forwardRef<HTMLDivElement, PopperProps>(
                 top: anchorRect.top + anchorRect.height / 2 - popperRect.height / 2 + offsetY,
               }
             case "right-start":
-              return {
-                left: anchorRect.right + offsetX,
-                top: anchorRect.top + offsetY,
-              }
+              return { left: anchorRect.right + offsetX, top: anchorRect.top + offsetY }
             case "right-end":
               return {
                 left: anchorRect.right + offsetX,
@@ -157,15 +150,12 @@ const Popper = forwardRef<HTMLDivElement, PopperProps>(
 
       updatePosition()
 
-      // popper 크기 변화 감지
       const roPopper = new ResizeObserver(updatePosition)
       roPopper.observe(popper)
 
-      // anchor 크기 변화 감지
       const roAnchor = new ResizeObserver(updatePosition)
       roAnchor.observe(anchor)
 
-      // 스크롤/리사이즈 대응
       window.addEventListener("scroll", updatePosition, true)
       window.addEventListener("resize", updatePosition)
 
@@ -176,6 +166,36 @@ const Popper = forwardRef<HTMLDivElement, PopperProps>(
         window.removeEventListener("resize", updatePosition)
       }
     }, [anchorRef, placement, offsetX, offsetY, open, width])
+
+    useLayoutEffect(() => {
+      if (!open) return
+
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key !== "Escape") return
+        onClose?.()
+      }
+
+      const onPointerDownCapture = (e: PointerEvent) => {
+        const popperEl = containerRef.current
+        const anchorEl = anchorRef.current
+        if (!popperEl) return
+
+        const target = e.target as Node | null
+        if (!target) return
+
+        if (popperEl.contains(target)) return
+        if (anchorEl && anchorEl.contains(target)) return
+        onClose?.()
+      }
+
+      document.addEventListener("keydown", onKeyDown)
+      document.addEventListener("pointerdown", onPointerDownCapture, true)
+
+      return () => {
+        document.removeEventListener("keydown", onKeyDown)
+        document.removeEventListener("pointerdown", onPointerDownCapture, true)
+      }
+    }, [open, anchorRef, onClose])
 
     if (!open) return null
 

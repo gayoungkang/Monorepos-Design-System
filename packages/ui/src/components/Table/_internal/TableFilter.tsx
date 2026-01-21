@@ -4,7 +4,7 @@ import IconButton from "../../IconButton/IconButton"
 import { styled } from "../../../tokens/customStyled"
 import { theme } from "../../../tokens/theme"
 import Divider from "../../Divider/Divider"
-import Drawer, { DrawerCloseBehavior, DrawerVariant } from "../../Drawer/Drawer"
+import Drawer, { DrawerVariant } from "../../Drawer/Drawer"
 import type { AxisPlacement } from "../../../types"
 import ScrollBox from "../../ScrollBox/ScrollBox"
 import Skeleton from "../../Skeleton/Skeleton"
@@ -21,7 +21,6 @@ export type TableFilterProps = {
 
   filterDrawerVariant?: DrawerVariant
   filterDrawerPlacement?: AxisPlacement
-  filterDrawerCloseBehavior?: DrawerCloseBehavior
   filterDrawerWidth?: number | string
   filterDrawerHeight?: number | string
 
@@ -38,45 +37,55 @@ export type TableFilterProps = {
   hideTrigger?: boolean
 }
 /**---------------------------------------------------------------------------/
-
-* ! TableFilter
-*
-* * 테이블 툴바 영역에서 필터 UI를 토글로 열고 닫는 컴포넌트
-* * Drawer 기반으로 필터 패널을 렌더링하며 variant/placement/closeBehavior/size를 외부에서 제어
-* * controlled/uncontrolled(open) 패턴 지원
-*   * filterOpen 제공 시 controlled
-*   * 미제공 시 내부 state(uncontrolledFilterOpen)로 관리
-* * 필터 활성 개수(filterActiveCount)를 Badge로 표시
-* * onBeforeOpen 훅으로 열기 직전에 외부 팝오버/드로어 정리 시나리오 지원
-* * hideTrigger=true면 트리거(툴바 버튼/Divider/Badge)는 렌더하지 않고 패널만 렌더링
-*
-* * 열림/닫힘 처리
-*   * setFilterOpenSafe: disabled/filterEnabled 가드 + controlled 여부에 따라 상태/콜백 처리
-*   * toggleFilter: 열기 직전 onBeforeOpen 호출 후 open 토글
-*
-* * Skeleton 처리
-*   * filterSkeletonEnabled + (disabled || !filterContent) 조건일 때 스켈레톤 렌더링
-*   * filterSkeletonCount 만큼 행을 생성해 로딩/비활성 상태를 시각화
-*
-* * 레이아웃/애니메이션
-*   * FilterSlot: placement에 따라 height(top/bottom) 또는 width(left/right) 애니메이션으로 공간을 확보
-*   * FilterInner: scaleY/opacity 전환으로 패널 표시감을 보강
-*   * placement가 top/bottom이면 세로 슬롯(100% width), 좌/우면 가로 슬롯(100% height)
-*   * toCssValue로 drawerWidth/drawerHeight를 안전한 css 문자열로 변환해 슬롯 크기 계산
-*
-* * Drawer 내부 구성
-*   * 상단 컨트롤: 검색(SearchLine), 초기화(reset), 닫기(CloseLine) 아이콘 버튼 제공
-*   * ScrollBox로 컨텐츠 영역 최대 높이 제한 + 스크롤 처리
-*   * Divider로 섹션 구분 및 테두리/배경을 theme 기반으로 적용
-*
-* @module TableFilter
-* 테이블의 필터 패널을 표시/숨김 처리하는 UI 컴포넌트입니다.
-*
-* @usage
-* <TableFilter filterContent={<MyFilter />} onFilterSearch={...} onFilterReset={...} />
-* <TableFilter filterOpen={open} onFilterOpenChange={setOpen} filterActiveCount={3} />
-* <TableFilter hideTrigger filterOpen={open} onFilterOpenChange={setOpen} />
-
+ *
+ * ! TableFilter
+ *
+ * * 테이블 툴바에서 필터 UI를 Drawer로 제공하는 컴포넌트
+ * * filterEnabled=false 인 경우 렌더링하지 않음(null 반환)
+ * * hideTrigger=true 인 경우 트리거(필터 아이콘 버튼) 영역을 숨기고, 슬롯/Drawer만 렌더링
+ *
+ * * open 상태 관리
+ *   * filterOpen이 제공되면 controlled 모드로 동작
+ *   * filterOpen이 없으면 내부 상태(uncontrolledFilterOpen)로 관리
+ *   * setFilterOpenSafe: disabled/filterEnabled 및 controlled 여부를 고려하여 open 상태를 안전하게 갱신
+ *   * toggleFilter: 닫힘→열림 전환 시 onBeforeOpen 1회 호출 후 open 토글
+ *
+ * * 스켈레톤 노출 규칙
+ *   * filterSkeletonEnabled=true 이면서
+ *   * disabled=true 또는 filterContent가 없을 때 스켈레톤 UI를 렌더링
+ *
+ * * Drawer 설정
+ *   * variant/placement/width/height를 props로 제어
+ *   * variant="flex" 인 경우 disableBackdrop 활성화
+ *   * 상단 액션: 검색(SearchLine) / 초기화(reset) / 닫기(CloseLine)
+ *     - disabled 또는 핸들러 미제공 시 각 버튼 비활성화
+ *
+ * * 애니메이션 레이아웃(슬롯 확장/축소)
+ *   * FilterSlot: placement 기준으로 height 또는 width를 0 ↔ 목표값으로 트랜지션
+ *     - top/bottom: height 전환, left/right: width 전환
+ *   * FilterInner: scaleY/opacity 트랜지션으로 부드러운 등장 효과
+ *
+ * @module TableFilter
+ * 테이블 필터 영역을 Drawer 기반으로 제공합니다.
+ * - 슬롯 확장/축소 애니메이션과 Drawer 조합으로 필터 UI를 표시합니다.
+ * - open은 controlled/uncontrolled 모두 지원하며, 검색/초기화 액션을 제공합니다.
+ *
+ * @usage
+ * <TableFilter
+ *   filterEnabled
+ *   filterActiveCount={2}
+ *   onFilterSearch={() => doSearch()}
+ *   onFilterReset={() => reset()}
+ *   filterContent={<MyFilterFields />}
+ * />
+ *
+ * <TableFilter
+ *   filterOpen={open}
+ *   onFilterOpenChange={setOpen}
+ *   hideTrigger
+ *   filterContent={<MyFilterFields />}
+ * />
+ *
 /---------------------------------------------------------------------------**/
 
 const TableFilter = ({
@@ -89,7 +98,6 @@ const TableFilter = ({
 
   filterDrawerVariant = "flex",
   filterDrawerPlacement = "top",
-  filterDrawerCloseBehavior = "hidden",
   filterDrawerWidth = 360,
   filterDrawerHeight = 220,
 
@@ -119,6 +127,7 @@ const TableFilter = ({
     }
 
     setUncontrolledFilterOpen(next)
+    onFilterOpenChange?.(next)
   }
 
   // * 필터 버튼 클릭 시 토글(열릴 때 onBeforeOpen 훅 호출)
@@ -183,7 +192,6 @@ const TableFilter = ({
               onClose={() => setFilterOpenSafe(false)}
               variant={filterDrawerVariant}
               placement={filterDrawerPlacement}
-              closeBehavior={filterDrawerCloseBehavior}
               width={filterDrawerWidth}
               height={filterDrawerHeight}
               disableBackdrop={filterDrawerVariant === "flex"}

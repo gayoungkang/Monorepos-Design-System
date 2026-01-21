@@ -10,27 +10,39 @@ export type TableHeadProps = BaseMixinProps &
     top?: string
   }
 /**---------------------------------------------------------------------------/
-
-* ! TableHead
-*
-* * Grid/Div 기반 테이블 구조에서 헤더 영역을 담당하는 컴포넌트
-* * sticky 옵션을 통해 헤더 고정(sticky) 동작 지원
-* * top 값을 문자열로 받아 고정 헤더의 상단 오프셋 제어
-* * theme.zIndex.sticky 값을 사용해 스크롤 시 헤더 레이어 우선순위 보장
-* * styled.div 기반으로 테이블 헤더 레이아웃 구성
-* * BaseMixin 기반 외부 스타일 확장 지원
-*
-* @module TableHead
-* 테이블 내부 헤더 영역을 렌더링하는 컴포넌트입니다.
-* - table 태그가 아닌 div/grid 기반 테이블 구조에서 사용됩니다.
-* - sticky=true일 경우 스크롤 컨테이너 기준으로 헤더를 상단에 고정합니다.
-* - top 옵션을 통해 고정 헤더의 위치를 세밀하게 조정할 수 있습니다.
-*
-* @usage
-* <TableHead sticky top="0px">
-*   ...
-* </TableHead>
-
+ *
+ * ! TableHead
+ *
+ * * Grid 기반 테이블에서 헤더 영역을 감싸는 컨테이너 컴포넌트
+ * * table 태그의 thead 역할을 div 기반 레이아웃으로 대체한 구조
+ *
+ * * sticky 헤더 지원
+ *   * sticky=true 인 경우 position: sticky 로 동작
+ *   * top 값을 통해 상단 고정 위치(offset)를 지정 가능
+ *   * left/right를 0으로 고정하여 가로 스크롤 시 헤더 정렬 유지
+ *   * z-index는 theme.zIndex.sticky 값을 사용하여 본문보다 위에 렌더링
+ *
+ * * BaseMixinProps 지원
+ *   * padding, margin, backgroundColor, sx 등 공통 스타일 확장 가능
+ *   * 테이블 외부 레이아웃(Grid/Flex)과의 합성 사용을 전제로 설계
+ *
+ * * 스타일 특징
+ *   * 배경색은 흰색(grayscale.white)으로 고정
+ *   * sticky 사용 여부에 따라 position을 static/sticky로 분기
+ *
+ * @module TableHead
+ * Grid 기반 테이블 헤더 컨테이너를 제공합니다.
+ * - sticky 옵션을 통해 스크롤 시 상단 고정 헤더를 구현할 수 있습니다.
+ *
+ * @usage
+ * <TableHead sticky top="0px">
+ *   <TableTr columns={gridColumns}>...</TableTr>
+ * </TableHead>
+ *
+ * <TableHead>
+ *   <TableTr columns={gridColumns}>...</TableTr>
+ * </TableHead>
+ *
 /---------------------------------------------------------------------------**/
 
 const TableHead = ({ children, sticky, top = "0px", ...baseProps }: TableHeadProps) => {
@@ -45,10 +57,10 @@ const Root = styled.div<BaseMixinProps & { $sticky?: boolean; $top: string }>`
   ${BaseMixin};
 
   position: ${({ $sticky }) => ($sticky ? "sticky" : "static")};
-  top: ${({ $top }) => $top ?? 0};
+  top: ${({ $top }) => $top ?? "0px"};
   left: 0;
   right: 0;
-  z-index: ${theme.zIndex?.sticky};
+  z-index: ${theme.zIndex?.sticky ?? 700};
   background-color: ${({ theme }) => theme.colors.grayscale.white};
 `
 

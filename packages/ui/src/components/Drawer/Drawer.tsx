@@ -21,6 +21,7 @@ export type DrawerProps = BaseMixinProps & {
   collapsedSize?: number | string
   container?: HTMLElement
   disableBackdrop?: boolean
+  overlay?: boolean
   boxShadow?: string
   children: ReactNode
 }
@@ -63,11 +64,12 @@ const Drawer = ({
   collapsedSize = 56,
   container,
   disableBackdrop = false,
+  overlay = true,
   boxShadow,
   children,
   ...others
 }: DrawerProps) => {
-  const isOverlay = variant === "fixed"
+  const isOverlay = variant === "fixed" && overlay
   const shouldUnmount = isOverlay && closeBehavior === "hidden"
 
   const [mounted, setMounted] = useState(open)

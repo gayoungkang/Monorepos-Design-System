@@ -17,35 +17,50 @@ type TableRowProps<T extends Record<string, unknown>> = {
   disabled?: boolean
 }
 /**---------------------------------------------------------------------------/
-
-* ! TableRow
-*
-* * Grid/Div 기반 테이블 구조에서 단일 행(row)을 렌더링하는 컴포넌트
-* * columns(gridTemplateColumns) 값을 TableTr로 전달하여 행 레이아웃을 그리드로 구성
-* * columnConfig 기반으로 각 셀(TableTd)을 생성하고 renderCell로 셀 콘텐츠 렌더링
-* * 행 선택(onRowSelect) 기능 지원 (row click 시 selected 토글)
-* * 셀 단위 클릭(column.onClick) 지원 (셀 클릭 시 이벤트 전파 차단)
-* * disabled 상태 지원 (row/cell 클릭 및 더블클릭 동작 차단)
-* * onDoubleClick 제공 시 행 더블클릭 이벤트 전달
-*
-* * 클릭 처리 우선순위
-*   * 행 클릭(handleRowClick): onRowSelect가 있을 때만 동작하며, column.disabled가 아닌 컬럼의 onClick을 선호출
-*   * 셀 클릭: column.onClick이 있을 때만 동작하며, row click 전파를 막고 개별 onClick 실행 + 선택 토글 처리
-*
-* * 셀 상태 계산
-*   * column.disabled가 함수면 row data 기반으로 평가, 아니면 boolean으로 처리
-*   * row disabled 또는 column disabled면 셀 disabled 처리
-*   * column.onClick 존재 + 셀 비활성 아님 -> clickable 스타일/핸들러 적용
-*
-* @module TableRow
-* Grid 기반 테이블에서 데이터 행을 구성하며, 행 선택/셀 클릭/더블클릭 인터랙션을 처리합니다.
-* - columns 값을 통해 행의 그리드 컬럼 폭을 상위 TableConfig와 동기화합니다.
-*
-* @usage
-* <TableRow tableKey="t1" index={0} data={row} columnConfig={cols} columns={columns} />
-* <TableRow onRowSelect={...} selected={selected} disabled={false} columns={columns} />
-
+ *
+ * ! TableRow
+ *
+ * * Grid 기반 테이블의 단일 행(Row) 렌더링 컴포넌트
+ * * TableTr(그리드 컨테이너) 내부에 컬럼 개수만큼 TableTd(셀)를 생성
+ * * tableKey/index를 이용해 셀 key를 안정적으로 구성
+ *
+ * * 행 선택(Row Select) 처리
+ *   * onRowSelect가 존재하고 disabled가 아닐 때 행 클릭으로 선택 토글
+ *   * handleRowClick: onRowSelect(data, index, !selected) 호출
+ *   * TableTr.selected는 "선택 기능 사용 여부"만 표현(Boolean(onRowSelect))
+ *   * 각 TableTd.selected는 "현재 선택 상태"를 표현(selected)
+ *
+ * * 셀 비활성/클릭 가능 여부 계산
+ *   * column.disabled가 함수면 row data 기반으로 평가, 아니면 Boolean 처리
+ *   * isCellDisabled = disabled || columnDisabled
+ *   * isClickable = column.onClick 존재 && !isCellDisabled
+ *   * 셀 클릭은 stopPropagation으로 행 클릭(선택 토글)과 분리
+ *
+ * * 정렬(align) 보정
+ *   * column.textAlign 값을 normalizeAlign로 정규화하여 TableTd align에 전달
+ *
+ * * 셀 렌더링 위임
+ *   * renderCell(column, data, index, isCellDisabled)로 셀 콘텐츠 렌더를 위임
+ *   * column type / custom renderer / disabled cell 처리 등은 TableCell 로직을 따른다
+ *
+ * @module TableRow
+ * Grid 테이블의 한 행을 렌더링합니다.
+ * - 행 선택(onRowSelect)과 셀 클릭(column.onClick)을 분리하여 동작합니다.
+ * - 컬럼 설정(columnConfig)을 기반으로 각 셀 렌더링을 TableCell에 위임합니다.
+ *
+ * @usage
+ * <TableRow
+ *   tableKey="users"
+ *   index={i}
+ *   data={row}
+ *   columnConfig={columns}
+ *   columns={gridColumns}
+ *   selected={selected}
+ *   onRowSelect={(row, i, s) => setSelectedMap(...)}
+ * />
+ *
 /---------------------------------------------------------------------------**/
+
 const TableRow = <T extends Record<string, unknown>>({
   tableKey,
   index,
@@ -57,36 +72,24 @@ const TableRow = <T extends Record<string, unknown>>({
   onDoubleClick,
   columns,
 }: TableRowProps<T>): JSX.Element => {
-  // * row 클릭 시 선택 토글 및 컬럼 onClick을 실행 (rowSelect 사용 시)
-  const handleRowClick = () => {
+  const handleRowClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!onRowSelect || disabled) return
-
-    const newSelected = !selected
-
-    columnConfig.forEach((column) => {
-      if (!column.disabled) column.onClick?.(data, index)
-    })
-
-    onRowSelect(data, index, newSelected)
+    onRowSelect(data, index, !Boolean(selected))
   }
 
   return (
     <TableTr
       columns={columns}
-      selected={onRowSelect ? true : false}
+      selected={Boolean(onRowSelect)}
       disabled={disabled}
+      rowData={data}
       onClick={onRowSelect && !disabled ? handleRowClick : undefined}
-      onDoubleClick={() => (!disabled ? onDoubleClick?.(data) : undefined)}
+      onDoubleClick={onDoubleClick}
     >
       {columnConfig.map((column, ci) => {
-        // * 컬럼 disabled 조건(function | boolean)을 row 데이터 기준으로 계산
         const columnDisabled =
           typeof column.disabled === "function" ? column.disabled(data) : Boolean(column.disabled)
-
-        // * row disabled + column disabled를 병합
         const isCellDisabled = Boolean(disabled || columnDisabled)
-
-        // * 셀 단위 onClick 활성 조건(핸들러 존재 + disabled 아님)
         const isClickable = Boolean(column.onClick) && !isCellDisabled
 
         return (
@@ -98,12 +101,11 @@ const TableRow = <T extends Record<string, unknown>>({
                 ? (e) => {
                     e.stopPropagation()
                     column.onClick?.(data, index)
-                    if (onRowSelect) onRowSelect(data, index, !selected)
                   }
                 : undefined
             }
             align={normalizeAlign(column.textAlign)}
-            selected={onRowSelect ? selected : false}
+            selected={Boolean(onRowSelect) ? Boolean(selected) : false}
             disabled={isCellDisabled}
           >
             {renderCell(column, data, index, isCellDisabled)}

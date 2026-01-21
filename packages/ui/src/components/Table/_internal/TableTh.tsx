@@ -71,7 +71,12 @@ const TableTh = ({
   }
 
   return (
-    <Root align={align} {...others}>
+    <Root
+      align={align}
+      role="columnheader"
+      aria-sort={sort ? (sort === "ASC" ? "ascending" : "descending") : "none"}
+      {...others}
+    >
       <Flex align="center" justify={align as any} gap={4} sx={{ minWidth: 0 }}>
         {typeof children === "string" ? (
           <Typography ellipsis text={children} sx={{ display: "inline-block", minWidth: 0 }} />

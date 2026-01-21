@@ -1,24 +1,21 @@
-import { useCallback, useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
-type IntersectHandler = (entry: IntersectionObserverEntry, observer: IntersectionObserver) => void
-
-export const useIntersect = (onIntersect: IntersectHandler, options?: IntersectionObserverInit) => {
-  const ref = useRef<HTMLDivElement>(null)
-  const callback = useCallback(
-    (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) onIntersect(entry, observer)
-      })
-    },
-    [onIntersect],
-  )
+const useIntersect = (onIntersect: () => void) => {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [enabled, setEnabled] = useState(true)
 
   useEffect(() => {
-    if (!ref.current) return
-    const observer = new IntersectionObserver(callback, options)
+    if (!enabled || !ref.current) return
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) onIntersect()
+    })
+
     observer.observe(ref.current)
     return () => observer.disconnect()
-  }, [ref, options, callback])
+  }, [enabled, onIntersect])
 
-  return ref
+  return { ref, enabled, setEnabled }
 }
+
+export default useIntersect
