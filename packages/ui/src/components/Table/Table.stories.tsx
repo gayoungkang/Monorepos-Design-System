@@ -6,14 +6,7 @@ import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
 import { Typography } from "../Typography/Typography"
 import Table from "./Table"
-import type {
-  TableProps,
-  SortDirection,
-  ColumnProps,
-  ColumnOnChangeType,
-  TableMode,
-  TableQuery,
-} from "./@Types/table"
+import type { TableProps, SortDirection, ColumnProps, TableMode } from "./@Types/table"
 import TableToolbar from "./_internal/TableToolBar"
 
 import Select from "../Select/Select"

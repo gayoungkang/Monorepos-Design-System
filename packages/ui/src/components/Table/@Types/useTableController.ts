@@ -1,50 +1,53 @@
+// useTableController.ts
 import { useEffect, useMemo, useRef, useState } from "react"
 
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
 
-const toCellText = (v: unknown) => {
-  if (v === null || v === undefined) return ""
-  if (typeof v === "string") return v
-  if (typeof v === "number" || typeof v === "boolean") return String(v)
-  try {
-    return JSON.stringify(v)
-  } catch {
-    return String(v)
-  }
+export type ServerTableSort = {
+  key: string
+  direction: "ASC" | "DESC"
+}
+
+export type ServerTableFilter = {
+  key: string
+  operator?: string
+  value?: unknown
 }
 
 export type ServerTableQuery = {
   page: number
   rowsPerPage: number
   keyword: string
+  sort?: ServerTableSort
+  filters?: ServerTableFilter[]
 }
 
-type Params<T extends Record<string, unknown>> = {
-  mode: "client" | "server"
+type TableConfig = {
+  page?: number
+  rowsPerPage?: number
+  rowsPerPageOptions?: number[]
+  totalCount?: number
+  handleOnRowsPerPageChange?: (e: any) => void
+}
+
+type Params = {
   disabled?: boolean
 
-  data: T[]
-  columnKeysForSearch: (keyof T)[]
+  tableConfig?: TableConfig
 
-  tableConfig?: {
-    page?: number
-    rowsPerPage?: number
-    rowsPerPageOptions?: number[]
-    totalCount?: number
-    handleOnRowsPerPageChange?: (e: any) => void
-  }
-
-  // external
   onPageChange?: (page: number) => void
   onRowsPerPageChange?: (rowsPerPage: number) => void
 
-  // search
   controlledKeyword?: string
   onKeywordChange?: (keyword: string) => void
 
-  // server query
+  sort?: ServerTableSort
+  filters?: ServerTableFilter[]
+
   onQueryChange?: (q: ServerTableQuery) => void
   searchDebounceMs?: number
+
+  maxRowsPerPageLimit?: number
 }
 
 const useDebouncedValue = <T>(value: T, delayMs: number) => {
@@ -56,12 +59,8 @@ const useDebouncedValue = <T>(value: T, delayMs: number) => {
   return debounced
 }
 
-export const useTableController = <T extends Record<string, unknown>>({
-  mode,
+export const useTableController = ({
   disabled,
-
-  data,
-  columnKeysForSearch,
 
   tableConfig,
 
@@ -71,14 +70,22 @@ export const useTableController = <T extends Record<string, unknown>>({
   controlledKeyword,
   onKeywordChange,
 
+  sort,
+  filters,
+
   onQueryChange,
   searchDebounceMs = 300,
-}: Params<T>) => {
-  const rowsPerPageOptions = useMemo(
-    () =>
-      tableConfig?.rowsPerPageOptions?.length ? tableConfig.rowsPerPageOptions : [10, 25, 50, 100],
-    [tableConfig?.rowsPerPageOptions],
-  )
+
+  maxRowsPerPageLimit = 200,
+}: Params) => {
+  const rowsPerPageOptions = useMemo(() => {
+    const base = tableConfig?.rowsPerPageOptions?.length
+      ? tableConfig.rowsPerPageOptions
+      : [10, 25, 50, 100]
+    const lim = Math.max(1, maxRowsPerPageLimit)
+    const filtered = base.filter((n) => Number.isFinite(n) && n > 0 && n <= lim)
+    return filtered.length ? filtered : [Math.min(100, lim)]
+  }, [tableConfig?.rowsPerPageOptions, maxRowsPerPageLimit])
 
   const [internalRowsPerPage, setInternalRowsPerPage] = useState<number>(
     Math.max(1, tableConfig?.rowsPerPage ?? rowsPerPageOptions[0] ?? 10),
@@ -90,8 +97,15 @@ export const useTableController = <T extends Record<string, unknown>>({
 
   const rowsPerPage = useMemo(() => {
     const rp = isControlledRowsPerPage ? (tableConfig?.rowsPerPage as number) : internalRowsPerPage
-    return Math.max(1, rp || rowsPerPageOptions[0] || 10)
-  }, [isControlledRowsPerPage, tableConfig?.rowsPerPage, internalRowsPerPage, rowsPerPageOptions])
+    const normalized = Math.max(1, rp || rowsPerPageOptions[0] || 10)
+    return clamp(normalized, 1, Math.max(1, maxRowsPerPageLimit))
+  }, [
+    isControlledRowsPerPage,
+    tableConfig?.rowsPerPage,
+    internalRowsPerPage,
+    rowsPerPageOptions,
+    maxRowsPerPageLimit,
+  ])
 
   const page = useMemo(() => {
     const p = isControlledPage ? (tableConfig?.page as number) : internalPage
@@ -102,20 +116,10 @@ export const useTableController = <T extends Record<string, unknown>>({
   const keyword = controlledKeyword ?? internalKeyword
   const debouncedKeywordForServer = useDebouncedValue(keyword ?? "", searchDebounceMs)
 
-  const filteredRows = useMemo(() => {
-    if (mode !== "client") return data
-    const q = (keyword ?? "").trim().toLowerCase()
-    if (!q) return data
-
-    return (data ?? []).filter((row) =>
-      columnKeysForSearch.some((k) => toCellText(row[k]).toLowerCase().includes(q)),
-    )
-  }, [mode, data, keyword, columnKeysForSearch])
-
-  const totalCount = useMemo(() => {
-    if (mode === "server") return Math.max(0, tableConfig?.totalCount ?? 0)
-    return Math.max(0, filteredRows.length ?? 0)
-  }, [mode, tableConfig?.totalCount, filteredRows.length])
+  const totalCount = useMemo(
+    () => Math.max(0, tableConfig?.totalCount ?? 0),
+    [tableConfig?.totalCount],
+  )
 
   const pageCount = useMemo(() => {
     if (totalCount <= 0) return 1
@@ -139,13 +143,6 @@ export const useTableController = <T extends Record<string, unknown>>({
     return { from, to }
   }, [totalCount, safePage, rowsPerPage])
 
-  const pageRows = useMemo(() => {
-    if (mode === "server") return data
-    const start = (safePage - 1) * rowsPerPage
-    const end = start + rowsPerPage
-    return filteredRows.slice(start, end)
-  }, [mode, data, filteredRows, safePage, rowsPerPage])
-
   const setPage = (nextPage: number) => {
     if (disabled) return
     const next = clamp(nextPage, 1, pageCount)
@@ -156,10 +153,12 @@ export const useTableController = <T extends Record<string, unknown>>({
   const setRowsPerPage = (nextRowsPerPage: number) => {
     if (disabled) return
 
-    tableConfig?.handleOnRowsPerPageChange?.({ target: { value: nextRowsPerPage } as any } as any)
-    onRowsPerPageChange?.(nextRowsPerPage)
+    const nextRp = clamp(Math.max(1, nextRowsPerPage), 1, Math.max(1, maxRowsPerPageLimit))
 
-    if (!isControlledRowsPerPage) setInternalRowsPerPage(nextRowsPerPage)
+    tableConfig?.handleOnRowsPerPageChange?.({ target: { value: nextRp } as any } as any)
+    onRowsPerPageChange?.(nextRp)
+
+    if (!isControlledRowsPerPage) setInternalRowsPerPage(nextRp)
 
     const nextPage = 1
     onPageChange?.(nextPage)
@@ -171,29 +170,29 @@ export const useTableController = <T extends Record<string, unknown>>({
     onKeywordChange?.(next)
     if (controlledKeyword === undefined) setInternalKeyword(next)
 
-    if (mode === "server") {
-      const nextPage = 1
-      onPageChange?.(nextPage)
-      if (!isControlledPage) setInternalPage(nextPage)
-    }
+    const nextPage = 1
+    onPageChange?.(nextPage)
+    if (!isControlledPage) setInternalPage(nextPage)
   }
 
   const lastQueryRef = useRef<string>("")
   useEffect(() => {
-    if (mode !== "server") return
     if (!onQueryChange) return
 
     const q: ServerTableQuery = {
       page: safePage,
       rowsPerPage,
       keyword: String(debouncedKeywordForServer ?? ""),
+      sort,
+      filters,
     }
-    const sig = `${q.page}|${q.rowsPerPage}|${q.keyword}`
+
+    const sig = JSON.stringify(q)
     if (sig === lastQueryRef.current) return
 
     lastQueryRef.current = sig
     onQueryChange(q)
-  }, [mode, onQueryChange, safePage, rowsPerPage, debouncedKeywordForServer])
+  }, [onQueryChange, safePage, rowsPerPage, debouncedKeywordForServer, sort, filters])
 
   return {
     rowsPerPageOptions,
@@ -203,9 +202,6 @@ export const useTableController = <T extends Record<string, unknown>>({
     totalCount,
     fromTo,
     keyword,
-
-    filteredRows,
-    pageRows,
 
     setPage,
     setRowsPerPage,

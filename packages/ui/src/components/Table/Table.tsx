@@ -1,8 +1,14 @@
-// Table.tsx (컨트롤러 훅으로 “서버 완전 제어형 파이프라인” + 리사이즈 RAF + 안정적인 key)
-import { JSX, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react"
+// Table.tsx
+import { JSX, useEffect, useMemo, useRef, useState } from "react"
 import Pagination from "../Pagination/Pagination"
 import { Typography } from "../Typography/Typography"
-import { SortDirection, TableProps } from "./@Types/table"
+import type {
+  ColumnProps,
+  ServerTableQuery,
+  SortDirection,
+  TableProps,
+  VirtualizedOptions,
+} from "./@Types/table"
 import TableContainer from "./_internal/TableContainer"
 import TableHead from "./_internal/TableHead"
 import TableRow from "./_internal/TableRow"
@@ -10,143 +16,158 @@ import TableTd from "./_internal/TableTd"
 import TableTh from "./_internal/TableTh"
 import TableTr from "./_internal/TableTr"
 import Flex from "../Flex/Flex"
-import ScrollBox from "../ScrollBox/ScrollBox"
-import { renderCell } from "./_internal/TableCell"
 import TableTotalRows from "./_internal/TableTotalRows"
 import TableRowsPerPage from "./_internal/TableRowsPerPage"
 import TableSummaryRow from "./_internal/TableSummaryRow"
 import Box from "../Box/Box"
 import { theme } from "../../tokens/theme"
-import { ExportType } from "./_internal/TableExport"
+import type { ExportType } from "./_internal/TableExport"
 import TableToolBar from "./_internal/TableToolBar"
-import { useTableController } from "./@Types/useTableController"
 
-const parseWidthToPx = (w?: string) => {
-  if (!w) return undefined
+const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
+const clampRowsPerPage = (v: number, limit = 200) =>
+  clamp(Math.max(1, Number(v || 1)), 1, Math.max(1, limit))
+
+const parseWidthToPx = (w?: string | number) => {
+  if (w === undefined || w === null) return undefined
+  if (typeof w === "number") return Number.isFinite(w) ? w : undefined
   const s = String(w).trim()
-  if (s.endsWith("px")) return Number(s.replace("px", ""))
+  if (s.endsWith("px")) {
+    const n = Number(s.replace("px", ""))
+    return Number.isFinite(n) ? n : undefined
+  }
   const n = Number(s)
   return Number.isFinite(n) ? n : undefined
 }
 
-const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
+const Table = <T extends Record<string, unknown>>(props: TableProps<T>): JSX.Element => {
+  const {
+    tableKey,
+    columnConfig,
+    data = [],
 
-const escapeCsv = (s: string) => {
-  const v = s ?? ""
-  if (/[",\n\r]/.test(v)) return `"${v.replace(/"/g, '""')}"`
-  return v
-}
+    // * server-controlled (single source of truth)
+    query,
+    totalCount,
+    rowsPerPageOptions = [10, 25, 50, 100],
+    onQueryChange,
 
-const toCellText = (v: unknown) => {
-  if (v === null || v === undefined) return ""
-  if (typeof v === "string") return v
-  if (typeof v === "number" || typeof v === "boolean") return String(v)
-  try {
-    return JSON.stringify(v)
-  } catch {
-    return String(v)
+    // * view-only row events
+    onRowClick,
+    rowActions,
+
+    // * layout
+    sticky = true,
+    height = 300,
+    emptyRowText,
+    disabled = false,
+    pagination,
+    totalRows = true,
+    rowsPer = true,
+    summaryRow,
+    customTableHeader,
+
+    // * toolbar
+    toolbar,
+
+    // * export (server job only)
+    exportEnabled = false,
+    exportItems,
+    excludeExportTypes,
+    onExport,
+    exportContext,
+
+    // * virtualization
+    virtualized,
+
+    ...baseProps
+  } = props
+
+  // ---------------------------------------------------------------------------
+  // * Controlled query normalization (rowsPerPage cap + page bounds)
+  // ---------------------------------------------------------------------------
+  const safeTotalCount = useMemo(() => Math.max(0, Number(totalCount ?? 0) || 0), [totalCount])
+
+  const safeRowsPerPageOptions = useMemo(() => {
+    const lim = 200
+    const out = (rowsPerPageOptions ?? [])
+      .filter((n) => Number.isFinite(n) && n > 0 && n <= lim)
+      .map((n) => Math.floor(n))
+    return out.length ? out : [Math.min(100, lim)]
+  }, [rowsPerPageOptions])
+
+  const safeRowsPerPage = useMemo(() => {
+    const fallback = safeRowsPerPageOptions[0] ?? 10
+    return clampRowsPerPage(query?.rowsPerPage ?? fallback, 200)
+  }, [query?.rowsPerPage, safeRowsPerPageOptions])
+
+  const pageCount = useMemo(() => {
+    if (safeTotalCount <= 0) return 1
+    return Math.max(1, Math.ceil(safeTotalCount / safeRowsPerPage))
+  }, [safeTotalCount, safeRowsPerPage])
+
+  const safePage = useMemo(
+    () => clamp(Math.max(1, Number(query?.page ?? 1) || 1), 1, pageCount),
+    [query?.page, pageCount],
+  )
+
+  useEffect(() => {
+    const nextKeyword = String(query?.keyword ?? "")
+    if (
+      (query?.page ?? 1) !== safePage ||
+      (query?.rowsPerPage ?? 0) !== safeRowsPerPage ||
+      (query?.keyword ?? "") !== nextKeyword
+    ) {
+      onQueryChange({
+        ...query,
+        page: safePage,
+        rowsPerPage: safeRowsPerPage,
+        keyword: nextKeyword,
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [safePage, safeRowsPerPage])
+
+  const emitQuery = (partial: Partial<ServerTableQuery>) => {
+    if (disabled) return
+
+    const next: ServerTableQuery = {
+      ...query,
+      page: partial.page ?? query.page,
+      rowsPerPage: partial.rowsPerPage ?? query.rowsPerPage,
+      keyword: partial.keyword ?? query.keyword,
+      sort: partial.sort ?? query.sort,
+      filters: partial.filters ?? query.filters,
+    }
+
+    const normalizedRowsPerPage = clampRowsPerPage(next.rowsPerPage, 200)
+    const normalizedPage = clamp(
+      Math.max(1, next.page || 1),
+      1,
+      Math.max(1, Math.ceil(safeTotalCount / normalizedRowsPerPage) || 1),
+    )
+
+    onQueryChange({
+      ...next,
+      page: normalizedPage,
+      rowsPerPage: normalizedRowsPerPage,
+      keyword: String(next.keyword ?? ""),
+    })
   }
-}
 
-const downloadBlob = (blob: Blob, filename: string) => {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
-}
-
-const Table = <T extends Record<string, unknown>>({
-  tableKey,
-  tableConfig,
-  columnConfig,
-  data = [],
-  pagination,
-  emptyRowText,
-  innerRef,
-  sticky = true,
-  height = 300,
-  renderRow,
-  customTableHeader,
-  onPageChange,
-  onRowsPerPageChange,
-  disabled = false,
-  totalRows = true,
-  rowsPer = true,
-  summaryRow,
-
-  mode = "client",
-
-  // search
-  searchEnabled = false,
-  searchPlaceholder,
-  searchKeys,
-  keyword: controlledKeyword,
-  onKeywordChange,
-  onQueryChange,
-
-  // export
-  exportEnabled = false,
-  exportScope = "all",
-  onExport,
-
-  ...baseProps
-}: TableProps<T> & {
-  onPageChange?: (page: number) => void
-  onRowsPerPageChange?: (rowsPerPage: number) => void
-  disabled?: boolean
-  height?: number
-  footer?: React.ReactNode
-  totalRows?: boolean
-  rowsPer?: boolean
-}): JSX.Element => {
-  const [insertRowActive, setInsertRowActive] = useState(false)
-
-  useImperativeHandle(innerRef, () => ({
-    insertRow: () => setInsertRowActive(true),
-    saveData: () => setInsertRowActive(false),
-  }))
-
-  const columnKeysForSearch = useMemo(() => {
-    const keys: (keyof T)[] = searchKeys?.length
-      ? (searchKeys as (keyof T)[])
-      : (columnConfig
-          .map((c) => c.key)
-          .filter((k): k is keyof T => k !== ("custom" as any)) as (keyof T)[])
-    return keys
-  }, [searchKeys, columnConfig])
-
-  const ctl = useTableController<T>({
-    mode: mode as any,
-    disabled,
-
-    data: data ?? [],
-    columnKeysForSearch,
-
-    tableConfig: tableConfig as any,
-
-    onPageChange,
-    onRowsPerPageChange,
-
-    controlledKeyword,
-    onKeywordChange,
-
-    onQueryChange: onQueryChange as any,
-    searchDebounceMs: 300,
-  })
-
-  // ---- column widths (grid) + drag resize (RAF) ----
+  // ---------------------------------------------------------------------------
+  // * Column widths + drag resize (RAF)
+  // ---------------------------------------------------------------------------
   const [colPx, setColPx] = useState<number[]>(() =>
-    columnConfig.map((c) => parseWidthToPx(c.width) ?? 160),
+    (columnConfig as ColumnProps<T>[]).map((c) => parseWidthToPx(c.width as any) ?? 160),
   )
 
   useEffect(() => {
     setColPx((prev) => {
       if (prev.length === columnConfig.length) return prev
-      return columnConfig.map((c, i) => prev[i] ?? parseWidthToPx(c.width) ?? 160)
+      return (columnConfig as ColumnProps<T>[]).map(
+        (c, i) => prev[i] ?? parseWidthToPx(c.width as any) ?? 160,
+      )
     })
   }, [columnConfig])
 
@@ -157,8 +178,8 @@ const Table = <T extends Record<string, unknown>>({
     startW: 0,
   })
 
-  const rafRef = useRef<number | null>(null)
-  const pendingWidthRef = useRef<{ colIndex: number; width: number } | null>(null)
+  const rafResizeRef = useRef<number | null>(null)
+  const pendingResizeRef = useRef<{ colIndex: number; width: number } | null>(null)
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -166,12 +187,12 @@ const Table = <T extends Record<string, unknown>>({
       const dx = e.clientX - dragRef.current.startX
       const nextW = clamp(dragRef.current.startW + dx, 60, 2000)
 
-      pendingWidthRef.current = { colIndex: dragRef.current.colIndex, width: nextW }
-      if (rafRef.current !== null) return
+      pendingResizeRef.current = { colIndex: dragRef.current.colIndex, width: nextW }
+      if (rafResizeRef.current !== null) return
 
-      rafRef.current = window.requestAnimationFrame(() => {
-        rafRef.current = null
-        const pending = pendingWidthRef.current
+      rafResizeRef.current = window.requestAnimationFrame(() => {
+        rafResizeRef.current = null
+        const pending = pendingResizeRef.current
         if (!pending) return
         setColPx((prev) => {
           const next = [...prev]
@@ -191,14 +212,12 @@ const Table = <T extends Record<string, unknown>>({
     return () => {
       window.removeEventListener("mousemove", onMove)
       window.removeEventListener("mouseup", onUp)
-      if (rafRef.current !== null) {
-        window.cancelAnimationFrame(rafRef.current)
-        rafRef.current = null
+      if (rafResizeRef.current !== null) {
+        window.cancelAnimationFrame(rafResizeRef.current)
+        rafResizeRef.current = null
       }
     }
   }, [])
-
-  const gridColumns = useMemo(() => colPx.map((w) => `${w}px`).join(" "), [colPx])
 
   const startResize = (colIndex: number) => (e: React.MouseEvent<HTMLDivElement>) => {
     if (disabled) return
@@ -207,184 +226,334 @@ const Table = <T extends Record<string, unknown>>({
     dragRef.current = { active: true, colIndex, startX: e.clientX, startW: colPx[colIndex] ?? 160 }
   }
 
-  const getSortValue = (
-    colSort?: boolean,
-    colSortDirection?: SortDirection,
-  ): SortDirection | undefined => {
+  const gridColumns = useMemo(() => {
+    const base = colPx.map((w) => `${w}px`).join(" ")
+    const actionCols = (rowActions?.length ?? 0) > 0 ? rowActions!.map(() => `80px`).join(" ") : ""
+    return actionCols ? `${base} ${actionCols}` : base
+  }, [colPx, rowActions])
+
+  // ---------------------------------------------------------------------------
+  // * Horizontal scroll sync (header/body/summary)
+  //   - Body only scrolls (overflow:auto)
+  //   - Header + Summary are outside body scroll, and sync by translateX(-scrollLeft)
+  // ---------------------------------------------------------------------------
+  const bodyScrollRef = useRef<HTMLDivElement | null>(null)
+  const rafScrollRef = useRef<number | null>(null)
+  const [scrollLeft, setScrollLeft] = useState(0)
+  const [scrollTop, setScrollTop] = useState(0)
+  const [viewportH, setViewportH] = useState(0)
+
+  useEffect(() => {
+    const el = bodyScrollRef.current
+    if (!el) return
+
+    const sync = () => {
+      setScrollLeft(el.scrollLeft)
+      setScrollTop(el.scrollTop)
+      setViewportH(el.clientHeight)
+    }
+
+    sync()
+
+    const onScroll = () => {
+      if (rafScrollRef.current !== null) return
+      rafScrollRef.current = window.requestAnimationFrame(() => {
+        rafScrollRef.current = null
+        sync()
+      })
+    }
+
+    el.addEventListener("scroll", onScroll, { passive: true })
+
+    let ro: ResizeObserver | null = null
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => sync())
+      ro.observe(el)
+    } else {
+      window.addEventListener("resize", sync)
+    }
+
+    return () => {
+      el.removeEventListener("scroll", onScroll as any)
+      if (ro) ro.disconnect()
+      else window.removeEventListener("resize", sync)
+      if (rafScrollRef.current !== null) {
+        window.cancelAnimationFrame(rafScrollRef.current)
+        rafScrollRef.current = null
+      }
+    }
+  }, [])
+
+  // ---------------------------------------------------------------------------
+  // * Virtualization (fixed rowHeight + overscan) - body rows only
+  // ---------------------------------------------------------------------------
+  const vOpt: VirtualizedOptions | undefined = virtualized?.enabled ? virtualized : undefined
+  const rowHeight = vOpt?.rowHeight ?? 0
+  const overscan = vOpt?.overscan ?? 6
+  const totalRowsCount = data?.length ?? 0
+
+  const virtualRange = useMemo(() => {
+    if (!vOpt || rowHeight <= 0) return { start: 0, end: totalRowsCount, padTop: 0, padBottom: 0 }
+
+    const start = clamp(
+      Math.floor(scrollTop / rowHeight) - overscan,
+      0,
+      Math.max(0, totalRowsCount),
+    )
+    const visibleCount = Math.ceil(viewportH / rowHeight) + overscan * 2
+    const end = clamp(start + visibleCount, 0, Math.max(0, totalRowsCount))
+    const padTop = start * rowHeight
+    const padBottom = Math.max(0, (totalRowsCount - end) * rowHeight)
+
+    return { start, end, padTop, padBottom }
+  }, [vOpt, rowHeight, overscan, scrollTop, viewportH, totalRowsCount])
+
+  const visibleRows = useMemo(() => {
+    if (!vOpt) return data ?? []
+    return (data ?? []).slice(virtualRange.start, virtualRange.end)
+  }, [vOpt, data, virtualRange.start, virtualRange.end])
+
+  // ---------------------------------------------------------------------------
+  // * Sort (server trigger only)
+  // ---------------------------------------------------------------------------
+  const getSortValue = (colSort?: boolean, colSortDirection?: SortDirection) => {
     if (!colSort) return undefined
     return colSortDirection ?? "ASC"
   }
 
-  const getRowKey = (row: T, index: number) => {
-    const anyRow: any = row as any
-    const candidate = anyRow?.id ?? anyRow?.key ?? anyRow?._id ?? anyRow?.rowId
-    return candidate !== undefined && candidate !== null
-      ? String(candidate)
-      : `${tableKey}_${index}`
-  }
-
-  // ----- export: server 우선(제어형), client fallback은 유지하되 “대규모”면 사용처에서 onExport 권장 -----
-  const doExportClientCsv = (scope: "page" | "all") => {
-    const rowsForExport = scope === "page" ? ctl.pageRows : ctl.filteredRows
-    const cols = columnConfig.filter((c) => c.key !== ("custom" as any))
-
-    const header = cols.map((c) => escapeCsv(String(c.title ?? ""))).join(",")
-    const lines = rowsForExport.map((row) =>
-      cols
-        .map((c) => {
-          const v = row[c.key as keyof T]
-          return escapeCsv(toCellText(v))
-        })
-        .join(","),
-    )
-
-    const csv = [header, ...lines].join("\r\n")
-    downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${tableKey}.csv`)
-  }
-
+  // ---------------------------------------------------------------------------
+  // * Export (server job only)
+  // ---------------------------------------------------------------------------
   const handleExport = (type: ExportType) => {
     if (!exportEnabled || disabled) return
+    if (!onExport) return
 
-    const scope = exportScope ?? "all"
-    const payload = {
-      scope,
-      keyword: ctl.keyword ?? "",
-      page: ctl.page,
-      rowsPerPage: ctl.rowsPerPage,
-    }
+    const baseCtx =
+      exportContext && typeof exportContext === "object"
+        ? (exportContext as Record<string, unknown>)
+        : ({} as Record<string, unknown>)
 
-    if (mode === "server") {
-      onExport?.(type, payload as any)
-      return
-    }
-
-    if (onExport) {
-      onExport(type, payload as any)
-      return
-    }
-
-    if (type === "csv") doExportClientCsv(scope)
-  }
-
-  const renderHead = () => (
-    <TableHead sticky={sticky} top={"0px"}>
-      {customTableHeader?.length ? null : null}
-      <TableTr columns={gridColumns} disabled={disabled}>
-        {columnConfig.map((col, idx) => {
-          const sortValue = getSortValue(col.sort, col.sortDirection)
-          const sortEnabled = !disabled && col.sort && col.onSortChange
-
-          return (
-            <TableTh
-              key={`${tableKey}_th_${String(col.title)}_${idx}`}
-              align={col.textAlign as any}
-              sort={sortEnabled ? sortValue : undefined}
-              onSortChange={
-                sortEnabled
-                  ? (nextDirection) => col.onSortChange?.(col.key as keyof T, nextDirection)
-                  : undefined
-              }
-              resizable={!disabled}
-              onResizeStart={startResize(idx)}
-              sx={{ userSelect: "none" }}
-            >
-              {col.title}
-            </TableTh>
-          )
-        })}
-      </TableTr>
-    </TableHead>
-  )
-
-  const renderSummaryRows = () => {
-    if (!summaryRow?.enabled) return null
-    return (
-      <TableSummaryRow
-        tableKey={tableKey}
-        columns={columnConfig}
-        rows={mode === "server" ? [] : ctl.filteredRows}
-        config={summaryRow as any}
-        disabled={disabled}
-        gridColumns={gridColumns}
-      />
+    onExport(
+      type as any,
+      {
+        ...baseCtx,
+        page: safePage,
+        rowsPerPage: safeRowsPerPage,
+        keyword: String(query.keyword ?? ""),
+        sort: query.sort,
+        filters: query.filters,
+      } as any,
     )
   }
 
-  const renderBody = () => {
-    if (ctl.pageRows.length === 0) {
+  // ---------------------------------------------------------------------------
+  // * Summary visibility + layout (no sticky; always visible at bottom)
+  // ---------------------------------------------------------------------------
+  const summaryEnabled = Boolean(summaryRow?.enabled && (summaryRow as any)?.data?.length)
+  const summaryLineCount = summaryEnabled ? ((summaryRow as any)?.rows?.length ?? 0) : 0
+  const summaryRowHeight = 32
+  const summaryHeight = summaryEnabled ? summaryLineCount * summaryRowHeight : 0
+
+  // ---------------------------------------------------------------------------
+  // * Pagination label
+  // ---------------------------------------------------------------------------
+  const fromTo = useMemo(() => {
+    if (safeTotalCount <= 0) return { from: 0, to: 0 }
+    const from = (safePage - 1) * safeRowsPerPage + 1
+    const to = Math.min(safeTotalCount, safePage * safeRowsPerPage)
+    return { from, to }
+  }, [safeTotalCount, safePage, safeRowsPerPage])
+
+  const paginationLabel = useMemo(
+    () => `${fromTo.from}–${fromTo.to} of ${safeTotalCount}`,
+    [fromTo.from, fromTo.to, safeTotalCount],
+  )
+
+  // ---------------------------------------------------------------------------
+  // * Header / Body / Summary renderers
+  // ---------------------------------------------------------------------------
+  const headerInnerStyle: React.CSSProperties = useMemo(
+    () => ({
+      transform: `translateX(${-scrollLeft}px)`,
+      willChange: "transform",
+    }),
+    [scrollLeft],
+  )
+
+  const renderHeader = () => {
+    return (
+      <div style={{ position: "relative", overflow: "hidden" }}>
+        <div style={headerInnerStyle}>
+          <TableHead sticky={sticky} top={"0px"}>
+            {customTableHeader ?? null}
+            <TableTr columns={gridColumns} disabled={disabled}>
+              {(columnConfig as ColumnProps<T>[]).map((col, idx) => {
+                const sortValue = getSortValue(col.sort, col.sortDirection)
+                const sortEnabled = !disabled && col.sort && col.onSortChange
+
+                return (
+                  <TableTh
+                    key={`${tableKey}_th_${String(col.title)}_${idx}`}
+                    align={col.textAlign as any}
+                    sort={sortEnabled ? sortValue : undefined}
+                    onSortChange={
+                      sortEnabled
+                        ? (nextDirection) => col.onSortChange?.(col.key as keyof T, nextDirection)
+                        : undefined
+                    }
+                    resizable={!disabled}
+                    onResizeStart={startResize(idx)}
+                    sx={{ userSelect: "none" }}
+                  >
+                    {col.title}
+                  </TableTh>
+                )
+              })}
+
+              {(rowActions?.length ?? 0) > 0
+                ? rowActions!.map((a) => (
+                    <TableTh
+                      key={`${tableKey}_th_action_${a.key}`}
+                      align="center"
+                      sx={{ userSelect: "none" }}
+                    >
+                      {""}
+                    </TableTh>
+                  ))
+                : null}
+            </TableTr>
+          </TableHead>
+        </div>
+      </div>
+    )
+  }
+
+  const renderBodyRowsOnly = () => {
+    if ((data ?? []).length === 0) {
       return (
-        <>
-          <TableTr columns={gridColumns} disabled={disabled}>
-            <TableTd colSpan={columnConfig.length} align="center" disabled={disabled}>
-              <Typography
-                text={emptyRowText ?? "검색 결과가 없습니다."}
-                align="center"
-                sx={{ display: "inline-block" }}
-              />
-            </TableTd>
-          </TableTr>
-          {renderSummaryRows()}
-        </>
+        <TableTr columns={gridColumns} disabled={disabled}>
+          <TableTd
+            colSpan={(columnConfig?.length ?? 0) + (rowActions?.length ?? 0)}
+            align="center"
+            disabled={disabled}
+          >
+            <Typography
+              text={emptyRowText ?? "검색 결과가 없습니다."}
+              align="center"
+              sx={{ display: "inline-block" }}
+            />
+          </TableTd>
+        </TableTr>
       )
     }
 
     return (
       <>
-        {ctl.pageRows.map((row, ri) =>
-          renderRow ? (
-            renderRow(row, ri)
-          ) : (
+        {vOpt ? <div style={{ height: virtualRange.padTop }} /> : null}
+
+        {(visibleRows ?? []).map((row, ri) => {
+          const realIndex = vOpt ? virtualRange.start + ri : ri
+
+          const keyCandidate: any =
+            (row as any)?.id ?? (row as any)?.key ?? (row as any)?._id ?? (row as any)?.rowId
+          const rowKey =
+            keyCandidate !== undefined && keyCandidate !== null
+              ? String(keyCandidate)
+              : `${tableKey}_${realIndex}`
+
+          return (
             <TableRow
-              key={`${tableKey}_row_${getRowKey(row, ri)}`}
-              columnConfig={columnConfig}
-              data={row}
-              index={ri}
+              key={`${tableKey}_row_${rowKey}`}
+              columnConfig={columnConfig as any}
+              data={row as any}
+              index={realIndex}
               tableKey={tableKey}
               disabled={disabled}
               columns={gridColumns}
+              onRowClick={onRowClick as any}
+              rowActions={rowActions as any}
             />
-          ),
-        )}
+          )
+        })}
 
-        {insertRowActive && (
-          <TableTr columns={gridColumns} disabled={disabled}>
-            {columnConfig.map((col, ci) => (
-              <TableTd key={`${tableKey}_insert_${ci}`} disabled>
-                {renderCell(col, {} as T, -1, true)}
-              </TableTd>
-            ))}
-          </TableTr>
-        )}
-
-        {renderSummaryRows()}
+        {vOpt ? <div style={{ height: virtualRange.padBottom }} /> : null}
       </>
     )
   }
 
-  const paginationLabel = useMemo(
-    () => `${ctl.fromTo.from}–${ctl.fromTo.to} of ${ctl.totalCount}`,
-    [ctl.fromTo.from, ctl.fromTo.to, ctl.totalCount],
-  )
+  const renderSummary = () => {
+    if (!summaryEnabled) return null
+
+    return (
+      <div style={{ position: "relative", overflow: "hidden" }}>
+        <div style={headerInnerStyle}>
+          <TableSummaryRow
+            tableKey={tableKey}
+            columns={columnConfig as any}
+            rows={[] as any}
+            config={summaryRow as any}
+            disabled={disabled}
+            gridColumns={gridColumns}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // ---------------------------------------------------------------------------
+  // * Toolbar conditions
+  // ---------------------------------------------------------------------------
+  const shouldRenderToolbar =
+    Boolean(toolbar?.searchEnabled) ||
+    Boolean(toolbar?.filterEnabled) ||
+    Boolean(toolbar?.columnVisibilityEnabled) ||
+    Boolean(exportEnabled && onExport && (exportItems?.length ?? 0) > 0)
 
   return (
     <>
-      {(searchEnabled || exportEnabled) && (
+      {shouldRenderToolbar ? (
         <TableToolBar
+          {...(toolbar as any)}
           disabled={disabled}
-          searchEnabled={searchEnabled}
-          searchValue={ctl.keyword}
-          searchPlaceholder={searchPlaceholder}
-          onSearchChange={ctl.setKeyword}
+          title={toolbar?.title}
+          searchValue={String(query.keyword ?? "")}
+          onSearchChange={(v) => emitQuery({ keyword: v, page: 1 })}
           exportEnabled={exportEnabled}
-          onExport={handleExport as any}
+          exportItems={exportItems as any}
+          excludeExportTypes={excludeExportTypes as any}
+          onExport={onExport ? (type: any, ctx: unknown) => handleExport(type) : undefined}
+          exportContext={exportContext}
         />
-      )}
+      ) : null}
 
       <TableContainer {...baseProps}>
-        <ScrollBox maxHeight={height}>
-          {renderHead()}
-          <Box>{renderBody()}</Box>
-        </ScrollBox>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            height,
+            minHeight: 0,
+            width: "100%",
+            background: theme.colors.grayscale.white,
+          }}
+        >
+          {renderHeader()}
+
+          <div
+            ref={bodyScrollRef}
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflow: "auto",
+              // * Summary가 항상 보이므로 본문과 겹침 방지용 패딩
+              paddingBottom: summaryHeight,
+            }}
+          >
+            <Box>{renderBodyRowsOnly()}</Box>
+          </div>
+
+          {renderSummary()}
+        </div>
       </TableContainer>
 
       <Flex
@@ -400,30 +569,33 @@ const Table = <T extends Record<string, unknown>>({
         }}
       >
         <Flex align="center" gap={4}>
-          {rowsPer && (
+          {rowsPer ? (
             <TableRowsPerPage
-              rowsPerPage={ctl.rowsPerPage}
-              rowsPerPageOptions={ctl.rowsPerPageOptions}
-              onRowsPerPageChange={ctl.setRowsPerPage}
+              rowsPerPage={safeRowsPerPage}
+              rowsPerPageOptions={safeRowsPerPageOptions}
+              onRowsPerPageChange={(rp) =>
+                emitQuery({ rowsPerPage: clampRowsPerPage(rp, 200), page: 1 })
+              }
               disabled={disabled}
+              maxRowsPerPageLimit={200}
             />
-          )}
-          {totalRows && <TableTotalRows ml={4} totalRows={ctl.totalCount} />}
+          ) : null}
+          {totalRows ? <TableTotalRows ml={4} totalRows={safeTotalCount} /> : null}
         </Flex>
 
-        {pagination && (
+        {pagination ? (
           <Pagination
             type={pagination as any}
             disabled={disabled}
-            count={ctl.totalCount}
-            page={ctl.page}
-            pageCount={ctl.pageCount}
-            onPageChange={ctl.setPage}
+            count={safeTotalCount}
+            page={safePage}
+            pageCount={pageCount}
+            onPageChange={(p) => emitQuery({ page: p })}
             labelDisplayedRows={() => paginationLabel}
             showPrevNextButtons
             showFirstLastButtons
           />
-        )}
+        ) : null}
       </Flex>
     </>
   )

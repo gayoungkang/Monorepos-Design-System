@@ -1,21 +1,15 @@
-import { useMemo, useState } from "react"
-import Badge from "../../Badge/Badge"
+import { ReactNode, useState } from "react"
 import Flex from "../../Flex/Flex"
 import IconButton from "../../IconButton/IconButton"
+import Divider from "../../Divider/Divider"
+
+import TableSearch from "./TableSearch"
+import TableColumnVisible from "./TableColumnVisible"
+import TableFilter from "./TableFilter"
+import Badge from "../../Badge/Badge"
 import { Typography } from "../../Typography/Typography"
 import { theme } from "../../../tokens/theme"
-import Divider from "../../Divider/Divider"
-import TableExport, { DefaultExportType, ExportItem, ExportType } from "./TableExport"
-import TableColumnVisible, { ColumnVisibilityItem } from "./TableColumnVisible"
-import TableFilter from "./TableFilter"
-import type { TableFilterProps } from "./TableFilter"
-import TableSearch from "./TableSearch"
-
-export type TableExportContext = {
-  visibleColumnKeys: string[]
-  hiddenColumnKeys: string[]
-  hiddenColumns: ColumnVisibilityItem[]
-}
+import TableExport from "./TableExport"
 
 export type TableToolBarProps<TExtraExportType extends string = never> = {
   title?: string
@@ -29,89 +23,36 @@ export type TableToolBarProps<TExtraExportType extends string = never> = {
 
   // export
   exportEnabled?: boolean
-  exportItems?: ExportItem<ExportType<TExtraExportType>>[]
-  defaultExportTypes?: DefaultExportType[]
-  excludeExportTypes?: ExportType<TExtraExportType>[]
-  onExport?: (type: ExportType<TExtraExportType>, context?: TableExportContext) => void
+  exportItems?: { type: any; label: string; icon?: string }[]
+  excludeExportTypes?: any[]
+  onExport?: (type: any, ctx: unknown) => void
+  exportContext?: unknown
 
-  // column
+  // columns visible
   columnVisibilityEnabled?: boolean
-  columns?: ColumnVisibilityItem[]
+  columns?: { key: string; title: string; hideable?: boolean }[]
   visibleColumnKeys?: string[]
   defaultVisibleColumnKeys?: string[]
   onVisibleColumnKeysChange?: (keys: string[]) => void
-  onHiddenColumnKeysChange?: (hiddenKeys: string[], hiddenColumns: ColumnVisibilityItem[]) => void
+  onHiddenColumnKeysChange?: (hiddenKeys: string[], hiddenColumns: any[]) => void
   columnsSkeletonEnabled?: boolean
   columnsSkeletonCount?: number
 
   // filter
-  filterEnabled?: TableFilterProps["filterEnabled"]
-  filterActiveCount?: TableFilterProps["filterActiveCount"]
-  filterOpen?: TableFilterProps["filterOpen"]
-  onFilterOpenChange?: TableFilterProps["onFilterOpenChange"]
-  filterDrawerVariant?: TableFilterProps["filterDrawerVariant"]
-  filterDrawerPlacement?: TableFilterProps["filterDrawerPlacement"]
-  filterDrawerWidth?: TableFilterProps["filterDrawerWidth"]
-  filterDrawerHeight?: TableFilterProps["filterDrawerHeight"]
-  filterSkeletonEnabled?: TableFilterProps["filterSkeletonEnabled"]
-  filterSkeletonCount?: TableFilterProps["filterSkeletonCount"]
-  onFilterSearch?: TableFilterProps["onFilterSearch"]
-  onFilterReset?: TableFilterProps["onFilterReset"]
-  filterContent?: TableFilterProps["filterContent"]
+  filterEnabled?: boolean
+  filterActiveCount?: number
+  filterOpen?: boolean
+  onFilterOpenChange?: (open: boolean) => void
+  filterDrawerVariant?: any
+  filterDrawerPlacement?: any
+  filterDrawerWidth?: number | string
+  filterDrawerHeight?: number | string
+  filterSkeletonEnabled?: boolean
+  filterSkeletonCount?: number
+  onFilterSearch?: () => void
+  onFilterReset?: () => void
+  filterContent?: ReactNode
 }
-/**---------------------------------------------------------------------------/
- *
- * ! TableToolBar
- *
- * * 테이블 상단 툴바 UI를 제공하는 컴포넌트(컬럼 표시/필터/내보내기/검색)
- * * filterDrawerCloseBehavior 옵션/처리는 프로젝트 규칙에 따라 제거된 버전
- *
- * * 구성 요소
- *   * Title: title이 있을 때 좌측에 타이틀 표시(Typography)
- *   * ColumnVisible: 숨김 컬럼 선택 UI(TableColumnVisible) 렌더
- *   * Filter: 필터 토글 버튼 + 하단 필터 패널(TableFilter, hideTrigger로 트리거 숨김) 렌더
- *   * Export: 내보내기 메뉴(TableExport) 렌더
- *   * Search: 검색 토글 입력(TableSearch) 렌더
- *
- * * filter open 제어
- *   * filterOpen이 undefined면 내부 상태(uncontrolledFilterOpen)로 관리
- *   * filterOpen이 주어지면 controlled로 동작하며 onFilterOpenChange로 위임
- *   * setFilterOpenSafe는 disabled/filterEnabled 조건을 먼저 체크한 뒤 open 상태를 안전하게 갱신
- *
- * * exportContext 계산
- *   * columns 중 hideable !== false 인 컬럼만 대상으로 visible/hidden을 계산
- *   * visibleColumnKeys가 controlled로 주어지면 해당 값을 사용
- *   * 없으면 defaultVisibleColumnKeys → allHideableKeys 순으로 fallback
- *   * onHiddenColumnKeysChange를 통해 들어온 최신 hidden 결과(hiddenColumnKeysState/hiddenColumnsState)가
- *     존재하면 우선 적용하여 컨트롤드/비동기 갱신 타이밍을 보정
- *   * 최종 context(visibleColumnKeys/hiddenColumnKeys/hiddenColumns)를 onExport에 전달
- *
- * * hidden 상태 동기화
- *   * TableColumnVisible에서 onHiddenColumnKeysChange가 호출되면
- *     내부 상태(hiddenColumnKeysState/hiddenColumnsState)를 갱신하고
- *     외부 onHiddenColumnKeysChange도 함께 호출
- *
- * * 레이아웃/스타일
- *   * 상단 툴바는 Flex로 좌우 배치(타이틀 / 우측 액션)
- *   * 배경 흰색, 보더, 라운드, zIndex(tooltip)로 오버레이 대비
- *   * 각 액션 그룹 사이에 Divider(vertical)로 구분선을 제공
- *
- * @module TableToolBar
- * 테이블 툴바(컬럼/필터/내보내기/검색)를 렌더링합니다.
- * - 필터는 TableFilter를 하단에 렌더링하며, 상단 트리거는 hideTrigger로 숨깁니다.
- * - 내보내기 시 현재 컬럼 표시/숨김 상태(exportContext)를 함께 전달할 수 있습니다.
- *
- * @usage
- * <TableToolBar
- *   title="Users"
- *   columns={columns}
- *   onExport={(type, ctx) => export(type, ctx)}
- *   filterContent={<FilterForm />}
- *   onFilterSearch={applyFilter}
- *   onFilterReset={resetFilter}
- * />
- *
-/---------------------------------------------------------------------------**/
 
 const TableToolBar = <TExtraExportType extends string = never>({
   title,
@@ -124,7 +65,6 @@ const TableToolBar = <TExtraExportType extends string = never>({
 
   exportEnabled = true,
   exportItems,
-  defaultExportTypes = ["excel", "csv", "pdf", "print"],
   excludeExportTypes,
   onExport,
 
@@ -150,46 +90,13 @@ const TableToolBar = <TExtraExportType extends string = never>({
   onFilterSearch,
   onFilterReset,
   filterContent,
+
+  exportContext,
 }: TableToolBarProps<TExtraExportType>) => {
-  // * filterOpen이 주어지면 controlled 모드로 동작
-  const isFilterControlled = filterOpen !== undefined
   const [uncontrolledFilterOpen, setUncontrolledFilterOpen] = useState(false)
-  const effectiveFilterOpen = isFilterControlled ? Boolean(filterOpen) : uncontrolledFilterOpen
+  const isFilterControlled = typeof filterOpen === "boolean"
+  const effectiveFilterOpen = isFilterControlled ? (filterOpen as boolean) : uncontrolledFilterOpen
 
-  // * 컬럼 숨김 결과를 export context로 전달하기 위한 내부 상태(최신값 유지)
-  const [hiddenColumnKeysState, setHiddenColumnKeysState] = useState<string[]>([])
-  const [hiddenColumnsState, setHiddenColumnsState] = useState<ColumnVisibilityItem[]>([])
-
-  // * export에 전달할 컨텍스트(visible/hidden 계산)
-  const exportContext = useMemo<TableExportContext>(() => {
-    const hideableColumns = (columns ?? []).filter((c) => c.hideable !== false)
-    const allHideableKeys = hideableColumns.map((c) => c.key)
-
-    const fallback = defaultVisibleColumnKeys?.length ? defaultVisibleColumnKeys : allHideableKeys
-    const effectiveVisibleKeys =
-      (visibleColumnKeys !== undefined ? visibleColumnKeys : fallback) ?? []
-
-    const visibleSet = new Set(effectiveVisibleKeys)
-    const computedHiddenKeys = allHideableKeys.filter((k) => !visibleSet.has(k))
-    const computedHiddenColumns = hideableColumns.filter((c) => computedHiddenKeys.includes(c.key))
-
-    const hiddenKeys = hiddenColumnKeysState.length ? hiddenColumnKeysState : computedHiddenKeys
-    const hiddenCols = hiddenColumnsState.length ? hiddenColumnsState : computedHiddenColumns
-
-    return {
-      visibleColumnKeys: effectiveVisibleKeys,
-      hiddenColumnKeys: hiddenKeys,
-      hiddenColumns: hiddenCols,
-    }
-  }, [
-    columns,
-    visibleColumnKeys,
-    defaultVisibleColumnKeys,
-    hiddenColumnKeysState,
-    hiddenColumnsState,
-  ])
-
-  // * disabled/filterEnabled/controlled 여부를 고려하여 open 상태를 안전하게 갱신
   const setFilterOpenSafe = (next: boolean) => {
     if (disabled) return
     if (!filterEnabled) return
@@ -202,12 +109,15 @@ const TableToolBar = <TExtraExportType extends string = never>({
     setUncontrolledFilterOpen(next)
   }
 
+  // * 서버 export job만 허용: onExport 없으면 숨김
+  const canExport = Boolean(exportEnabled && onExport && (exportItems?.length ?? 0) > 0)
+
   return (
     <>
       <Flex
         align="center"
         justify="space-between"
-        mb={2}
+        mb={0}
         p={"2px 5px"}
         bgColor={theme.colors.grayscale.white}
         sx={{
@@ -230,11 +140,7 @@ const TableToolBar = <TExtraExportType extends string = never>({
               visibleColumnKeys={visibleColumnKeys}
               defaultVisibleColumnKeys={defaultVisibleColumnKeys}
               onVisibleColumnKeysChange={onVisibleColumnKeysChange}
-              onHiddenColumnKeysChange={(hiddenKeys, hiddenColumns) => {
-                setHiddenColumnKeysState(hiddenKeys)
-                setHiddenColumnsState(hiddenColumns)
-                onHiddenColumnKeysChange?.(hiddenKeys, hiddenColumns)
-              }}
+              onHiddenColumnKeysChange={onHiddenColumnKeysChange}
               columnsSkeletonEnabled={columnsSkeletonEnabled}
               columnsSkeletonCount={columnsSkeletonCount}
               onBeforeOpen={() => {}}
@@ -261,14 +167,13 @@ const TableToolBar = <TExtraExportType extends string = never>({
             </Flex>
           ) : null}
 
-          {exportEnabled ? (
+          {canExport ? (
             <Flex align="center" gap={6}>
               <Divider direction="vertical" height={17} thickness="1px" />
               <TableExport<TExtraExportType>
                 disabled={disabled}
                 exportEnabled={exportEnabled}
                 exportItems={exportItems}
-                defaultExportTypes={defaultExportTypes}
                 excludeExportTypes={excludeExportTypes}
                 onExport={(type) => onExport?.(type, exportContext)}
                 onBeforeOpen={() => {}}

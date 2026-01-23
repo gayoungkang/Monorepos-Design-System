@@ -1,130 +1,154 @@
-import type { CSSProperties, ReactNode, Ref } from "react"
-import type React from "react"
-import { PaginationType } from "../../Pagination/Pagination"
-import { BaseMixinProps } from "packages/ui/src/tokens/baseMixin"
-import { SummaryRowProps } from "../_internal/TableSummaryRow"
-import { ExportType } from "../_internal/TableExport"
+// @Types/table.ts
+import type { ReactNode } from "react"
+import type { BaseMixinProps } from "../../../tokens/baseMixin"
+import type { AxisPlacement } from "../../../types"
 
 export type SortDirection = "ASC" | "DESC"
 export type TableCellAlign = "left" | "center" | "right"
-export type TableMode = "client" | "server"
-export type ExportScope = "page" | "all"
 
-export const CellType = {
-  Default: "Default",
-  TextField: "TextField",
-  Button: "Button",
-  CheckBox: "CheckBox",
-  IconButton: "IconButton",
-  Accordion: "Accordion",
-} as const
+export type TableMode = "server"
 
-export type CellTypeKey = keyof typeof CellType
-
-export type CustomTableHeaderProps = {
-  title: string
-  colspan: number
-  rowspan?: number
-  align?: "left" | "center" | "right"
+export type ServerTableSort = {
+  key: string
+  direction: SortDirection
 }
 
-export type SelectChangeEvent<T = number> = React.ChangeEvent<HTMLSelectElement> & {
-  target: EventTarget & { value: T }
+export type ServerTableFilter = {
+  key: string
+  operator?: string
+  value?: unknown
 }
 
-export type ColumnOnChangeType<T> = {
-  type: keyof typeof CellType
-  rowIndex: number
+export type ServerTableQuery = {
+  page: number // 1-based
+  rowsPerPage: number
+  keyword: string
+  sort?: ServerTableSort
+  filters?: ServerTableFilter[]
+}
+
+export type VirtualizedOptions = {
+  enabled?: boolean
+  rowHeight: number
+  overscan?: number
+}
+
+export type ColumnProps<T extends Record<string, unknown>> = {
   key: keyof T
-  changeValue: string | boolean
-}
+  title: ReactNode
+  width?: number | string
+  textAlign?: TableCellAlign | "start" | "end"
 
-export type ColumnProps<T> = {
-  key: keyof T | "custom"
-  title: string
-  type?: keyof typeof CellType
-  width?: string
-  textAlign?: CSSProperties["textAlign"]
-  onClick?: (data: T, index: number) => void
-  renderCellTitle?: string
-  onChange?: (data: ColumnOnChangeType<T>) => void
-  renderCustomCell?: (data: T) => React.ReactNode
+  disabled?: boolean | ((row: T) => boolean)
+
+  // server-sort only (UI trigger only)
   sort?: boolean
   sortDirection?: SortDirection
   onSortChange?: (key: keyof T, direction: SortDirection) => void
-  disabled?: boolean | ((data: T) => boolean)
-  renderAccordionSummary?: (row: T) => ReactNode
-  renderAccordionDetails?: (row: T) => ReactNode
-  accordionDefaultExpanded?: boolean
+
+  // view-only (no inputs)
+  render?: (row: T, index: number, ctx: { disabled: boolean }) => ReactNode
 }
 
-export type TableConfig = {
-  totalCount?: number
-  rowsPerPageOptions?: number[]
-  rowsPerPage?: number
-  page?: number
-  handleOnRowsPerPageChange?: (event: SelectChangeEvent<number>) => void
+export type TableRowAction<T extends Record<string, unknown>> = {
+  key: string
+  render: (row: T, index: number) => ReactNode
+  disabled?: boolean | ((row: T) => boolean)
+  onClick?: (row: T, index: number) => void
 }
 
-export type TableRef = {
-  insertRow: () => void
-  saveData: () => void
-}
-
-export type TableQuery = {
-  page: number
-  rowsPerPage: number
-  keyword: string
-  sortKey?: string
-  sortDirection?: SortDirection
-}
-
-export type TableCommon<T> = BaseMixinProps & {
-  tableKey: string
-  data: T[]
-  columnConfig: ColumnProps<T>[]
-  renderRow?: (data: T, index?: number) => React.ReactNode
-  customTableHeader?: CustomTableHeaderProps[]
-  innerRef?: Ref<TableRef>
-  tableConfig?: TableConfig
-  height?: number | string
-  emptyRowText?: string
+export type SummaryRowProps<T extends Record<string, unknown>> = {
+  enabled?: boolean
   sticky?: boolean
-  disabled?: boolean
-  totalRows?: boolean
+  rows: any[]
+  data?: Record<string, number>[]
+}
 
-  // summary
+export type TableToolbarProps<TExtraExportType extends string = never> = {
+  title?: string
+
+  searchEnabled?: boolean
+  searchValue?: string
+  searchPlaceholder?: string
+  onSearchChange?: (value: string) => void
+
+  exportEnabled?: boolean
+  exportItems?: { type: any; label: string; icon?: string }[]
+  excludeExportTypes?: any[]
+  onExport?: (type: any, ctx: unknown) => void
+  exportContext?: unknown
+
+  columnVisibilityEnabled?: boolean
+  columns?: { key: string; title: string; hideable?: boolean }[]
+  visibleColumnKeys?: string[]
+  defaultVisibleColumnKeys?: string[]
+  onVisibleColumnKeysChange?: (keys: string[]) => void
+  onHiddenColumnKeysChange?: (hiddenKeys: string[], hiddenColumns: any[]) => void
+  columnsSkeletonEnabled?: boolean
+  columnsSkeletonCount?: number
+
+  filterEnabled?: boolean
+  filterActiveCount?: number
+  filterOpen?: boolean
+  onFilterOpenChange?: (open: boolean) => void
+  filterDrawerVariant?: any
+  filterDrawerPlacement?: any
+  filterDrawerWidth?: number | string
+  filterDrawerHeight?: number | string
+  filterSkeletonEnabled?: boolean
+  filterSkeletonCount?: number
+  onFilterSearch?: () => void
+  onFilterReset?: () => void
+  filterContent?: ReactNode
+}
+
+export type TableProps<
+  T extends Record<string, unknown>,
+  TExtraExportType extends string = never,
+> = BaseMixinProps & {
+  tableKey: string
+  columnConfig: ColumnProps<T>[]
+  data?: T[]
+
+  // server-controlled (single source of truth)
+  query: ServerTableQuery
+  totalCount: number
+  rowsPerPageOptions?: number[]
+  onQueryChange: (next: ServerTableQuery) => void
+
+  // view-only: row events only
+  onRowClick?: (row: T, index: number) => void
+  rowActions?: TableRowAction<T>[]
+
+  // pagination UI
+  pagination?: "Table" | "Basic"
+
+  // layout
+  sticky?: boolean
+  height?: number
+  emptyRowText?: string
+  disabled?: boolean
+
+  // bottom panel toggles
+  totalRows?: boolean
+  rowsPer?: boolean
+
+  // summary (server-only data)
   summaryRow?: SummaryRowProps<T>
 
-  // mode
-  mode?: TableMode
+  // toolbar
+  toolbar?: TableToolbarProps<TExtraExportType>
 
-  // search
-  searchEnabled?: boolean
-  searchPlaceholder?: string
-  searchKeys?: (keyof T)[]
-  keyword?: string
-  onKeywordChange?: (keyword: string) => void
-
-  // server mode hook
-  onQueryChange?: (query: TableQuery) => void
-
-  // export
+  // export (server job only)
   exportEnabled?: boolean
-  exportScope?: ExportScope
-  onExport?: (type: ExportType, payload: { scope: ExportScope; keyword: string }) => void
-}
+  exportItems?: any[]
+  excludeExportTypes?: any[]
+  onExport?: (type: any, ctx: unknown) => void
+  exportContext?: unknown
 
-export type TableProps<T> = TableCommon<T> & {
-  rowsPer?: boolean
-  pagination?: PaginationType
-  onPageChange?: (page: number) => void
-  onRowsPerPageChange?: (rowsPerPage: number) => void
-}
+  // virtualization
+  virtualized?: VirtualizedOptions
 
-export interface InfiniteTableProps<T> extends TableProps<T> {
-  loadMore: () => void
-  loading?: boolean
-  hasMore?: boolean
-  top?: string
+  // custom header row render
+  customTableHeader?: ReactNode
 }
