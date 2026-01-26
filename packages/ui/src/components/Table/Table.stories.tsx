@@ -1,1156 +1,550 @@
+// Table.stories.tsx
 import type { Meta, StoryObj } from "@storybook/react"
-import { useEffect, useMemo, useState } from "react"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
-import Flex from "../Flex/Flex"
-import Box from "../Box/Box"
-import { Typography } from "../Typography/Typography"
+import React, { useCallback, useMemo, useState } from "react"
 import Table from "./Table"
-import type { TableProps, SortDirection, ColumnProps, TableMode } from "./@Types/table"
-import TableToolbar from "./_internal/TableToolBar"
+import type {
+  ColumnProps,
+  ServerTableFilter,
+  ServerTableQuery,
+  SortDirection,
+} from "./@Types/table"
+import Box from "../Box/Box"
+import Flex from "../Flex/Flex"
+import { Typography } from "../Typography/Typography"
 
-import Select from "../Select/Select"
-import TextField from "../TextField/TextField"
-import IconButton from "../IconButton/IconButton"
-import Button from "../Button/Button"
-import Divider from "../Divider/Divider"
-import { ExportItem, ExportType } from "./_internal/TableExport"
-
-/* -------------------------------------------------------------------------- */
-/*                                    Types                                   */
-/* -------------------------------------------------------------------------- */
-
-type PersonRow = {
+type Row = {
   id: string
   name: string
-  role: string
-  email: string
-  active: boolean
-  qty: number
-  price: number
+  amount: number
+  status: "ACTIVE" | "INACTIVE" | "PENDING"
+  date: string
 }
 
-type FilterOperator = "contains" | "startsWith" | "endsWith" | "equals"
-
-type FilterItem = {
-  id: string
-  columnKey?: string
-  operator?: FilterOperator
-  value?: string
+const makeRows = (count: number): Row[] => {
+  const statuses: Row["status"][] = ["ACTIVE", "INACTIVE", "PENDING"]
+  const out: Row[] = []
+  for (let i = 0; i < count; i++) {
+    const d = new Date(2024, 0, 1 + (i % 365))
+    out.push({
+      id: `row_${i + 1}`,
+      name: `User ${i + 1}`,
+      amount: ((i * 7919) % 100000) + 100,
+      status: statuses[i % statuses.length],
+      date: d.toISOString().slice(0, 10),
+    })
+  }
+  return out
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                 Mock Data                                  */
-/* -------------------------------------------------------------------------- */
+const applyKeyword = (rows: Row[], keyword: string) => {
+  const k = keyword.trim().toLowerCase()
+  if (!k) return rows
+  return rows.filter((r) => r.id.toLowerCase().includes(k) || r.name.toLowerCase().includes(k))
+}
 
-const makeRows = (): PersonRow[] => [
-  {
-    id: "U-001",
-    name: "Alice",
-    role: "Admin",
-    email: "alice@demo.com",
-    active: true,
-    qty: 3,
-    price: 12000,
-  },
-  {
-    id: "U-002",
-    name: "Bob",
-    role: "Editor",
-    email: "bob@demo.com",
-    active: false,
-    qty: 2,
-    price: 8000,
-  },
-  {
-    id: "U-003",
-    name: "Chris",
-    role: "Viewer",
-    email: "chris@demo.com",
-    active: true,
-    qty: 8,
-    price: 15000,
-  },
-  {
-    id: "U-004",
-    name: "Daisy",
-    role: "Editor",
-    email: "daisy@demo.com",
-    active: true,
-    qty: 5,
-    price: 10000,
-  },
-  {
-    id: "U-005",
-    name: "Evan",
-    role: "Viewer",
-    email: "evan@demo.com",
-    active: false,
-    qty: 1,
-    price: 4000,
-  },
-  {
-    id: "U-006",
-    name: "Fiona",
-    role: "Admin",
-    email: "fiona@demo.com",
-    active: true,
-    qty: 6,
-    price: 22000,
-  },
-  {
-    id: "U-007",
-    name: "Gabe",
-    role: "Editor",
-    email: "gabe@demo.com",
-    active: true,
-    qty: 4,
-    price: 9000,
-  },
-  {
-    id: "U-008",
-    name: "Hana",
-    role: "Viewer",
-    email: "hana@demo.com",
-    active: false,
-    qty: 7,
-    price: 18000,
-  },
-  {
-    id: "U-009",
-    name: "Ian",
-    role: "Editor",
-    email: "ian@demo.com",
-    active: true,
-    qty: 9,
-    price: 3000,
-  },
-  {
-    id: "U-010",
-    name: "Jane",
-    role: "Admin",
-    email: "jane@demo.com",
-    active: true,
-    qty: 2,
-    price: 7000,
-  },
-  {
-    id: "U-011",
-    name: "Kyle",
-    role: "Viewer",
-    email: "kyle@demo.com",
-    active: false,
-    qty: 11,
-    price: 5000,
-  },
-  {
-    id: "U-012",
-    name: "Lia",
-    role: "Editor",
-    email: "lia@demo.com",
-    active: true,
-    qty: 3,
-    price: 6000,
-  },
-  {
-    id: "U-013",
-    name: "Mina",
-    role: "Viewer",
-    email: "mina@demo.com",
-    active: true,
-    qty: 4,
-    price: 12000,
-  },
-  {
-    id: "U-014",
-    name: "Noah",
-    role: "Admin",
-    email: "noah@demo.com",
-    active: false,
-    qty: 10,
-    price: 20000,
-  },
-  {
-    id: "U-015",
-    name: "Owen",
-    role: "Editor",
-    email: "owen@demo.com",
-    active: true,
-    qty: 1,
-    price: 11000,
-  },
-]
+const applyFilters = (rows: Row[], filters?: ServerTableFilter[]) => {
+  const fs = filters ?? []
+  if (fs.length === 0) return rows
 
-/* -------------------------------------------------------------------------- */
-/*                                   Utils                                    */
-/* -------------------------------------------------------------------------- */
+  let out = rows
+  for (const f of fs) {
+    if (f.key === "status" && typeof f.value === "string" && f.value) {
+      out = out.filter((r) => r.status === f.value)
+    }
+  }
+  return out
+}
 
-const sortRows = (rows: PersonRow[], key: keyof PersonRow, dir: SortDirection) => {
-  const copy = [...rows]
-  copy.sort((a, b) => {
-    const av = a[key] as any
-    const bv = b[key] as any
-    const as = typeof av === "string" ? av : String(av ?? "")
-    const bs = typeof bv === "string" ? bv : String(bv ?? "")
-    if (as < bs) return dir === "ASC" ? -1 : 1
-    if (as > bs) return dir === "ASC" ? 1 : -1
-    return 0
+const applySort = (rows: Row[], sort?: { key?: string; direction?: SortDirection }) => {
+  const key = sort?.key as keyof Row | undefined
+  const dir = sort?.direction
+  if (!key || (dir !== "ASC" && dir !== "DESC")) return rows
+  if (!["id", "name", "amount", "status", "date"].includes(String(key))) return rows
+
+  const mul = dir === "ASC" ? 1 : -1
+  const copied = [...rows]
+  copied.sort((a, b) => {
+    const av = a[key]
+    const bv = b[key]
+    if (typeof av === "number" && typeof bv === "number") return (av - bv) * mul
+    return String(av).localeCompare(String(bv)) * mul
   })
-  return copy
+  return copied
 }
 
-const paginate = (rows: PersonRow[], page: number, rowsPerPage: number) => {
-  const start = (page - 1) * rowsPerPage
-  return rows.slice(start, start + rowsPerPage)
+const slicePage = (rows: Row[], page: number, rowsPerPage: number) => {
+  const safePage = Math.max(1, page || 1)
+  const safeRpp = Math.max(1, rowsPerPage || 10)
+  const start = (safePage - 1) * safeRpp
+  return rows.slice(start, start + safeRpp)
 }
 
-const toCellText = (v: unknown) => {
-  if (v === null || v === undefined) return ""
-  if (typeof v === "string") return v
-  if (typeof v === "number" || typeof v === "boolean") return String(v)
-  try {
-    return JSON.stringify(v)
-  } catch {
-    return String(v)
-  }
+const buildColumns = (
+  onSortChange: (key: keyof Row, direction: SortDirection) => void,
+): ColumnProps<Row>[] =>
+  [
+    { key: "id", title: "ID", width: "160px", textAlign: "left", sort: true, onSortChange },
+    { key: "name", title: "Name", width: "240px", textAlign: "left", sort: true, onSortChange },
+    {
+      key: "amount",
+      title: "Amount",
+      width: "160px",
+      textAlign: "right",
+      sort: true,
+      onSortChange,
+    },
+    {
+      key: "status",
+      title: "Status",
+      width: "160px",
+      textAlign: "center",
+      sort: true,
+      onSortChange,
+    },
+    { key: "date", title: "Date", width: "160px", textAlign: "center", sort: true, onSortChange },
+  ] as ColumnProps<Row>[]
+
+const meta: Meta<typeof Table> = {
+  title: "Table/Operational/Table",
+  component: Table,
+  parameters: { layout: "fullscreen" },
 }
-
-const escapeCsv = (s: string) => {
-  const v = s ?? ""
-  if (/[",\n\r]/.test(v)) return `"${v.replace(/"/g, '""')}"`
-  return v
-}
-
-const downloadBlob = (blob: Blob, filename: string) => {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
-}
-
-const makeId = () => `f_${Math.random().toString(36).slice(2, 10)}`
-
-const applyOperator = (hay: string, needle: string, op: FilterOperator) => {
-  const h = hay.toLowerCase()
-  const n = needle.toLowerCase()
-  if (!n) return true
-  if (op === "equals") return h === n
-  if (op === "startsWith") return h.startsWith(n)
-  if (op === "endsWith") return h.endsWith(n)
-  return h.includes(n)
-}
-
-const applyFilters = (rows: PersonRow[], filters: FilterItem[]) => {
-  const actives = (filters ?? []).filter((f) => (f.value ?? "").trim().length > 0 && f.columnKey)
-  if (!actives.length) return rows
-
-  return rows.filter((r) => {
-    for (const f of actives) {
-      const key = f.columnKey as keyof PersonRow
-      const op = (f.operator ?? "contains") as FilterOperator
-      const val = (f.value ?? "").trim()
-      const cell = toCellText(r[key])
-      if (!applyOperator(cell, val, op)) return false
-    }
-    return true
-  })
-}
-
-/* -------------------------------------------------------------------------- */
-/*                          Interactive Wrapper (핵심)                        */
-/* -------------------------------------------------------------------------- */
-
-type TableStoryExtraProps = {
-  disabled?: boolean
-  summaryEnabled?: boolean
-  summarySticky?: boolean
-  summaryMultiRow?: boolean
-  paginationType?: "Table" | "Basic"
-  stickyHeader?: boolean
-
-  mode?: TableMode
-  searchEnabled?: boolean
-  exportEnabled?: boolean
-  exportScope?: "page" | "all"
-
-  columnVisibilityEnabled?: boolean
-  filterEnabled?: boolean
-
-  // * NEW: export 확장/제외 테스트용
-  exportExcludePrint?: boolean
-  exportExtraEnabled?: boolean
-}
-
-const TableInteractive = (props: TableProps<PersonRow> & TableStoryExtraProps) => {
-  const [allRows, setAllRows] = useState<PersonRow[]>(makeRows())
-
-  const [page, setPage] = useState<number>(props.tableConfig?.page ?? 1)
-  const [rowsPerPage, setRowsPerPage] = useState<number>(props.tableConfig?.rowsPerPage ?? 5)
-
-  const [sortKey, setSortKey] = useState<keyof PersonRow | null>(null)
-  const [sortDirection, setSortDirection] = useState<SortDirection>("ASC")
-
-  const [keyword, setKeyword] = useState<string>("")
-
-  const [visibleKeys, setVisibleKeys] = useState<string[]>([])
-
-  const [filters, setFilters] = useState<FilterItem[]>([
-    { id: makeId(), columnKey: "name", operator: "contains", value: "" },
-  ])
-  const [filterOpen, setFilterOpen] = useState(false)
-
-  const [serverRows, setServerRows] = useState<PersonRow[]>([])
-  const [serverTotal, setServerTotal] = useState<number>(0)
-
-  const mode: TableMode = props.mode ?? "client"
-
-  const sorted = useMemo(() => {
-    if (!sortKey) return allRows
-    return sortRows(allRows, sortKey, sortDirection)
-  }, [allRows, sortKey, sortDirection])
-
-  const filteredByKeyword = useMemo(() => {
-    const kw = keyword.trim().toLowerCase()
-    if (!kw) return sorted
-    return sorted.filter((r) => {
-      const hay = [r.id, r.name, r.role, r.email, r.active, r.qty, r.price]
-        .map((v) => toCellText(v).toLowerCase())
-        .join(" ")
-      return hay.includes(kw)
-    })
-  }, [sorted, keyword])
-
-  const filteredAll = useMemo(
-    () => applyFilters(filteredByKeyword, filters),
-    [filteredByKeyword, filters],
-  )
-
-  const onCellChange = (c: ColumnOnChangeType<PersonRow>) => {
-    if (props.disabled) return
-
-    if (c.type === "TextField") {
-      setAllRows((prev) =>
-        prev.map((r, i) => (i === c.rowIndex ? { ...r, [c.key]: String(c.changeValue) } : r)),
-      )
-      return
-    }
-
-    if (c.type === "CheckBox") {
-      setAllRows((prev) =>
-        prev.map((r, i) => (i === c.rowIndex ? { ...r, [c.key]: Boolean(c.changeValue) } : r)),
-      )
-    }
-  }
-
-  const baseColumnConfig: ColumnProps<PersonRow>[] = useMemo(() => {
-    const isDisabled = Boolean(props.disabled)
-
-    return [
-      {
-        key: "id",
-        title: "ID (sort)",
-        type: "Default",
-        width: "110px",
-        textAlign: "left",
-        sort: !isDisabled,
-        sortDirection: !isDisabled && sortKey === "id" ? sortDirection : undefined,
-        onSortChange: !isDisabled
-          ? (key, next) => {
-              setSortKey(key as keyof PersonRow)
-              setSortDirection(next)
-            }
-          : undefined,
-      },
-      {
-        key: "name",
-        title: "Name (TextField)",
-        type: "TextField",
-        textAlign: "left",
-        sort: !isDisabled,
-        sortDirection: !isDisabled && sortKey === "name" ? sortDirection : undefined,
-        onSortChange: !isDisabled
-          ? (key, next) => {
-              setSortKey(key as keyof PersonRow)
-              setSortDirection(next)
-            }
-          : undefined,
-        onChange: onCellChange,
-      },
-      {
-        key: "role",
-        title: "Role (sort)",
-        type: "Default",
-        width: "120px",
-        textAlign: "left",
-        sort: !isDisabled,
-        sortDirection: !isDisabled && sortKey === "role" ? sortDirection : undefined,
-        onSortChange: !isDisabled
-          ? (key, next) => {
-              setSortKey(key as keyof PersonRow)
-              setSortDirection(next)
-            }
-          : undefined,
-      },
-      {
-        key: "email",
-        title: "Email (sort)",
-        type: "Default",
-        width: "200px",
-        textAlign: "left",
-        sort: !isDisabled,
-        sortDirection: !isDisabled && sortKey === "email" ? sortDirection : undefined,
-        onSortChange: !isDisabled
-          ? (key, next) => {
-              setSortKey(key as keyof PersonRow)
-              setSortDirection(next)
-            }
-          : undefined,
-      },
-      {
-        key: "active",
-        title: "Active (CheckBox)",
-        type: "CheckBox",
-        width: "140px",
-        textAlign: "center",
-        sort: !isDisabled,
-        sortDirection: !isDisabled && sortKey === "active" ? sortDirection : undefined,
-        onSortChange: !isDisabled
-          ? (key, next) => {
-              setSortKey(key as keyof PersonRow)
-              setSortDirection(next)
-            }
-          : undefined,
-        onChange: onCellChange,
-      },
-      {
-        key: "qty",
-        title: "Qty (sum)",
-        type: "Default",
-        width: "100px",
-        textAlign: "right",
-        sort: !isDisabled,
-        sortDirection: !isDisabled && sortKey === "qty" ? sortDirection : undefined,
-        onSortChange: !isDisabled
-          ? (key, next) => {
-              setSortKey(key as keyof PersonRow)
-              setSortDirection(next)
-            }
-          : undefined,
-      },
-      {
-        key: "price",
-        title: "Price (sum)",
-        type: "Default",
-        width: "120px",
-        textAlign: "right",
-        sort: !isDisabled,
-        sortDirection: !isDisabled && sortKey === "price" ? sortDirection : undefined,
-        onSortChange: !isDisabled
-          ? (key, next) => {
-              setSortKey(key as keyof PersonRow)
-              setSortDirection(next)
-            }
-          : undefined,
-      },
-      {
-        key: "custom",
-        title: "Link (onClick)",
-        type: "Default",
-        width: "120px",
-        textAlign: "center",
-        onClick: isDisabled
-          ? undefined
-          : (row, idx) => {
-              console.log("Cell onClick:", { row, idx })
-            },
-        renderCellTitle: "Open",
-      },
-    ]
-  }, [props.disabled, sortKey, sortDirection])
-
-  const toolbarColumns = useMemo(
-    () =>
-      baseColumnConfig
-        .filter((c) => c.key !== "custom")
-        .map((c) => ({ key: String(c.key), title: String(c.title ?? ""), hideable: true })),
-    [baseColumnConfig],
-  )
-
-  const defaultVisibleKeys = useMemo(() => toolbarColumns.map((c) => c.key), [toolbarColumns])
-
-  useEffect(() => {
-    if (!visibleKeys.length) setVisibleKeys(defaultVisibleKeys)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultVisibleKeys.join("|")])
-
-  const columnConfig = useMemo(() => {
-    const enabled = props.columnVisibilityEnabled !== false
-    if (!enabled) return baseColumnConfig
-
-    const v = new Set(visibleKeys.length ? visibleKeys : defaultVisibleKeys)
-    return baseColumnConfig.filter((c) => c.key === "custom" || v.has(String(c.key)))
-  }, [props.columnVisibilityEnabled, baseColumnConfig, visibleKeys, defaultVisibleKeys])
-
-  const runServerQuery = (q: TableQuery) => {
-    const base = sorted
-
-    const kw = (q.keyword ?? "").trim().toLowerCase()
-    const kwFiltered = !kw
-      ? base
-      : base.filter((r) => {
-          const hay = [r.id, r.name, r.role, r.email, r.active, r.qty, r.price]
-            .map((v) => toCellText(v).toLowerCase())
-            .join(" ")
-          return hay.includes(kw)
-        })
-
-    const filtered = applyFilters(kwFiltered, filters)
-    const total = filtered.length
-    const pageRows = paginate(filtered, q.page, q.rowsPerPage)
-
-    setServerTotal(total)
-    setServerRows(pageRows)
-  }
-
-  useEffect(() => {
-    if (mode !== "server") return
-    runServerQuery({
-      page,
-      rowsPerPage,
-      keyword,
-      sortKey: sortKey ? String(sortKey) : undefined,
-      sortDirection,
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode])
-
-  useEffect(() => {
-    if (mode !== "server") return
-    setPage(1)
-    runServerQuery({
-      page: 1,
-      rowsPerPage,
-      keyword,
-      sortKey: sortKey ? String(sortKey) : undefined,
-      sortDirection,
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters])
-
-  const showSummary = Boolean(props.summaryEnabled)
-  const stickySummary = props.summarySticky !== false
-  const multiRow = Boolean(props.summaryMultiRow)
-
-  const summaryRow = useMemo(() => {
-    if (!showSummary) return undefined as any
-
-    const numberFmt = (v: number) => new Intl.NumberFormat().format(v)
-    const priceFmt = (v: number) => `${new Intl.NumberFormat().format(v)}원`
-
-    const avgBase = mode === "server" ? serverRows : paginate(filteredAll, page, rowsPerPage)
-
-    return {
-      enabled: true,
-      sticky: stickySummary,
-      rows: multiRow
-        ? [
-            {
-              label: "SUM",
-              labelColumnKey: "role",
-              items: [
-                { key: "qty", formatter: numberFmt },
-                { key: "price", formatter: priceFmt },
-              ],
-            },
-            {
-              label: "AVG",
-              labelColumnKey: "role",
-              items: [
-                {
-                  key: "qty",
-                  formatter: (sum: number) => {
-                    const avg = avgBase.length ? sum / avgBase.length : 0
-                    return avg.toFixed(1)
-                  },
-                },
-                {
-                  key: "price",
-                  formatter: (sum: number) => {
-                    const avg = avgBase.length ? sum / avgBase.length : 0
-                    return `${Math.round(avg).toLocaleString()}원`
-                  },
-                },
-              ],
-            },
-          ]
-        : [
-            {
-              label: "SUM",
-              labelColumnKey: "role",
-              items: [
-                { key: "qty", formatter: numberFmt },
-                { key: "price", formatter: priceFmt },
-              ],
-            },
-          ],
-    }
-  }, [showSummary, stickySummary, multiRow, mode, serverRows, filteredAll, page, rowsPerPage])
-
-  const pagination = props.paginationType
-
-  // * NEW: ExportType 확장 (Story에서만 "json" 추가)
-  type ExtraExport = "json"
-  const extraExportEnabled = Boolean(props.exportExtraEnabled)
-
-  const exportExclude = useMemo(() => {
-    const base: ExportType<ExtraExport>[] = []
-    if (props.exportExcludePrint) base.push("print")
-    return base
-  }, [props.exportExcludePrint])
-
-  const exportItems: ExportItem<ExportType<ExtraExport>>[] = useMemo(() => {
-    if (!extraExportEnabled) return []
-    return [{ type: "json", label: "JSON 다운로드" }]
-  }, [extraExportEnabled])
-
-  const handleExport = (
-    type: ExportType<ExtraExport>,
-    payload: { scope: "page" | "all"; keyword: string },
-  ) => {
-    if (props.disabled) return
-
-    if (mode === "server") {
-      // * 서버 모드는 "요청만" 확인(실제 다운로드는 서버 응답으로 처리하는 케이스)
-      console.log("[SERVER EXPORT]", {
-        type,
-        payload,
-        filters,
-        sortKey,
-        sortDirection,
-        page,
-        rowsPerPage,
-      })
-      return
-    }
-
-    const scope = payload.scope
-    const rowsForExport = scope === "page" ? paginate(filteredAll, page, rowsPerPage) : filteredAll
-    const cols = baseColumnConfig.filter((c) => c.key !== ("custom" as any))
-
-    if (type === "csv" || type === "excel") {
-      const header = cols.map((c) => escapeCsv(String(c.title ?? ""))).join(",")
-      const lines = rowsForExport.map((row) =>
-        cols.map((c) => escapeCsv(toCellText(row[c.key as keyof PersonRow]))).join(","),
-      )
-      const csv = [header, ...lines].join("\r\n")
-      downloadBlob(
-        new Blob([csv], { type: "text/csv;charset=utf-8" }),
-        type === "excel" ? "demo-table.xls" : "demo-table.csv",
-      )
-      return
-    }
-
-    if (type === "pdf") {
-      // * 데모: 실제 PDF 생성은 서버/라이브러리로 대체될 수 있음
-      console.log("[CLIENT PDF]", { rows: rowsForExport.length })
-      const text = `PDF DEMO\nrows=${rowsForExport.length}\nkeyword=${payload.keyword}\nfilters=${filters.length}`
-      downloadBlob(new Blob([text], { type: "application/pdf" }), "demo-table.pdf")
-      return
-    }
-
-    if (type === "print") {
-      console.log("[CLIENT PRINT]", { rows: rowsForExport.length })
-      window.print()
-      return
-    }
-
-    if (type === "json") {
-      const json = JSON.stringify(rowsForExport, null, 2)
-      downloadBlob(new Blob([json], { type: "application/json" }), "demo-table.json")
-    }
-  }
-
-  const handleFilterChange = (next: FilterItem[]) => {
-    if (props.disabled) return
-    setFilters(next)
-    setPage(1)
-  }
-
-  const filterActiveCount = useMemo(
-    () => (filters ?? []).filter((f) => (f.value ?? "").trim().length > 0).length,
-    [filters],
-  )
-
-  const filterColumnOptions = useMemo(
-    () => toolbarColumns.map((c) => ({ value: c.key, label: c.title })),
-    [toolbarColumns],
-  )
-
-  const operatorOptions = useMemo(
-    () => [
-      { value: "startsWith", label: "startsWith" },
-      { value: "contains", label: "contains" },
-      { value: "endsWith", label: "endsWith" },
-      { value: "equals", label: "equals" },
-    ],
-    [],
-  )
-
-  // * NEW: filterContent (외부 렌더링) + 외부 onFilterSearch/onFilterReset 시뮬레이션
-  const filterContent = useMemo(() => {
-    return (
-      <Flex direction="column" gap={10}>
-        {(filters ?? []).map((f) => (
-          <Flex align="center" justify="flex-start" gap={10} key={f.id}>
-            <IconButton
-              icon="CloseLine"
-              toolTip="삭제"
-              disableInteraction={false}
-              disabled={props.disabled}
-              onClick={() => {
-                if (props.disabled) return
-                const next = (filters ?? []).filter((x) => x.id !== f.id)
-                handleFilterChange(next)
-              }}
-            />
-
-            <Select
-              label="Columns"
-              options={filterColumnOptions as any}
-              value={(f.columnKey ?? "") as any}
-              onChange={(v: any) => {
-                if (props.disabled) return
-                const next = (filters ?? []).map((x) =>
-                  x.id === f.id ? { ...x, columnKey: String(v) } : x,
-                )
-                handleFilterChange(next)
-              }}
-              placeholder="Select"
-              disabled={props.disabled}
-            />
-
-            <Select
-              label="Operator"
-              options={operatorOptions as any}
-              value={(f.operator ?? "contains") as any}
-              onChange={(v: any) => {
-                if (props.disabled) return
-                const next = (filters ?? []).map((x) =>
-                  x.id === f.id ? { ...x, operator: v as any } : x,
-                )
-                handleFilterChange(next)
-              }}
-              placeholder="contains"
-              disabled={props.disabled}
-            />
-
-            <TextField
-              label="Value"
-              disabled={props.disabled}
-              value={f.value ?? ""}
-              placeholder="Filter value"
-              onChange={(e) => {
-                if (props.disabled) return
-                const next = (filters ?? []).map((x) =>
-                  x.id === f.id ? { ...x, value: e.target.value } : x,
-                )
-                handleFilterChange(next)
-              }}
-            />
-          </Flex>
-        ))}
-
-        <Divider />
-
-        <Flex align="center" justify="space-between">
-          <Button
-            text="필터 추가"
-            variant="text"
-            color="secondary"
-            disabled={props.disabled}
-            onClick={() => {
-              if (props.disabled) return
-              const firstKey = filterColumnOptions[0]?.value
-              const next: FilterItem = {
-                id: makeId(),
-                columnKey: String(firstKey ?? ""),
-                operator: "contains",
-                value: "",
-              }
-              handleFilterChange([...(filters ?? []), next])
-            }}
-          />
-
-          <Button
-            text="모두 삭제"
-            variant="text"
-            color="secondary"
-            disabled={props.disabled || !(filters ?? []).length}
-            onClick={() => {
-              if (props.disabled) return
-              handleFilterChange([])
-            }}
-          />
-        </Flex>
-      </Flex>
-    )
-  }, [filters, props.disabled, filterColumnOptions, operatorOptions])
-
-  const clientData = useMemo(() => filteredAll, [filteredAll])
-
+export default meta
+
+type Story = StoryObj<typeof Table>
+
+const StatusFilterPanel = ({
+  value,
+  onChange,
+  onApply,
+  onReset,
+}: {
+  value: "" | Row["status"]
+  onChange: (v: "" | Row["status"]) => void
+  onApply: () => void
+  onReset: () => void
+}) => {
   return (
-    <Box width="100%" p={12}>
-      <Flex direction="column" gap={8} mb={12}>
-        <Typography
-          variant="b2Regular"
-          text={[
-            `mode=${mode}`,
-            `disabled=${Boolean(props.disabled)}`,
-            `stickyHeader=${Boolean(props.stickyHeader)}`,
-            `toolbar.search=${Boolean(props.searchEnabled)}`,
-            `toolbar.export=${Boolean(props.exportEnabled)}(scope=${props.exportScope ?? "all"})`,
-            `toolbar.columns=${props.columnVisibilityEnabled !== false}`,
-            `toolbar.filter=${props.filterEnabled !== false}`,
-            `pagination=${pagination ?? "none"}`,
-            `page=${page}`,
-            `rowsPerPage=${rowsPerPage}`,
-            `total=${mode === "server" ? serverTotal : filteredAll.length}`,
-            `sort=${sortKey ? `${String(sortKey)} ${sortDirection}` : "none"}`,
-            `keyword="${keyword}"`,
-            `filters(active)=${filterActiveCount}`,
-            `export.excludePrint=${Boolean(props.exportExcludePrint)}`,
-            `export.extra(json)=${Boolean(props.exportExtraEnabled)}`,
-          ].join(" / ")}
-        />
-      </Flex>
+    <Box p={12}>
+      <Typography variant="b1Bold" text="Status Filter (mock)" />
+      <Box mt={10}>
+        <Flex gap={8} align="center" sx={{ flexWrap: "wrap" }}>
+          <button onClick={() => onChange("")} aria-pressed={value === ""}>
+            All
+          </button>
+          <button onClick={() => onChange("ACTIVE")} aria-pressed={value === "ACTIVE"}>
+            ACTIVE
+          </button>
+          <button onClick={() => onChange("INACTIVE")} aria-pressed={value === "INACTIVE"}>
+            INACTIVE
+          </button>
+          <button onClick={() => onChange("PENDING")} aria-pressed={value === "PENDING"}>
+            PENDING
+          </button>
+        </Flex>
+      </Box>
 
-      <TableToolbar<"json">
-        title="Table Demo"
-        disabled={props.disabled}
-        searchEnabled={Boolean(props.searchEnabled)}
-        searchValue={keyword}
-        searchPlaceholder={mode === "server" ? "검색(서버: queryChange)" : "검색(클라: 로컬)"}
-        onSearchChange={(v) => {
-          if (props.disabled) return
-          setKeyword(v)
-          setPage(1)
-          if (mode === "server") {
-            runServerQuery({
-              page: 1,
-              rowsPerPage,
-              keyword: v,
-              sortKey: sortKey ? String(sortKey) : undefined,
-              sortDirection,
-            })
-          }
-        }}
-        exportEnabled={Boolean(props.exportEnabled)}
-        // * NEW: 기본은 excel/csv/pdf/print 모두 노출, 외부에서 exclude 가능
-        excludeExportTypes={exportExclude as any}
-        // * NEW: 추가 export 타입(json) 데모
-        exportItems={exportItems as any}
-        onExport={(t) =>
-          handleExport(t as any, { scope: (props.exportScope ?? "all") as any, keyword })
-        }
-        columnVisibilityEnabled={props.columnVisibilityEnabled !== false}
-        columns={toolbarColumns}
-        visibleColumnKeys={visibleKeys}
-        defaultVisibleColumnKeys={defaultVisibleKeys}
-        onVisibleColumnKeysChange={(keys) => {
-          if (props.disabled) return
-          setVisibleKeys(keys)
-        }}
-        columnsSkeletonEnabled={false}
-        filterEnabled={props.filterEnabled !== false}
-        // * NEW: filter 외부 컨트롤
-        filterOpen={filterOpen}
-        onFilterOpenChange={(open) => {
-          if (props.disabled) return
-          setFilterOpen(open)
-        }}
-        filterActiveCount={filterActiveCount}
-        filterDrawerVariant="flex"
-        filterDrawerPlacement="top"
-        filterDrawerCloseBehavior="hidden"
-        filterDrawerHeight={220}
-        filterSkeletonEnabled={false}
-        onFilterSearch={() => {
-          // * 데모: 서버 모드면 "검색" 버튼이 서버 쿼리 트리거 역할
-          if (props.disabled) return
-          if (mode === "server") {
-            runServerQuery({
-              page: 1,
-              rowsPerPage,
-              keyword,
-              sortKey: sortKey ? String(sortKey) : undefined,
-              sortDirection,
-            })
-          }
-          console.log("[FILTER SEARCH]", { keyword, filters })
-        }}
-        onFilterReset={() => {
-          if (props.disabled) return
-          handleFilterChange([{ id: makeId(), columnKey: "name", operator: "contains", value: "" }])
-          console.log("[FILTER RESET]")
-        }}
-        filterContent={filterContent}
-      />
-
-      <Table
-        tableKey={props.tableKey}
-        columnConfig={columnConfig}
-        data={mode === "server" ? serverRows : clientData}
-        sticky={Boolean(props.stickyHeader)}
-        emptyRowText={props.emptyRowText}
-        disabled={props.disabled}
-        pagination={pagination as any}
-        summaryRow={summaryRow}
-        mode={mode}
-        searchEnabled={false}
-        exportEnabled={false}
-        keyword={keyword}
-        onKeywordChange={(next) => {
-          if (props.disabled) return
-          setKeyword(next)
-        }}
-        onQueryChange={(q) => {
-          if (props.disabled) return
-          setPage(q.page)
-          setRowsPerPage(q.rowsPerPage)
-          setKeyword(q.keyword)
-          runServerQuery({
-            ...q,
-            sortKey: sortKey ? String(sortKey) : undefined,
-            sortDirection,
-          })
-        }}
-        tableConfig={{
-          totalCount: mode === "server" ? serverTotal : filteredAll.length,
-          rowsPerPageOptions: props.tableConfig?.rowsPerPageOptions ?? [5, 10, 25],
-          rowsPerPage,
-          page,
-          handleOnRowsPerPageChange: (e: any) => {
-            if (props.disabled) return
-            const next = Number(e?.target?.value ?? 5)
-            setRowsPerPage(next)
-            setPage(1)
-
-            if (mode === "server") {
-              runServerQuery({
-                page: 1,
-                rowsPerPage: next,
-                keyword,
-                sortKey: sortKey ? String(sortKey) : undefined,
-                sortDirection,
-              })
-            }
-          },
-        }}
-        onPageChange={(next) => {
-          if (props.disabled) return
-          setPage(next)
-
-          if (mode === "server") {
-            runServerQuery({
-              page: next,
-              rowsPerPage,
-              keyword,
-              sortKey: sortKey ? String(sortKey) : undefined,
-              sortDirection,
-            })
-          }
-        }}
-        onRowsPerPageChange={(next) => {
-          if (props.disabled) return
-          setRowsPerPage(next)
-          setPage(1)
-
-          if (mode === "server") {
-            runServerQuery({
-              page: 1,
-              rowsPerPage: next,
-              keyword,
-              sortKey: sortKey ? String(sortKey) : undefined,
-              sortDirection,
-            })
-          }
-        }}
-      />
+      <Box mt={12}>
+        <Flex gap={8}>
+          <button onClick={onApply}>Apply</button>
+          <button onClick={onReset}>Reset</button>
+        </Flex>
+      </Box>
     </Box>
   )
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                  Meta 설정                                  */
-/* -------------------------------------------------------------------------- */
+export const Operational_AllFeatures: Story = {
+  render: () => {
+    const tableKey = "operational_all_features"
 
-const meta: Meta<TableProps<PersonRow> & TableStoryExtraProps> = {
-  title: "components/Table",
-  component: TableInteractive as any,
+    const allRows = useMemo(() => makeRows(5000), [])
 
-  args: {
-    tableKey: "demo-table",
-    emptyRowText: "검색 결과가 없습니다.",
-
-    disabled: false,
-    stickyHeader: true,
-    paginationType: "Table",
-    summaryEnabled: true,
-    summarySticky: true,
-    summaryMultiRow: true,
-
-    mode: "client",
-    searchEnabled: true,
-    exportEnabled: true,
-    exportScope: "all",
-
-    columnVisibilityEnabled: true,
-    filterEnabled: true,
-
-    exportExcludePrint: false,
-    exportExtraEnabled: true,
-
-    data: [] as any,
-    columnConfig: [] as any,
-    tableConfig: {
-      rowsPerPageOptions: [5, 10, 25],
-      rowsPerPage: 5,
+    const [query, setQuery] = useState<ServerTableQuery>({
       page: 1,
-      totalCount: 0,
-    } as any,
+      rowsPerPage: 100,
+      keyword: "",
+      sort: { key: "amount", direction: "DESC" },
+      filters: [],
+    })
+
+    const onQueryChange = useCallback((next: ServerTableQuery) => setQuery(next), [])
+
+    const onSortChange = useCallback(
+      (key: keyof Row, direction: SortDirection) => {
+        onQueryChange({
+          ...query,
+          page: 1,
+          sort: { key: String(key), direction },
+        })
+      },
+      [onQueryChange, query],
+    )
+
+    const columnConfigBase = useMemo(() => buildColumns(onSortChange), [onSortChange])
+
+    const allColumnKeys = useMemo(
+      () => columnConfigBase.map((c) => String(c.key)),
+      [columnConfigBase],
+    )
+    const [visibleColumnKeys, setVisibleColumnKeys] = useState<string[]>(() => allColumnKeys)
+
+    const columnConfig = useMemo(() => {
+      const set = new Set(visibleColumnKeys)
+      return columnConfigBase.filter((c) => set.has(String(c.key)))
+    }, [columnConfigBase, visibleColumnKeys])
+
+    const [statusDraft, setStatusDraft] = useState<"" | Row["status"]>("")
+    const [statusApplied, setStatusApplied] = useState<"" | Row["status"]>("")
+
+    const appliedFilters = useMemo<ServerTableFilter[]>(() => {
+      const f: ServerTableFilter[] = []
+      if (statusApplied) f.push({ key: "status", value: statusApplied })
+      return f
+    }, [statusApplied])
+
+    const filterActiveCount = appliedFilters.length
+
+    const normalizedQuery = useMemo(
+      () => ({ ...query, filters: appliedFilters }),
+      [query, appliedFilters],
+    )
+
+    const filtered = useMemo(() => {
+      const byKeyword = applyKeyword(allRows, String(normalizedQuery.keyword ?? ""))
+      const byFilter = applyFilters(byKeyword, normalizedQuery.filters)
+      return byFilter
+    }, [allRows, normalizedQuery.keyword, normalizedQuery.filters])
+
+    const totalCount = filtered.length
+
+    const serverRows = useMemo(() => {
+      const sorted = applySort(filtered, normalizedQuery.sort)
+      return slicePage(
+        sorted,
+        Number(normalizedQuery.page ?? 1),
+        Number(normalizedQuery.rowsPerPage ?? 100),
+      )
+    }, [filtered, normalizedQuery.page, normalizedQuery.rowsPerPage, normalizedQuery.sort])
+
+    const summaryRow = useMemo(() => {
+      const sum = filtered.reduce((acc, r) => acc + (Number(r.amount) || 0), 0)
+      return {
+        enabled: true,
+        rows: [
+          {
+            label: "SUM",
+            labelColumnKey: "name",
+            items: [{ key: "amount" }],
+          },
+        ],
+        data: [{ amount: sum }],
+      }
+    }, [filtered])
+
+    const rowActions = useMemo(
+      () => [
+        {
+          key: "view",
+          render: (row: Row) => (
+            <button type="button" onClick={() => console.log("[rowAction:view]", row.id)}>
+              View
+            </button>
+          ),
+        },
+        {
+          key: "copyId",
+          render: (row: Row) => (
+            <button
+              type="button"
+              onClick={() => {
+                void navigator.clipboard?.writeText?.(row.id)
+                console.log("[rowAction:copyId]", row.id)
+              }}
+            >
+              Copy ID
+            </button>
+          ),
+        },
+      ],
+      [],
+    )
+
+    const handleApplyFilter = () => {
+      setStatusApplied(statusDraft)
+      onQueryChange({ ...query, page: 1 })
+    }
+
+    const handleResetFilter = () => {
+      setStatusDraft("")
+      setStatusApplied("")
+      onQueryChange({ ...query, page: 1 })
+    }
+
+    return (
+      <Box p={12}>
+        <Typography
+          variant="b1Bold"
+          text="Operational_AllFeatures (Server-controlled + Toolbar + Summary + Column Visibility + RowActions)"
+        />
+        <Box mt={12}>
+          <Table<Row>
+            tableKey={tableKey}
+            columnConfig={columnConfig}
+            data={serverRows}
+            query={normalizedQuery}
+            totalCount={totalCount}
+            onQueryChange={onQueryChange}
+            height={620}
+            sticky
+            pagination={"Table"}
+            rowsPer
+            totalRows
+            summaryRow={summaryRow as any}
+            rowActions={rowActions as any}
+            onRowClick={(row) => console.log("[rowClick]", row.id)}
+            exportEnabled
+            exportItems={[
+              { type: "excel", label: "Excel" },
+              { type: "csv", label: "CSV" },
+              { type: "pdf", label: "PDF" },
+              { type: "print", label: "Print" },
+            ]}
+            onExport={(type: any, ctx: unknown) => {
+              console.log("[export]", type, ctx)
+            }}
+            toolbar={{
+              title: "Users",
+              searchEnabled: true,
+              searchPlaceholder: "Search by id/name",
+
+              filterEnabled: true,
+              filterActiveCount,
+              onFilterSearch: handleApplyFilter,
+              onFilterReset: handleResetFilter,
+              filterContent: (
+                <StatusFilterPanel
+                  value={statusDraft}
+                  onChange={setStatusDraft}
+                  onApply={handleApplyFilter}
+                  onReset={handleResetFilter}
+                />
+              ),
+
+              columnVisibilityEnabled: true,
+              columns: columnConfigBase.map((c) => ({
+                key: String(c.key),
+                title: String(c.title),
+                hideable: true,
+              })),
+              defaultVisibleColumnKeys: allColumnKeys,
+              visibleColumnKeys,
+              onVisibleColumnKeysChange: (keys) => setVisibleColumnKeys(keys),
+              exportContext: { feature: "Operational_AllFeatures" },
+            }}
+          />
+        </Box>
+      </Box>
+    )
   },
-
-  argTypes: {
-    tableKey: { control: "text" },
-    emptyRowText: { control: "text" },
-
-    disabled: { control: "boolean" },
-    stickyHeader: { control: "boolean" },
-
-    paginationType: { control: "radio", options: [undefined, "Table", "Basic"] },
-
-    summaryEnabled: { control: "boolean" },
-    summarySticky: { control: "boolean" },
-    summaryMultiRow: { control: "boolean" },
-
-    mode: { control: "radio", options: ["client", "server"] },
-    searchEnabled: { control: "boolean" },
-    exportEnabled: { control: "boolean" },
-    exportScope: { control: "radio", options: ["page", "all"] },
-
-    columnVisibilityEnabled: { control: "boolean" },
-    filterEnabled: { control: "boolean" },
-
-    exportExcludePrint: { control: "boolean", description: "export에서 print 제외" },
-    exportExtraEnabled: { control: "boolean", description: "export에 json 추가" },
-
-    data: { control: false },
-    columnConfig: { control: false },
-    tableConfig: { control: false },
-    innerRef: { control: false },
-    renderRow: { control: false },
-    customTableHeader: { control: false },
-  },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Story />
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
 }
 
-export default meta
+export const Operational_Virtualized: Story = {
+  render: () => {
+    const tableKey = "operational_virtualized"
 
-type Story = StoryObj<TableProps<PersonRow> & TableStoryExtraProps>
+    const allRows = useMemo(() => makeRows(20000), [])
+    const [query, setQuery] = useState<ServerTableQuery>({
+      page: 1,
+      rowsPerPage: 200,
+      keyword: "",
+      sort: { key: "amount", direction: "DESC" },
+      filters: [],
+    })
 
-/* -------------------------------------------------------------------------- */
-/*                                   Stories                                   */
-/* -------------------------------------------------------------------------- */
+    const onQueryChange = useCallback((next: ServerTableQuery) => setQuery(next), [])
+    const onSortChange = useCallback(
+      (key: keyof Row, direction: SortDirection) => {
+        onQueryChange({ ...query, page: 1, sort: { key: String(key), direction } })
+      },
+      [onQueryChange, query],
+    )
 
-export const AllFeatures: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-}
+    const columnConfig = useMemo(() => buildColumns(onSortChange), [onSortChange])
 
-export const ServerMode: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: {
-    mode: "server",
-    searchEnabled: true,
-    exportEnabled: true,
-    columnVisibilityEnabled: true,
-    filterEnabled: true,
-    exportExcludePrint: false,
-    exportExtraEnabled: true,
-  },
-}
+    const filtered = useMemo(
+      () => applyKeyword(allRows, String(query.keyword ?? "")),
+      [allRows, query.keyword],
+    )
+    const totalCount = filtered.length
 
-export const ClientMode: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: {
-    mode: "client",
-    searchEnabled: true,
-    exportEnabled: true,
-    columnVisibilityEnabled: true,
-    filterEnabled: true,
-    exportExcludePrint: true,
-    exportExtraEnabled: true,
+    const serverRows = useMemo(() => {
+      const sorted = applySort(filtered, query.sort)
+      return slicePage(sorted, Number(query.page ?? 1), Number(query.rowsPerPage ?? 200))
+    }, [filtered, query.page, query.rowsPerPage, query.sort])
+
+    return (
+      <Box p={12}>
+        <Typography
+          variant="b1Bold"
+          text="Operational_Virtualized (row windowing + fixed rowHeight)"
+        />
+        <Box mt={12}>
+          <Table<Row>
+            tableKey={tableKey}
+            columnConfig={columnConfig}
+            data={serverRows}
+            query={query}
+            totalCount={totalCount}
+            onQueryChange={onQueryChange}
+            height={640}
+            sticky
+            pagination={"Table"}
+            rowsPer
+            totalRows
+            virtualized={{ enabled: true, rowHeight: 32, overscan: 8 }}
+            toolbar={{
+              title: "Large Dataset",
+              searchEnabled: true,
+              searchPlaceholder: "Search by id/name",
+              exportContext: { feature: "Operational_Virtualized" },
+            }}
+          />
+        </Box>
+      </Box>
+    )
   },
 }
 
-export const ExportOff: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: { exportEnabled: false },
+export const Operational_EmptyState: Story = {
+  render: () => {
+    const tableKey = "operational_empty"
+
+    const allRows = useMemo(() => makeRows(300), [])
+    const [query, setQuery] = useState<ServerTableQuery>({
+      page: 1,
+      rowsPerPage: 50,
+      keyword: "___no_match___",
+      sort: undefined,
+      filters: [],
+    })
+
+    const onQueryChange = useCallback((next: ServerTableQuery) => setQuery(next), [])
+    const onSortChange = useCallback(
+      (key: keyof Row, direction: SortDirection) => {
+        onQueryChange({ ...query, page: 1, sort: { key: String(key), direction } })
+      },
+      [onQueryChange, query],
+    )
+
+    const columnConfig = useMemo(() => buildColumns(onSortChange), [onSortChange])
+
+    const filtered = useMemo(
+      () => applyKeyword(allRows, String(query.keyword ?? "")),
+      [allRows, query.keyword],
+    )
+    const totalCount = filtered.length
+    const serverRows = useMemo(
+      () => slicePage(filtered, Number(query.page ?? 1), Number(query.rowsPerPage ?? 50)),
+      [filtered, query.page, query.rowsPerPage],
+    )
+
+    return (
+      <Box p={12}>
+        <Typography variant="b1Bold" text="Operational_EmptyState" />
+        <Box mt={12}>
+          <Table<Row>
+            tableKey={tableKey}
+            columnConfig={columnConfig}
+            data={serverRows}
+            query={query}
+            totalCount={totalCount}
+            onQueryChange={onQueryChange}
+            height={520}
+            sticky
+            pagination={"Table"}
+            rowsPer
+            totalRows
+            emptyRowText="검색 결과가 없습니다."
+            toolbar={{
+              title: "Empty",
+              searchEnabled: true,
+              searchPlaceholder: "Search by id/name",
+            }}
+          />
+        </Box>
+      </Box>
+    )
+  },
 }
 
-export const SearchOff: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: { searchEnabled: false },
-}
+export const Guardrail_BadColumnConfigRef: Story = {
+  render: () => {
+    const tableKey = "guardrail_bad_column_ref"
 
-export const DisabledAll: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: { disabled: true },
-}
+    const allRows = useMemo(() => makeRows(1500), [])
+    const [query, setQuery] = useState<ServerTableQuery>({
+      page: 1,
+      rowsPerPage: 100,
+      keyword: "",
+      sort: undefined,
+      filters: [],
+    })
 
-export const BasicPagination: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: { paginationType: "Basic" },
-}
+    const onQueryChange = useCallback((next: ServerTableQuery) => setQuery(next), [])
+    const [tick, setTick] = useState(0)
 
-export const NoPagination: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: { paginationType: undefined },
-}
+    const onSortChange = useCallback(
+      (key: keyof Row, direction: SortDirection) => {
+        onQueryChange({ ...query, page: 1, sort: { key: String(key), direction } })
+      },
+      [onQueryChange, query],
+    )
 
-export const SummaryOff: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: { summaryEnabled: false },
-}
+    // ❌ 의도적 위반: useMemo 없이 매 렌더 새 columnConfig 생성
+    const columnConfig = buildColumns(onSortChange)
 
-export const SummarySingleRow: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: { summaryEnabled: true, summaryMultiRow: false },
-}
+    const filtered = useMemo(
+      () => applyKeyword(allRows, String(query.keyword ?? "")),
+      [allRows, query.keyword],
+    )
+    const totalCount = filtered.length
+    const serverRows = useMemo(() => {
+      const sorted = applySort(filtered, query.sort)
+      return slicePage(sorted, Number(query.page ?? 1), Number(query.rowsPerPage ?? 100))
+    }, [filtered, query.page, query.rowsPerPage, query.sort])
 
-export const StickyHeaderOff: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: { stickyHeader: false },
-}
+    return (
+      <Box p={12}>
+        <Flex align="center" justify="space-between">
+          <Typography
+            variant="b1Bold"
+            text="Guardrail_BadColumnConfigRef (의도적 위반: columnConfig ref 변경)"
+          />
+          <button onClick={() => setTick((v) => v + 1)}>Force Re-render ({tick})</button>
+        </Flex>
 
-export const ColumnVisibilityOff: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: { columnVisibilityEnabled: false },
-}
-
-export const FilterOff: Story = {
-  render: (args) => <TableInteractive {...(args as any)} />,
-  args: { filterEnabled: false },
+        <Box mt={12}>
+          <Table<Row>
+            tableKey={tableKey}
+            columnConfig={columnConfig}
+            data={serverRows}
+            query={query}
+            totalCount={totalCount}
+            onQueryChange={onQueryChange}
+            height={560}
+            sticky
+            pagination={"Table"}
+            rowsPer
+            totalRows
+            toolbar={{
+              title: "Bad Usage",
+              searchEnabled: true,
+              searchPlaceholder: "Search by id/name",
+            }}
+          />
+        </Box>
+      </Box>
+    )
+  },
 }

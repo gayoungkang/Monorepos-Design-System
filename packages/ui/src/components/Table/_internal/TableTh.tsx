@@ -9,13 +9,16 @@ import { styled } from "../../../tokens/customStyled"
 export type TableThProps = BaseMixinProps & {
   children: ReactNode
   align?: CSSProperties["textAlign"]
+
+  sortable?: boolean
   sort?: SortDirection
   onSortChange?: (direction: SortDirection) => void
+
   resizable?: boolean
   onResizeStart?: (e: React.MouseEvent<HTMLDivElement>) => void
 }
 
-// * 현재 sort 상태를 기준으로 다음 정렬 방향을 토글(ASC <-> DESC)
+// * 현재 sort 방향을 기준으로 다음 방향을 결정(ASC <-> DESC)
 const getNextSortDirection = (current?: SortDirection): SortDirection => {
   if (current === "ASC") return "DESC"
   return "ASC"
@@ -24,48 +27,58 @@ const getNextSortDirection = (current?: SortDirection): SortDirection => {
  *
  * ! TableTh
  *
- * * Grid 기반 Table 헤더 셀(Header Cell)을 표현하는 컴포넌트
- * * BaseMixinProps를 확장하여 padding, margin, width, sx 등 공통 스타일 속성 지원
+ * * Grid 기반 Table Header에서 “헤더 셀”을 렌더링하는 컴포넌트
+ * * 문자열 children은 `Typography(ellipsis)`로 감싸 최소 폭에서 말줄임 처리
+ * * 정렬/정렬 토글(sort) UI와 컬럼 리사이즈 핸들을 옵션으로 제공
  *
- * * 정렬(Sort) 기능
- *   * sort 값이 존재하는 경우 정렬 아이콘(ArrowDown) 표시
- *   * 현재 정렬 상태에 따라 아이콘 회전 및 opacity로 시각적 상태 표현
- *   * 헤더 클릭 시 ASC ↔ DESC 토글(getNextSortDirection)
- *   * 정렬 변경은 onSortChange 콜백으로 상위에 위임
+ * * 동작 규칙
+ *   * 정렬 가능 조건: `sortable && onSortChange`가 모두 만족될 때만 정렬 토글 UI 활성화
+ *   * 정렬 토글: 아이콘 클릭 시 `getNextSortDirection(sort)`로 다음 방향을 계산해 `onSortChange(next)` 호출
+ *     * current === "ASC" → "DESC"
+ *     * 그 외(undefined 포함) → "ASC"
+ *   * ARIA: `aria-sort`로 정렬 상태를 "ascending" | "descending" | "none" 중 하나로 노출
+ *   * 리사이즈: `resizable`이 true일 때만 핸들을 렌더링하고, `onMouseDown`으로 `onResizeStart`를 전달
  *
- * * 정렬 기준 텍스트 렌더링
- *   * children이 문자열인 경우 Typography + ellipsis 처리
- *   * Flex + minWidth:0 조합으로 컬럼 폭 축소 시 말줄임 안정 처리
+ * * 레이아웃/스타일 관련 규칙
+ *   * Root: flex 정렬 + 고정 높이(36px) + padding + 우측 border(마지막 셀은 제거)
+ *   * children 영역: `Flex`로 라벨/아이콘을 가로 배치하고 `minWidth: 0`로 축소/ellipsis가 동작하도록 보정
+ *   * sort 아이콘: ASC/DESC 상태에 따라 rotate/opacity를 전환하고 transition으로 시각적 피드백 제공
+ *   * ResizeHandle: absolute 배치(우측 -4px, 폭 8px)로 hit-area 확보, hover 시 배경 강조, cursor col-resize
  *
- * * 컬럼 리사이즈 지원
- *   * resizable=true 인 경우 우측 ResizeHandle 렌더링
- *   * ResizeHandle은 absolute 포지션으로 헤더 우측에 오버레이
- *   * onResizeStart를 통해 마우스 드래그 시작 시점만 상위로 위임
- *   * 실제 컬럼 width 계산/적용 로직은 외부(Grid/Table)에서 처리
- *
- * * 레이아웃 구조
- *   * Root: position: relative 기반 컨테이너
- *   * 내부는 Flex 정렬, 우측 border 기본 적용
- *   * 마지막 헤더 셀은 border 제거
+ * * 데이터 처리 규칙
+ *   * 입력 props 계약
+ *     * `children`은 헤더 라벨(문자열인 경우 ellipsis 처리)
+ *     * `align`은 헤더 텍스트 정렬 기준이며, 내부 `Flex justify`에도 동일 기준으로 반영
+ *     * `sort`는 현재 정렬 방향("ASC" | "DESC")을 나타내며 아이콘 표시/ARIA에 반영
+ *     * `onSortChange`는 정렬 토글 결과를 외부(서버/상위 상태)로 전달하는 제어 포인트
+ *     * `onResizeStart`는 드래그 시작 이벤트를 외부 로직(컬럼 폭 계산/상태 반영)으로 위임
  *
  * @module TableTh
- * Grid 기반 테이블에서 컬럼 헤더를 표현하며,
- * 정렬(sort)과 컬럼 리사이즈(resize) 인터랙션을 함께 제공합니다.
+ * Table 헤더 셀 단위로 정렬 토글 및 리사이즈 핸들을 제공하는 UI 컴포넌트
+ *
+ * @usage
+ * <TableTh sortable sort={sort} onSortChange={setSort} resizable onResizeStart={onResizeStart}>
+ *   {"Column"}
+ * </TableTh>
  *
 /---------------------------------------------------------------------------**/
 
 const TableTh = ({
   children,
   align = "center",
+  sortable,
   sort,
   onSortChange,
   resizable,
   onResizeStart,
   ...others
 }: TableThProps) => {
-  // * 정렬 아이콘 클릭 시 다음 방향으로 토글 후 onSortChange 호출
+  // * 정렬 가능 조건(정렬 UI + 핸들러 존재)을 단일 플래그로 정규화
+  const canSort = Boolean(sortable && onSortChange)
+
+  // * 정렬 아이콘 클릭 시 다음 방향으로 토글하여 상위에 전달
   const handleSortClick = () => {
-    if (!sort) return
+    if (!canSort) return
     const next = getNextSortDirection(sort)
     onSortChange?.(next)
   }
@@ -78,27 +91,33 @@ const TableTh = ({
       {...others}
     >
       <Flex align="center" justify={align as any} gap={4} sx={{ minWidth: 0 }}>
+        {/* * 문자열 헤더는 Typography로 ellipsis 처리 */}
         {typeof children === "string" ? (
           <Typography ellipsis text={children} sx={{ display: "inline-block", minWidth: 0 }} />
         ) : (
           children
         )}
 
-        {sort && (
+        {/* * 정렬 가능 시 토글 아이콘 표시(ASC/DESC 상태를 opacity/rotate로 표현) */}
+        {canSort && (
           <IconButton
             icon="ArrowDown"
             onClick={handleSortClick}
             disableInteraction={false}
             sx={{
-              opacity: sort === "ASC" ? 1 : 0.3,
-              transform: sort === "ASC" ? "rotate(180deg)" : "rotate(0deg)",
+              opacity: sort ? (sort === "ASC" ? 1 : 0.3) : 0.3,
+              transform: sort
+                ? sort === "ASC"
+                  ? "rotate(180deg)"
+                  : "rotate(0deg)"
+                : "rotate(0deg)",
               transition: "transform 0.15s ease, opacity 0.15s ease",
             }}
           />
         )}
       </Flex>
 
-      {/* * 컬럼 리사이즈 활성화 시 드래그 핸들 노출 */}
+      {/* * 컬럼 리사이즈가 활성화된 경우 드래그 핸들 렌더링 */}
       {resizable && <ResizeHandle onMouseDown={onResizeStart} />}
     </Root>
   )

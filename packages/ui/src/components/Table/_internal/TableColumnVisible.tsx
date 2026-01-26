@@ -13,6 +13,19 @@ export type ColumnVisibilityItem = {
   title: string
   hideable?: boolean
 }
+
+export type TableColumnVisibleProps = {
+  disabled?: boolean
+  columnVisibilityEnabled?: boolean
+  columns?: ColumnVisibilityItem[]
+  visibleColumnKeys?: string[]
+  defaultVisibleColumnKeys?: string[]
+  onVisibleColumnKeysChange?: (keys: string[]) => void
+  onHiddenColumnKeysChange?: (hiddenKeys: string[], hiddenColumns: ColumnVisibilityItem[]) => void
+  columnsSkeletonEnabled?: boolean
+  columnsSkeletonCount?: number
+  onBeforeOpen?: () => void
+}
 /**---------------------------------------------------------------------------/
  *
  * ! TableColumnVisible
@@ -54,20 +67,6 @@ export type ColumnVisibilityItem = {
  * 테이블 컬럼 표시/숨김을 팝오버 UI로 제공하며, 숨김 결과를 상위로 동기화합니다.
  *
 /---------------------------------------------------------------------------**/
-
-export type TableColumnVisibleProps = {
-  disabled?: boolean
-  columnVisibilityEnabled?: boolean
-  columns?: ColumnVisibilityItem[]
-  visibleColumnKeys?: string[]
-  defaultVisibleColumnKeys?: string[]
-  onVisibleColumnKeysChange?: (keys: string[]) => void
-  onHiddenColumnKeysChange?: (hiddenKeys: string[], hiddenColumns: ColumnVisibilityItem[]) => void
-  columnsSkeletonEnabled?: boolean
-  columnsSkeletonCount?: number
-  onBeforeOpen?: () => void
-}
-
 const TableColumnVisible = ({
   disabled,
   columnVisibilityEnabled = true,

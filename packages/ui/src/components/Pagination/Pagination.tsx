@@ -6,6 +6,7 @@ import Flex from "../Flex/Flex"
 import { IconName } from "../Icon/icon-loader"
 import { Typography } from "../Typography/Typography"
 import IconButton from "../IconButton/IconButton"
+import { clamp } from "../Table/@utils/table"
 
 export type PaginationType = "Table" | "Basic"
 
@@ -37,9 +38,6 @@ export type PaginationProps = BaseMixinProps &
       last: IconName
     }>
   }
-
-// * 값을 min~max 범위로 고정
-const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
 
 // * start~end 구간의 연속 숫자 배열 생성
 const range = (start: number, end: number) => {
