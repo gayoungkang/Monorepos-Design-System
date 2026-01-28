@@ -1,104 +1,75 @@
 import type { Meta, StoryObj } from "@storybook/react"
-import HelperText, { type HelperTextProps } from "./HelperText"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
+import React, { useState } from "react"
+import HelperText from "./HelperText"
+import type { HelperTextProps } from "./HelperText"
+import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
+import Button from "../Button/Button"
+import { Typography } from "../Typography/Typography"
 
-const meta: Meta<HelperTextProps> = {
-  title: "components/HelperText",
+const meta: Meta<typeof HelperText> = {
+  title: "Components/HelperText",
   component: HelperText,
-
-  args: {
-    text: "도움말 텍스트입니다.",
-    status: "default",
-  },
-
+  parameters: { layout: "fullscreen" },
   argTypes: {
-    /* ---------------------------------- UI ---------------------------------- */
-    text: {
-      control: "text",
-      description: "표시할 메시지 텍스트",
-    },
-    status: {
-      control: "radio",
-      options: ["default", "error", "success", "info"],
-      description: "상태에 따른 컬러/아이콘 변경",
-    },
-
-    /* ---------------------------------- Sub Components ---------------------------------- */
-    typographyProps: { control: false, description: "Typography 커스텀 옵션" },
-    iconProps: { control: false, description: "Icon 커스텀 옵션" },
-
-    /* ---------------------------------- BaseMixinProps ---------------------------------- */
-    p: { control: "text" },
-    pt: { control: "text" },
-    pr: { control: "text" },
-    pb: { control: "text" },
-    pl: { control: "text" },
-    px: { control: "text" },
-    py: { control: "text" },
-
-    m: { control: "text" },
-    mt: { control: "text" },
-    mr: { control: "text" },
-    mb: { control: "text" },
-    ml: { control: "text" },
-    mx: { control: "text" },
-    my: { control: "text" },
-
-    width: { control: "text" },
-    height: { control: "text" },
-
-    sx: { control: false },
+    iconProps: { control: false },
+    typographyProps: { control: false },
   },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Story />
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
+  args: {
+    status: "error",
+    text: "비밀번호가 일치하지 않습니다.",
+  },
 }
-
 export default meta
-type Story = StoryObj<HelperTextProps>
+type Story = StoryObj<typeof HelperText>
 
-/* ─────────── Default ─────────── */
-export const Default: Story = {}
-
-/* ─────────── Status Variants ─────────── */
-export const StatusVariants: Story = {
-  render: () => (
-    <Flex direction="column" gap="12px">
-      <HelperText text="기본 상태 메시지" status="default" />
-      <HelperText text="에러가 발생했습니다." status="error" />
-      <HelperText text="성공적으로 완료되었습니다." status="success" />
-      <HelperText text="추가 정보가 있습니다." status="info" />
-    </Flex>
-  ),
-}
-
-/* ─────────── Multi-line Text ─────────── */
-export const MultiLine: Story = {
-  args: {
-    text: "첫 번째 줄\n두 번째 줄\n세 번째 줄",
-    status: "info",
+export const Playground: Story = {
+  render: (args) => {
+    return (
+      <Box p="20px">
+        <Typography variant="h3" text="HelperText Playground" mb="12px" />
+        <HelperText {...(args as HelperTextProps)} />
+      </Box>
+    )
   },
 }
 
-/* ─────────── Custom Icon/Text Props ─────────── */
-export const CustomStyling: Story = {
-  args: {
-    text: "커스텀 스타일 적용",
-    status: "success",
-    typographyProps: {
-      variant: "b1Medium",
-    },
-    iconProps: {
-      size: 16,
-    },
+export const AllStatuses: Story = {
+  render: () => {
+    const [text, setText] = useState("멀티라인도 됩니다.\n두 번째 줄")
+
+    return (
+      <Box p="20px">
+        <Typography variant="h3" text="Statuses" mb="12px" />
+
+        <Flex gap="8px" mb="12px" wrap="wrap">
+          <Button
+            text="Set short"
+            variant="outlined"
+            color="normal"
+            onClick={() => setText("짧은 메시지")}
+          />
+          <Button
+            text="Set multiline"
+            variant="outlined"
+            color="normal"
+            onClick={() => setText("멀티라인도 됩니다.\n두 번째 줄")}
+          />
+        </Flex>
+
+        <Box mb="10px">
+          <HelperText status="error" text={text} />
+        </Box>
+        <Box mb="10px">
+          <HelperText status="success" text={text} />
+        </Box>
+        <Box mb="10px">
+          <HelperText status="info" text={text} />
+        </Box>
+        <Box>
+          <HelperText status="default" text={text} />
+        </Box>
+      </Box>
+    )
   },
 }

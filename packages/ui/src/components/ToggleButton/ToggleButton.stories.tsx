@@ -1,248 +1,185 @@
-import { useState } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
-import ToggleButton, { type ToggleButtonProps } from "./ToggleButton"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
-import { IconNames } from "../Icon/icon-loader"
+import React, { useMemo, useState } from "react"
+import ToggleButton, { ToggleButtonItem, ToggleButtonProps } from "./ToggleButton"
 import Flex from "../Flex/Flex"
+import Box from "../Box/Box"
+import { Typography } from "../Typography/Typography"
+import Button from "../Button/Button"
+import { IconNames } from "../Icon/icon-loader"
 
-const meta: Meta<ToggleButtonProps> = {
-  title: "components/ToggleButton",
-  component: ToggleButton,
+type ValueType = "all" | "active" | "archived"
 
+type FixedProps = ToggleButtonProps<ValueType>
+
+// * Storybook용: 제네릭을 ValueType으로 고정한 래퍼 (meta.component 타입 에러 방지)
+const ToggleButtonFixed = (props: FixedProps) => <ToggleButton<ValueType> {...props} />
+ToggleButtonFixed.displayName = "ToggleButtonFixed"
+
+const meta: Meta<typeof ToggleButtonFixed> = {
+  title: "Components/ToggleButton",
+  component: ToggleButtonFixed,
+  parameters: { layout: "centered" },
+  argTypes: {
+    orientation: { control: { type: "radio" }, options: ["horizontal", "vertical"] },
+    buttons: { control: false },
+    size: { control: { type: "radio" }, options: ["S", "M", "L"] },
+    selectedValue: { control: false },
+    onClick: { control: false },
+    label: { control: { type: "text" } },
+    disabled: { control: { type: "boolean" } },
+    required: { control: { type: "boolean" } },
+    labelProps: { control: false },
+    iconProps: { control: false },
+  },
   args: {
     orientation: "horizontal",
     size: "M",
+    label: "Status",
     disabled: false,
     required: false,
-    selectedValue: "1",
-    label: "옵션 선택",
-    buttons: [
-      { label: "Option 1", value: "1" },
-      { label: "Option 2", value: "2" },
-      { label: "Option 3", value: "3" },
-    ],
-  },
-
-  argTypes: {
-    /* ─────────── UI Options ─────────── */
-    orientation: {
-      control: "radio",
-      options: ["horizontal", "vertical"],
-      description: "토글 버튼 정렬 방향",
-    },
-    size: {
-      control: "radio",
-      options: ["S", "M", "L"],
-      description: "토글 버튼 크기",
-    },
-    selectedValue: {
-      control: "text",
-      description: "현재 선택된 value 값",
-    },
-    label: {
-      control: "text",
-      description: "그룹 라벨",
-    },
-    required: { control: "boolean", description: "필수 여부" },
-    disabled: { control: "boolean", description: "비활성화 여부" },
-
-    /* ─────────── Buttons ─────────── */
-    buttons: {
-      control: "object",
-      description:
-        "버튼 배열: { startIcon?: IconName; endIcon?: IconName; label?: string; value: string }[]",
-    },
-
-    /* ─────────── Sub Components ─────────── */
-    iconProps: { control: false, description: "아이콘 공통 옵션" },
-    labelProps: { control: false, description: "라벨 공통 옵션" },
-
-    /* ─────────── BaseMixinProps ─────────── */
-    p: { control: "text" },
-    pt: { control: "text" },
-    pr: { control: "text" },
-    pb: { control: "text" },
-    pl: { control: "text" },
-    px: { control: "text" },
-    py: { control: "text" },
-
-    m: { control: "text" },
-    mt: { control: "text" },
-    mr: { control: "text" },
-    mb: { control: "text" },
-    ml: { control: "text" },
-    mx: { control: "text" },
-    my: { control: "text" },
-
-    width: { control: "text" },
-    sx: { control: false },
-  },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Story />
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
+    buttons: [],
+    selectedValue: "all",
+    onClick: () => {},
+  } satisfies Partial<FixedProps>,
 }
 
 export default meta
+type Story = StoryObj<typeof ToggleButtonFixed>
 
-type Story = StoryObj<ToggleButtonProps>
+const defaultButtons: ToggleButtonItem<ValueType>[] = [
+  { label: "All", value: "all", startIcon: IconNames[0] },
+  { label: "Active", value: "active", startIcon: IconNames[1] },
+  { label: "Archived", value: "archived", startIcon: IconNames[2] },
+]
 
-/* ─────────── Default ─────────── */
-export const Default: Story = {
-  render: (args) => {
-    const [selected, setSelected] = useState(args.selectedValue ?? "1")
+const Controlled = (args: FixedProps) => {
+  const [selected, setSelected] = useState<ValueType>("all")
 
-    return (
-      <ToggleButton {...args} selectedValue={selected} onClick={(value) => setSelected(value)} />
-    )
-  },
-}
+  const buttons = useMemo(() => defaultButtons, [])
 
-/* ─────────── Variants (icon-only, text-only, icon+text 조합) ─────────── */
-export const Variants: Story = {
-  render: () => {
-    const [selected, setSelected] = useState("1")
-
-    return (
-      <Flex gap="12px">
-        <ToggleButton
-          buttons={[
-            { startIcon: IconNames[0], value: "1" }, // icon-only
-            { label: "텍스트", value: "2" }, // label-only
-            { endIcon: IconNames[1], value: "3" }, // icon-only (right)
-          ]}
-          selectedValue={selected}
-          onClick={setSelected}
-          label="Variants"
-        />
+  return (
+    <Flex direction="column" gap="12px" width="640px">
+      <Flex align="center" justify="space-between">
+        <Typography text="Playground" variant="h3" />
+        <Flex gap="8px">
+          <Button text="All" onClick={() => setSelected("all")} />
+          <Button variant="outlined" text="Active" onClick={() => setSelected("active")} />
+          <Button variant="outlined" text="Archived" onClick={() => setSelected("archived")} />
+        </Flex>
       </Flex>
-    )
-  },
+
+      <ToggleButtonFixed
+        {...args}
+        buttons={buttons}
+        selectedValue={selected}
+        onClick={(v) => setSelected(v)}
+      />
+
+      <Box sx={{ padding: "10px 12px", borderRadius: "12px", backgroundColor: "grayscale.50" }}>
+        <Typography text={`selectedValue: ${selected}`} variant="b2Regular" />
+      </Box>
+    </Flex>
+  )
 }
 
-/* ─────────── Sizes (S, M, L 각각 독립 상태) ─────────── */
-export const Sizes: Story = {
-  render: () => {
-    const [selectedS, setSelectedS] = useState("1")
-    const [selectedM, setSelectedM] = useState("1")
-    const [selectedL, setSelectedL] = useState("1")
+export const Playground: Story = {
+  render: (args) => <Controlled {...(args as FixedProps)} />,
+}
 
-    const buttons = [
-      { label: "Option 1", value: "1" },
-      { label: "Option 2", value: "2" },
-      { label: "Option 3", value: "3" },
+export const AllCases: Story = {
+  render: (args) => {
+    const common = args as FixedProps
+
+    const [v1, setV1] = useState<ValueType>("all")
+    const [v2, setV2] = useState<ValueType>("active")
+    const [v3, setV3] = useState<ValueType>("archived")
+    const [disabledAll, setDisabledAll] = useState<boolean>(false)
+
+    const buttonsWithItemDisabled: ToggleButtonItem<ValueType>[] = [
+      { label: "All", value: "all", startIcon: IconNames[0] },
+      { label: "Active", value: "active", startIcon: IconNames[1], disabled: true },
+      { label: "Archived", value: "archived", startIcon: IconNames[2] },
     ]
 
     return (
-      <Flex direction="column" gap="16px">
-        <ToggleButton
-          size="S"
-          buttons={buttons}
-          selectedValue={selectedS}
-          onClick={setSelectedS}
-          label="Size S"
-        />
-        <ToggleButton
-          size="M"
-          buttons={buttons}
-          selectedValue={selectedM}
-          onClick={setSelectedM}
-          label="Size M"
-        />
-        <ToggleButton
-          size="L"
-          buttons={buttons}
-          selectedValue={selectedL}
-          onClick={setSelectedL}
-          label="Size L"
-        />
+      <Flex direction="column" gap="18px" width="980px">
+        <Flex align="center" justify="space-between">
+          <Typography text="AllCases / Variants" variant="h3" />
+          <Flex gap="8px">
+            <Button
+              variant={disabledAll ? "contained" : "outlined"}
+              text={disabledAll ? "Disabled: ON" : "Disabled: OFF"}
+              onClick={() => setDisabledAll((p) => !p)}
+            />
+          </Flex>
+        </Flex>
+
+        <Typography text="Horizontal" variant="b1Medium" />
+        <Flex direction="column" gap="12px">
+          <ToggleButtonFixed
+            {...common}
+            label="Default"
+            orientation="horizontal"
+            buttons={defaultButtons}
+            selectedValue={v1}
+            disabled={disabledAll}
+            onClick={(v) => setV1(v)}
+          />
+          <ToggleButtonFixed
+            {...common}
+            label="Size S"
+            orientation="horizontal"
+            size="S"
+            buttons={defaultButtons}
+            selectedValue={v2}
+            disabled={disabledAll}
+            onClick={(v) => setV2(v)}
+          />
+          <ToggleButtonFixed
+            {...common}
+            label="Size L"
+            orientation="horizontal"
+            size="L"
+            buttons={defaultButtons}
+            selectedValue={v3}
+            disabled={disabledAll}
+            onClick={(v) => setV3(v)}
+          />
+        </Flex>
+
+        <Typography text="Vertical" variant="b1Medium" />
+        <Flex direction="column" gap="12px">
+          <ToggleButtonFixed
+            {...common}
+            label="Vertical"
+            orientation="vertical"
+            buttons={defaultButtons}
+            selectedValue={v1}
+            disabled={disabledAll}
+            onClick={(v) => setV1(v)}
+          />
+        </Flex>
+
+        <Typography text="Item disabled" variant="b1Medium" />
+        <Flex direction="column" gap="12px">
+          <ToggleButtonFixed
+            {...common}
+            label="Active disabled (item)"
+            orientation="horizontal"
+            buttons={buttonsWithItemDisabled}
+            selectedValue={v2}
+            disabled={disabledAll}
+            onClick={(v) => setV2(v)}
+          />
+        </Flex>
+
+        <Box sx={{ padding: "10px 12px", borderRadius: "12px", backgroundColor: "grayscale.50" }}>
+          <Typography
+            text={`state: v1=${v1}, v2=${v2}, v3=${v3}, disabledAll=${disabledAll}`}
+            variant="b2Regular"
+          />
+        </Box>
       </Flex>
     )
-  },
-}
-
-/* ─────────── Orientation (가로 / 세로 비교) ─────────── */
-export const Orientation: Story = {
-  render: () => {
-    const [selectedH, setSelectedH] = useState("1")
-    const [selectedV, setSelectedV] = useState("1")
-
-    const buttons = [
-      { label: "A", value: "1" },
-      { label: "B", value: "2" },
-      { label: "C", value: "3" },
-    ]
-
-    return (
-      <Flex gap="24px">
-        <ToggleButton
-          orientation="horizontal"
-          buttons={buttons}
-          selectedValue={selectedH}
-          onClick={setSelectedH}
-          label="Horizontal"
-        />
-
-        <ToggleButton
-          orientation="vertical"
-          buttons={buttons}
-          selectedValue={selectedV}
-          onClick={setSelectedV}
-          label="Vertical"
-        />
-      </Flex>
-    )
-  },
-}
-
-/* ─────────── With Icons (startIcon + endIcon 포함 조합) ─────────── */
-export const WithIcons: Story = {
-  render: () => {
-    const [selected, setSelected] = useState("1")
-
-    return (
-      <Flex gap="12px">
-        <ToggleButton
-          buttons={[
-            { startIcon: IconNames[0], value: "1" },
-            { label: "Option 2", value: "2" },
-            {
-              startIcon: IconNames[1],
-              endIcon: IconNames[2],
-              label: "양쪽 아이콘",
-              value: "3",
-            },
-          ]}
-          selectedValue={selected}
-          onClick={setSelected}
-          label="With Icons"
-        />
-      </Flex>
-    )
-  },
-}
-
-/* ─────────── Disabled ─────────── */
-export const Disabled: Story = {
-  render: (args) => {
-    const [selected, setSelected] = useState(args.selectedValue ?? "1")
-
-    return <ToggleButton {...args} disabled selectedValue={selected} onClick={setSelected} />
-  },
-}
-
-/* ─────────── Required ─────────── */
-export const Required: Story = {
-  render: (args) => {
-    const [selected, setSelected] = useState(args.selectedValue ?? "1")
-
-    return <ToggleButton {...args} required selectedValue={selected} onClick={setSelected} />
   },
 }

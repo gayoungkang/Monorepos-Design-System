@@ -90,38 +90,72 @@ const getBasicItems = (
   return dedup
 }
 /**---------------------------------------------------------------------------/
-
-* ! Pagination
-*
-* * 2가지 형태를 지원하는 Pagination 컴포넌트 (Table / Basic)
-* * disabled 상태 지원 (버튼/페이지 이동 비활성화)
-*
-* * 공통 로직
-*   * clamp로 page 값을 1~pageCount 범위로 보정
-*   * count 기반 총 페이지 수(computedPageCount) 계산 (기본 페이지 크기 10 고정)
-*   * from/to 계산을 통해 현재 페이지의 표시 범위 텍스트 생성
-*   * labelDisplayedRows로 표시 문구 커스터마이징 지원
-*   * icons(prev/next/first/last) 커스터마이징 지원 (기본 아이콘 포함)
-*
-* * Table 타입
-*   * "from–to of count" 형태의 요약 텍스트 표시
-*   * prev/next IconButton으로 페이지 이동(onPageChange) 제공
-*
-* * Basic 타입
-*   * siblingCount / boundaryCount 규칙 기반 페이지 번호/ellipsis 목록 계산(getBasicItems)
-*   * first/last, prev/next 버튼 노출 옵션 제어
-*   * 현재 페이지는 aria-current 및 선택 스타일 적용
-*
-* @module Pagination
-* 테이블/리스트 페이지 이동 UI를 제공하는 Pagination 컴포넌트입니다.
-* - `type`에 따라 요약형(Table) 또는 번호형(Basic) UI를 렌더링합니다.
-* - `count`와 `page`를 기반으로 현재 표시 구간을 계산하며, 페이지 크기는 10으로 고정됩니다.
-* - `Basic` 모드에서는 boundary/sibling 규칙에 따라 페이지 버튼과 ellipsis를 구성합니다.
-*
-* @usage
-* <Pagination type="Table" count={120} page={1} onPageChange={...} />
-* <Pagination type="Basic" page={3} pageCount={20} onPageChange={...} />
-
+ *
+ * ! Pagination
+ *
+ * * Table/Basic 두 가지 타입의 페이지네이션 UI를 제공하는 컴포넌트
+ * * Table 타입은 “from–to of count” 표시 + prev/next 이동을 제공
+ * * Basic 타입은 숫자 버튼 + ellipsis(start/end) + prev/next/first/last 아이콘 버튼을 제공
+ * * page/pageCount/count 입력을 안전하게 보정(clamp)하여 범위를 벗어난 값도 안정적으로 렌더링
+ * * disabled 상태를 지원하며, 이동 불가(canPrev/canNext) 조건에서는 네비게이션을 차단
+ *
+ * * 동작 규칙
+ *   * 주요 분기 조건 및 처리 우선순위
+ *     * type === "Table" 이면 Table 렌더링만 수행
+ *     * type === "Basic" 이면 Basic 렌더링만 수행
+ *     * pageCount prop이 유효하면(pageCount > 0) 이를 최우선으로 사용
+ *     * pageCount가 없으면 count 기반으로 페이지 수를 계산(기본 10개 단위)
+ *     * page는 1~computedPageCount 범위로 clamp하여 safePage로 사용
+ *   * 이벤트 처리 방식
+ *     * onPageChange: 아이콘(prev/next/first/last) 및 숫자 버튼 클릭 시 목표 page를 전달
+ *     * ellipsis 아이템은 버튼이 아니며 클릭 이벤트 없음(표시 전용)
+ *   * disabled 상태에서 차단되는 동작
+ *     * disabled === true 이면 모든 버튼(PageButton/IconButton) 비활성 처리
+ *     * canPrev/canNext가 false이면 해당 네비게이션 버튼 비활성 처리
+ *
+ * * 레이아웃/스타일 관련 규칙
+ *   * 공통: Flex 기반 수평 정렬, width는 "fit-content" 중심
+ *   * Table 타입
+ *     * displayedRows(문구) + prev/next IconButton 2개 구성
+ *   * Basic 타입
+ *     * siblingCount/boundaryCount 규칙으로 페이지 아이템을 계산(getBasicItems)
+ *     * start-ellipsis/end-ellipsis는 "…" 텍스트로 표시
+ *     * PageButton은 $selected에 따라 배경/타이포 variant를 변경
+ *     * show/hide 옵션으로 prev/next 및 first/last 노출 제어
+ *   * 아이콘 커스터마이즈
+ *     * icons(prev/next/first/last) 제공 시 해당 아이콘 사용, 없으면 기본 아이콘 fallback 사용
+ *
+ * * 데이터 처리 규칙
+ *   * 입력 props 계약(필수/선택)
+ *     * type: 필수("Table" | "Basic")
+ *     * disabled: 옵션(기본 false)
+ *     * Table 관련:
+ *       * count/page/onPageChange/labelDisplayedRows(옵션)
+ *     * Basic 관련:
+ *       * pageCount(옵션, 우선 적용)
+ *       * siblingCount/boundaryCount(기본 1)
+ *       * hidePrevNextButtons/hideFirstLastButtons, showPrevNextButtons(기본 true), showFirstLastButtons(기본 false)
+ *     * icons: 네비게이션 아이콘 커스터마이즈(옵션)
+ *   * 내부 계산 로직 요약
+ *     * safeCount: count를 0 이상으로 보정
+ *     * computedPageCount:
+ *       * pageCount 우선, 없으면 safeCount/10으로 계산(최소 1)
+ *     * safePage: page를 1~computedPageCount로 clamp
+ *     * Table from/to:
+ *       * (safePage-1)*10+1 ~ min(count, safePage*10)
+ *     * displayedRows:
+ *       * labelDisplayedRows 제공 시 우선 사용, 없으면 기본 문자열 생성
+ *     * basicItems:
+ *       * getBasicItems로 boundary/sibling 규칙에 따라 숫자/ellipsis 시퀀스 생성 + 중복 숫자 제거
+ *   * 클라이언트 제어 컴포넌트 (onPageChange 콜백으로 외부 상태 갱신)
+ *
+ * @module Pagination
+ * Table/Basic 타입을 지원하는 공통 페이지네이션 컴포넌트
+ *
+ * @usage
+ * <Pagination type="Table" count={120} page={1} onPageChange={(p) => {}} />
+ * <Pagination type="Basic" page={3} pageCount={20} onPageChange={(p) => {}} />
+ *
 /---------------------------------------------------------------------------**/
 
 const Pagination = ({
@@ -174,7 +208,7 @@ const Pagination = ({
   }, [safeCount, safePage])
 
   // * Table 타입 표시 문구 계산 (사용자 formatter 우선)
-  const displayedRows = useMemo(() => {
+  const displayedRows = useMemo<ReactNode>(() => {
     if (!safeCount) return "0–0 of 0"
     if (labelDisplayedRows) return labelDisplayedRows(fromTo.from, fromTo.to, safeCount)
     return `${fromTo.from}–${fromTo.to} of ${safeCount}`
@@ -192,11 +226,11 @@ const Pagination = ({
   // * Table 타입 렌더링
   const renderTable = () => (
     <Flex align="center" gap={12} width={"fit-content"}>
-      <Typography
-        text={displayedRows as string}
-        variant="b1Bold"
-        color={theme.colors.text.primary}
-      />
+      {typeof displayedRows === "string" ? (
+        <Typography text={displayedRows} variant="b1Bold" color={theme.colors.text.primary} />
+      ) : (
+        <>{displayedRows}</>
+      )}
 
       <Flex align="center" gap={4}>
         <IconButton
@@ -250,6 +284,7 @@ const Pagination = ({
 
           const p = it
           const selected = p === safePage
+
           return (
             <PageButton
               key={`p-${p}`}

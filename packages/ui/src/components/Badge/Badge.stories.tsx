@@ -1,205 +1,138 @@
-import { useState } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
-import Badge, { BadgeProps } from "./Badge"
+import { useState } from "react"
+import Badge from "./Badge"
+import type { BadgeProps } from "./Badge"
 import Box from "../Box/Box"
-import Button from "../Button/Button"
-import { StatusUiType } from "../../types"
 import Flex from "../Flex/Flex"
+import Button from "../Button/Button"
+import Avatar from "../Avatar/Avatar"
+import { Typography } from "../Typography/Typography"
 
-/* -------------------------------------------------------------------------- */
-/*                                    Meta                                    */
-/* -------------------------------------------------------------------------- */
-
-const meta: Meta<BadgeProps> = {
-  title: "components/Badge",
+const meta: Meta<typeof Badge> = {
+  title: "Components/Badge",
   component: Badge,
-
-  args: {
-    content: 5,
-    max: 99,
-    status: "error",
-    overlap: "rectangular",
-    placement: "top-right",
-    showZero: false,
-    invisible: false,
-  },
-
+  parameters: { layout: "fullscreen" },
   argTypes: {
     content: { control: "text" },
     max: { control: "number" },
-    status: {
-      control: "radio",
-      options: ["error", "success", "info", "warning"] satisfies StatusUiType[],
-    },
-    overlap: {
-      control: "radio",
-      options: ["rectangular", "circular"],
-    },
-    placement: {
-      control: "select",
-      options: ["top-right", "top-left", "bottom-right", "bottom-left"],
-    },
     showZero: { control: "boolean" },
     invisible: { control: "boolean" },
+    status: { control: "radio", options: ["success", "info", "warning", "error"] },
+    overlap: { control: "radio", options: ["rectangular", "circular"] },
+    placement: {
+      control: "radio",
+      options: ["top-right", "top-left", "bottom-right", "bottom-left"],
+    },
+    children: { control: false },
   },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Box p="24px">
-          <Story />
-        </Box>
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
+  args: {
+    content: 3,
+    max: 99,
+    showZero: false,
+    invisible: false,
+    status: "error",
+    overlap: "rectangular",
+    placement: "top-right",
+  },
 }
 
 export default meta
+type Story = StoryObj<typeof Badge>
 
-type Story = StoryObj<BadgeProps>
+export const Playground: Story = {
+  render: (args) => {
+    return (
+      <Box p="20px">
+        <Typography variant="h3" text="Badge Playground" mb="12px" />
 
-/* -------------------------------------------------------------------------- */
-/*                                  Default                                   */
-/* -------------------------------------------------------------------------- */
+        <Flex gap="18px" align="center">
+          <Badge {...(args as BadgeProps)}>
+            <Button text="Target" variant="contained" color="primary" />
+          </Badge>
 
-export const Default: Story = {
-  render: (args) => (
-    <Badge {...args}>
-      <Button text="알림 버튼" />
-    </Badge>
-  ),
+          <Badge {...(args as BadgeProps)} overlap="circular">
+            <Avatar name="Jane Doe" size="L" />
+          </Badge>
+        </Flex>
+      </Box>
+    )
+  },
 }
 
-/* -------------------------------------------------------------------------- */
-/*                              Status Variants                                */
-/* -------------------------------------------------------------------------- */
-
-export const Status: Story = {
-  render: () => (
-    <Flex gap="24px">
-      <Badge content={5} status="error">
-        <Button text="Error" />
-      </Badge>
-      <Badge content={5} status="success">
-        <Button text="Success" />
-      </Badge>
-      <Badge content={5} status="info">
-        <Button text="Info" />
-      </Badge>
-      <Badge content={5} status="warning">
-        <Button text="Warning" />
-      </Badge>
-    </Flex>
-  ),
-}
-
-/* -------------------------------------------------------------------------- */
-/*                               Max + Overflow                                */
-/* -------------------------------------------------------------------------- */
-
-export const MaxOverflow: Story = {
-  render: () => (
-    <Flex gap="24px">
-      <Badge content={150} max={99}>
-        <Button text="99 max" />
-      </Badge>
-
-      <Badge content={1000} max={999}>
-        <Button text="999 max" />
-      </Badge>
-    </Flex>
-  ),
-}
-
-/* -------------------------------------------------------------------------- */
-/*                               Placement Examples                            */
-/* -------------------------------------------------------------------------- */
-
-export const Placement: Story = {
-  render: () => (
-    <Flex gap="40px">
-      <Badge content={3} placement="top-left">
-        <Button text="Top Left" />
-      </Badge>
-
-      <Badge content={3} placement="top-right">
-        <Button text="Top Right" />
-      </Badge>
-
-      <Badge content={3} placement="bottom-left">
-        <Button text="Bottom Left" />
-      </Badge>
-
-      <Badge content={3} placement="bottom-right">
-        <Button text="Bottom Right" />
-      </Badge>
-    </Flex>
-  ),
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                Overlap Types                                */
-/* -------------------------------------------------------------------------- */
-
-export const Overlap: Story = {
-  render: () => (
-    <Flex gap="40px">
-      <Badge content={8} overlap="rectangular">
-        <Button text="Rectangular" />
-      </Badge>
-
-      <Badge content={8} overlap="circular">
-        <Button text="Circular" />
-      </Badge>
-    </Flex>
-  ),
-}
-
-/* -------------------------------------------------------------------------- */
-/*                              Show Zero & Invisible                          */
-/* -------------------------------------------------------------------------- */
-
-export const ShowZero: Story = {
-  render: () => (
-    <Flex gap="40px">
-      <Badge content={0} showZero>
-        <Button text="Show Zero" />
-      </Badge>
-
-      <Badge content={0} showZero={false}>
-        <Button text="Zero Hidden" />
-      </Badge>
-
-      <Badge content={10} invisible>
-        <Button text="Invisible" />
-      </Badge>
-    </Flex>
-  ),
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                Live Updating                                */
-/* -------------------------------------------------------------------------- */
-
-export const LiveUpdate: Story = {
+export const MaxAndZeroAndInvisible: Story = {
   render: () => {
-    const [count, setCount] = useState(1)
+    const [count, setCount] = useState(0)
+    const [invisible, setInvisible] = useState(false)
 
     return (
-      <Flex direction="column" gap="16px">
-        <Badge content={count}>
-          <Button text="Dynamic Badge" />
-        </Badge>
+      <Box p="20px">
+        <Typography variant="h3" text="Max / Zero / Invisible" mb="12px" />
 
-        <Flex gap="12px">
-          <Button text="+" onClick={() => setCount((c) => c + 1)} />
-          <Button text="-" onClick={() => setCount((c) => Math.max(0, c - 1))} />
+        <Flex gap="10px" mb="12px" wrap="wrap">
+          <Button text="+1" onClick={() => setCount((v) => v + 1)} />
+          <Button
+            text="-1"
+            variant="outlined"
+            color="normal"
+            onClick={() => setCount((v) => v - 1)}
+          />
+          <Button
+            text={invisible ? "Show badge" : "Hide badge"}
+            variant="text"
+            color="secondary"
+            onClick={() => setInvisible((v) => !v)}
+          />
         </Flex>
-      </Flex>
+
+        <Flex gap="18px" align="center">
+          <Badge content={count} max={9} status="error" showZero={false} invisible={invisible}>
+            <Button text="showZero=false" variant="outlined" color="normal" />
+          </Badge>
+
+          <Badge content={count} max={9} status="info" showZero invisible={invisible}>
+            <Button text="showZero=true" variant="outlined" color="normal" />
+          </Badge>
+
+          <Badge content={120} max={99} status="warning">
+            <Button text="120 → 99+" variant="outlined" color="normal" />
+          </Badge>
+        </Flex>
+      </Box>
+    )
+  },
+}
+
+export const PlacementMatrix: Story = {
+  render: () => {
+    const placements: Array<BadgeProps["placement"]> = [
+      "top-right",
+      "top-left",
+      "bottom-right",
+      "bottom-left",
+    ]
+    return (
+      <Box p="20px">
+        <Typography variant="h3" text="Placement Matrix" mb="12px" />
+
+        <Flex gap="22px" wrap="wrap">
+          {placements.map((p) => (
+            <Box key={p}>
+              <Typography variant="b3Regular" text={p ?? ""} mb="8px" color="#666666" />
+              <Badge content={3} placement={p} status="success">
+                <Box
+                  width="64px"
+                  height="64px"
+                  sx={{
+                    borderRadius: "14px",
+                    border: "1px solid #e5e7eb",
+                    backgroundColor: "#ffffff",
+                  }}
+                />
+              </Badge>
+            </Box>
+          ))}
+        </Flex>
+      </Box>
     )
   },
 }

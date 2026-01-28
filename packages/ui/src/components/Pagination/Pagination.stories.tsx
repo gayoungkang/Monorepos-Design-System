@@ -1,168 +1,66 @@
-import { useMemo, useState } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
+import React, { useMemo, useState } from "react"
 import Pagination from "./Pagination"
-import type { PaginationType } from "./Pagination"
-import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
-import Button from "../Button/Button"
+import Box from "../Box/Box"
+import { Typography } from "../Typography/Typography"
 import { theme } from "../../tokens/theme"
-
-/* ------------------------------------------------------------------ */
-/* meta */
-/* ------------------------------------------------------------------ */
+import { formatWithComma } from "../../utils/string"
 
 const meta: Meta<typeof Pagination> = {
   title: "Components/Pagination",
   component: Pagination,
+  parameters: { layout: "padded" },
   argTypes: {
-    type: {
-      control: "radio",
-      options: ["Table", "Basic"] satisfies PaginationType[],
-    },
-    disabled: { control: "boolean" },
-
-    count: { control: { type: "number", min: 0, step: 1 } },
-    page: { control: { type: "number", min: 1, step: 1 } },
-    onPageChange: { control: false },
+    onPageChange: { action: "onPageChange", control: false },
     labelDisplayedRows: { control: false },
-
-    pageCount: { control: { type: "number", min: 1, step: 1 } },
-    siblingCount: { control: { type: "number", min: 0, step: 1 } },
-    boundaryCount: { control: { type: "number", min: 0, step: 1 } },
-
-    hidePrevNextButtons: { control: "boolean" },
-    hideFirstLastButtons: { control: "boolean" },
-    showFirstLastButtons: { control: "boolean" },
-    showPrevNextButtons: { control: "boolean" },
-
     icons: { control: false },
   },
-  args: {
-    type: "Basic",
-    disabled: false,
-
-    count: 128,
-    page: 1,
-
-    pageCount: 10,
-    siblingCount: 1,
-    boundaryCount: 1,
-
-    hidePrevNextButtons: false,
-    hideFirstLastButtons: false,
-    showFirstLastButtons: false,
-    showPrevNextButtons: true,
-  },
-  decorators: [
-    (Story) => (
-      <Box p={24} bgColor={theme.colors.background.default} width="100%">
-        <Story />
-      </Box>
-    ),
-  ],
 }
-
 export default meta
-
 type Story = StoryObj<typeof Pagination>
-
-/* ------------------------------------------------------------------ */
-/* stories */
-/* ------------------------------------------------------------------ */
-
-export const Playground: Story = {
-  render: (args) => {
-    const [page, setPage] = useState(args.page ?? 1)
-
-    const count = typeof args.count === "number" ? Math.max(0, args.count) : 0
-
-    const pageCount = useMemo(() => {
-      if (typeof args.pageCount === "number" && args.pageCount > 0)
-        return Math.floor(args.pageCount)
-      if (count <= 0) return 1
-      return Math.max(1, Math.ceil(count / 10))
-    }, [args.pageCount, count])
-
-    const safePage = Math.min(Math.max(1, page), pageCount)
-
-    return (
-      <Flex direction="column" gap={16} width="100%">
-        <Flex gap={8} align="center" wrap="wrap">
-          <Button text="First" variant="outlined" onClick={() => setPage(1)} />
-
-          <Button
-            text="Prev"
-            variant="outlined"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          />
-
-          <Button
-            text="Next"
-            variant="outlined"
-            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-          />
-
-          <Button text="Last" variant="outlined" onClick={() => setPage(pageCount)} />
-        </Flex>
-
-        <Pagination
-          {...args}
-          count={count}
-          page={safePage}
-          onPageChange={(p) => setPage(p)}
-          pageCount={args.type === "Basic" ? pageCount : undefined}
-        />
-
-        <Box
-          p={12}
-          bgColor={theme.colors.grayscale[50]}
-          sx={{
-            border: `1px solid ${theme.colors.border.default}`,
-            borderRadius: theme.borderRadius[8],
-          }}
-        >
-          type: {args.type} / page: {safePage} / pageCount: {pageCount} / count: {count}
-        </Box>
-      </Flex>
-    )
-  },
-}
 
 export const Table: Story = {
   args: {
     type: "Table",
+    count: 235,
     disabled: false,
-    count: 128,
-    page: 1,
+    width: "fit-content",
   },
   render: (args) => {
-    const [page, setPage] = useState(args.page ?? 1)
+    const [page, setPage] = useState(1)
 
-    const count = typeof args.count === "number" ? Math.max(0, args.count) : 0
-    const pageCount = Math.max(1, Math.ceil(count / 10))
-    const safePage = Math.min(Math.max(1, page), pageCount)
+    const labelDisplayedRows = useMemo(
+      () => (from: number, to: number, count: number) => (
+        <Typography
+          variant="b1Bold"
+          color={theme.colors.text.primary}
+          text={`${from}–${to} / 총 ${formatWithComma(count)}건`}
+        />
+      ),
+      [],
+    )
 
     return (
-      <Flex direction="column" gap={16} width="100%">
+      <Box>
+        <Typography variant="h3" text="Pagination (Table)" mb="12px" />
+        <Flex align="center" gap="12px" mb="12px">
+          <Typography
+            variant="b2Regular"
+            color={theme.colors.text.secondary}
+            text={`page: ${page}`}
+          />
+        </Flex>
+
         <Pagination
           {...args}
-          count={count}
-          page={safePage}
-          onPageChange={(p) => setPage(p)}
-          labelDisplayedRows={(from, to, total) => `${from}–${to} / ${total}`}
-        />
-
-        <Box
-          p={12}
-          bgColor={theme.colors.grayscale[50]}
-          sx={{
-            border: `1px solid ${theme.colors.border.default}`,
-            borderRadius: theme.borderRadius[8],
+          page={page}
+          onPageChange={(p) => {
+            setPage(p)
           }}
-        >
-          page: {safePage} / pageCount: {pageCount} / count: {count}
-        </Box>
-      </Flex>
+          labelDisplayedRows={labelDisplayedRows}
+        />
+      </Box>
     )
   },
 }
@@ -170,50 +68,111 @@ export const Table: Story = {
 export const Basic: Story = {
   args: {
     type: "Basic",
-    disabled: false,
-    count: 128,
-    page: 1,
+    pageCount: 32,
     siblingCount: 1,
     boundaryCount: 1,
     showPrevNextButtons: true,
     showFirstLastButtons: true,
     hidePrevNextButtons: false,
     hideFirstLastButtons: false,
+    disabled: false,
+    width: "fit-content",
   },
   render: (args) => {
-    const [page, setPage] = useState(args.page ?? 1)
-
-    const count = typeof args.count === "number" ? Math.max(0, args.count) : 0
-    const pageCount = useMemo(() => {
-      if (typeof args.pageCount === "number" && args.pageCount > 0)
-        return Math.floor(args.pageCount)
-      if (count <= 0) return 1
-      return Math.max(1, Math.ceil(count / 10))
-    }, [args.pageCount, count])
-
-    const safePage = Math.min(Math.max(1, page), pageCount)
+    const [page, setPage] = useState(7)
 
     return (
-      <Flex direction="column" gap={16} width="100%">
+      <Box>
+        <Typography variant="h3" text="Pagination (Basic)" mb="12px" />
+        <Flex align="center" gap="12px" mb="12px">
+          <Typography
+            variant="b2Regular"
+            color={theme.colors.text.secondary}
+            text={`page: ${page}`}
+          />
+          <Typography
+            variant="b2Regular"
+            color={theme.colors.text.secondary}
+            text={`pageCount: ${args.pageCount}`}
+          />
+        </Flex>
+
         <Pagination
           {...args}
-          count={count}
-          page={safePage}
-          onPageChange={(p) => setPage(p)}
-          pageCount={pageCount}
-        />
-
-        <Box
-          p={12}
-          bgColor={theme.colors.grayscale[50]}
-          sx={{
-            border: `1px solid ${theme.colors.border.default}`,
-            borderRadius: theme.borderRadius[8],
+          page={page}
+          onPageChange={(p) => {
+            setPage(p)
           }}
-        >
-          page: {safePage} / pageCount: {pageCount} / count: {count}
-        </Box>
-      </Flex>
+        />
+      </Box>
+    )
+  },
+}
+
+export const DisabledMatrix: Story = {
+  render: () => {
+    const [pageA, setPageA] = useState(1)
+    const [pageB, setPageB] = useState(5)
+
+    return (
+      <Box>
+        <Typography variant="h3" text="Disabled / Options Matrix" mb="12px" />
+
+        <Flex direction="column" gap="16px">
+          <Box>
+            <Typography variant="h2" text="Table - enabled" mb="8px" />
+            <Pagination type="Table" count={120} page={pageA} onPageChange={setPageA} />
+          </Box>
+
+          <Box>
+            <Typography variant="h2" text="Table - disabled" mb="8px" />
+            <Pagination type="Table" count={120} page={pageA} onPageChange={setPageA} disabled />
+          </Box>
+
+          <Box>
+            <Typography variant="h2" text="Basic - full controls" mb="8px" />
+            <Pagination
+              type="Basic"
+              page={pageB}
+              onPageChange={setPageB}
+              pageCount={24}
+              siblingCount={2}
+              boundaryCount={2}
+              showFirstLastButtons
+              showPrevNextButtons
+            />
+          </Box>
+
+          <Box>
+            <Typography variant="h2" text="Basic - no first/last, no prev/next" mb="8px" />
+            <Pagination
+              type="Basic"
+              page={pageB}
+              onPageChange={setPageB}
+              pageCount={24}
+              siblingCount={1}
+              boundaryCount={1}
+              showFirstLastButtons={false}
+              showPrevNextButtons={false}
+            />
+          </Box>
+
+          <Box>
+            <Typography variant="h2" text="Basic - disabled" mb="8px" />
+            <Pagination
+              type="Basic"
+              page={pageB}
+              onPageChange={setPageB}
+              pageCount={24}
+              siblingCount={1}
+              boundaryCount={1}
+              showFirstLastButtons
+              showPrevNextButtons
+              disabled
+            />
+          </Box>
+        </Flex>
+      </Box>
     )
   },
 }

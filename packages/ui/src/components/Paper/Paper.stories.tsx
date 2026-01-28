@@ -1,90 +1,100 @@
 import type { Meta, StoryObj } from "@storybook/react"
-import { ThemeProvider } from "styled-components"
+import React from "react"
 import Paper from "./Paper"
-import { theme } from "../../tokens/theme"
 import Flex from "../Flex/Flex"
+import { Typography } from "../Typography/Typography"
+import { theme } from "../../tokens/theme"
 
 const meta: Meta<typeof Paper> = {
-  title: "components/Paper",
+  title: "Components/Paper",
   component: Paper,
-  tags: ["autodocs"],
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Story />
-      </ThemeProvider>
-    ),
-  ],
+  args: {
+    elevation: 4,
+    radius: 4,
+  },
   argTypes: {
     elevation: {
       control: { type: "number", min: 0, max: 24, step: 1 },
-      description: "그림자 레벨 (0~24)",
     },
     radius: {
-      control: "text",
-      description: "border-radius (theme.borderRadius 키 또는 px 값)",
+      control: { type: "select" },
+      options: Object.keys(theme.borderRadius).map((k) => {
+        const asNumber = Number(k)
+        return Number.isNaN(asNumber) ? k : asNumber
+      }),
     },
+    children: { control: false },
   },
 }
-
 export default meta
 
 type Story = StoryObj<typeof Paper>
 
-/**
- * 기본 사용 예제
- */
-export const Default: Story = {
+export const Playground: Story = {
+  render: (args) => (
+    <Paper {...args}>
+      <Typography
+        variant="b2Regular"
+        text="Paper content"
+        color={theme.colors.text.secondary}
+        sx={{ lineHeight: "1.4" }}
+      />
+    </Paper>
+  ),
+}
+
+export const Elevations: Story = {
   args: {
-    elevation: 1,
-    radius: 4,
-    children: "기본 Paper",
+    radius: 8,
+  },
+  render: (args) => (
+    <Flex gap={12} wrap="wrap">
+      {[0, 1, 2, 4, 6, 8, 12, 16, 24].map((e) => (
+        <Paper key={e} {...args} elevation={e} width="160px">
+          <Typography variant="b2Regular" text={`elevation: ${e}`} />
+        </Paper>
+      ))}
+    </Flex>
+  ),
+}
+
+export const RadiusTokens: Story = {
+  args: {
+    elevation: 6,
+  },
+  render: (args) => {
+    const keys = Object.keys(theme.borderRadius)
+      .map((k) => {
+        const asNumber = Number(k)
+        return Number.isNaN(asNumber) ? k : asNumber
+      })
+      .slice(0, 10)
+
+    return (
+      <Flex gap={12} wrap="wrap">
+        {keys.map((r) => (
+          <Paper key={String(r)} {...args} radius={r as any} width="160px">
+            <Typography variant="b2Regular" text={`radius: ${String(r)}`} />
+          </Paper>
+        ))}
+      </Flex>
+    )
   },
 }
 
-/**
- * elevation 단계 비교
- */
-export const ElevationLevels: Story = {
+export const CustomRadiusString: Story = {
+  args: {
+    elevation: 8,
+    radius: "18px",
+  },
   render: (args) => (
-    <Flex direction="column" gap="16px">
-      <Paper {...args} elevation={0} sx={{ backgroundColor: theme.colors.grayscale[100] }}>
-        elevation 0
+    <Flex gap={12} wrap="wrap">
+      <Paper {...args} width="240px">
+        <Typography variant="b2Regular" text={`radius: "${String(args.radius)}"`} />
       </Paper>
-      <Paper {...args} elevation={2} sx={{ backgroundColor: theme.colors.grayscale[100] }}>
-        elevation 2
-      </Paper>
-      <Paper {...args} elevation={8} sx={{ backgroundColor: theme.colors.grayscale[100] }}>
-        elevation 8
-      </Paper>
-      <Paper {...args} elevation={16} sx={{ backgroundColor: theme.colors.grayscale[100] }}>
-        elevation 16
+      <Paper {...args} radius="9999px" width="240px">
+        <Typography variant="b2Regular" text='radius: "9999px"' />
       </Paper>
     </Flex>
   ),
-  args: {
-    radius: 4,
-  },
-}
-
-/**
- * radius 변화 예제
- */
-export const RadiusVariants: Story = {
-  render: (args) => (
-    <Flex gap={"16px"}>
-      <Paper {...args} radius={0}>
-        radius 0
-      </Paper>
-      <Paper {...args} radius={4}>
-        radius 4 (기본)
-      </Paper>
-      <Paper {...args} radius={"16px"}>
-        radius "16px"
-      </Paper>
-    </Flex>
-  ),
-  args: {
-    elevation: 2,
-  },
 }

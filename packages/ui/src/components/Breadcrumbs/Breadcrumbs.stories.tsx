@@ -1,115 +1,109 @@
 import type { Meta, StoryObj } from "@storybook/react"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
-import Breadcrumbs, { BreadcrumbsProps } from "./Breadcrumbs"
+import React, { useMemo, useState } from "react"
+import Breadcrumbs from "./Breadcrumbs"
+import type { BreadcrumbItem, BreadcrumbsProps } from "./Breadcrumbs"
+import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
+import Button from "../Button/Button"
+import Icon from "../Icon/Icon"
 import { Typography } from "../Typography/Typography"
 
-const meta: Meta<BreadcrumbsProps> = {
-  title: "components/Breadcrumbs",
+const meta: Meta<typeof Breadcrumbs> = {
+  title: "Components/Breadcrumbs",
   component: Breadcrumbs,
-
-  args: {
-    items: [
-      { label: "Home", href: "/" },
-      { label: "Category", onClick: () => console.log("Category clicked") },
-      { label: "Subpage", href: "/sub" },
-      { label: "Detail" },
-    ],
-    maxItems: undefined,
-  },
-
+  parameters: { layout: "fullscreen" },
   argTypes: {
-    items: { control: "object" },
     maxItems: { control: "number" },
     separator: { control: false },
+    items: { control: false },
   },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Flex p="20px">
-          <Story />
-        </Flex>
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
+  args: {
+    maxItems: undefined,
+  },
 }
 
 export default meta
+type Story = StoryObj<typeof Breadcrumbs>
 
-type Story = StoryObj<BreadcrumbsProps>
+export const Playground: Story = {
+  render: (args) => {
+    const items = useMemo<BreadcrumbItem[]>(
+      () => [
+        { label: "Home", onClick: () => undefined },
+        { label: "Library", onClick: () => undefined },
+        { label: "Category", onClick: () => undefined },
+        { label: "Detail" },
+      ],
+      [],
+    )
 
-/* -------------------------------------------------------------------------- */
-/*                                  Default                                   */
-/* -------------------------------------------------------------------------- */
+    return (
+      <Box p="20px">
+        <Typography variant="h3" text="Breadcrumbs Playground" mb="12px" />
+        <Breadcrumbs {...(args as BreadcrumbsProps)} items={items} />
+      </Box>
+    )
+  },
+}
 
-export const Default: Story = {}
+export const MaxItemsInteractive: Story = {
+  render: () => {
+    const baseItems = useMemo<BreadcrumbItem[]>(
+      () => [
+        { label: "Home", onClick: () => undefined },
+        { label: "Products", onClick: () => undefined },
+        { label: "Electronics", onClick: () => undefined },
+        { label: "Cameras", onClick: () => undefined },
+        { label: "Mirrorless", onClick: () => undefined },
+        { label: "Detail" },
+      ],
+      [],
+    )
 
-/* -------------------------------------------------------------------------- */
-/*                           Custom Separator Example                          */
-/* -------------------------------------------------------------------------- */
+    const [maxItems, setMaxItems] = useState<number | undefined>(3)
+
+    return (
+      <Box p="20px">
+        <Typography variant="h3" text="maxItems behavior" mb="12px" />
+
+        <Flex gap="10px" mb="12px" wrap="wrap">
+          <Button
+            text="maxItems=undefined"
+            variant="outlined"
+            color="normal"
+            onClick={() => setMaxItems(undefined)}
+          />
+          {[2, 3, 4, 5].map((v) => (
+            <Button
+              key={v}
+              text={`maxItems=${v}`}
+              variant="text"
+              color="secondary"
+              onClick={() => setMaxItems(v)}
+            />
+          ))}
+        </Flex>
+
+        <Breadcrumbs items={baseItems} maxItems={maxItems} />
+      </Box>
+    )
+  },
+}
 
 export const CustomSeparator: Story = {
-  render: (args) => <Breadcrumbs {...args} separator={<Typography text="/" />} />,
-}
+  render: () => {
+    const items: BreadcrumbItem[] = [
+      { label: "Home", onClick: () => undefined },
+      { label: "Docs", onClick: () => undefined },
+      { label: "Components", onClick: () => undefined },
+      { label: "Breadcrumbs" },
+    ]
 
-/* -------------------------------------------------------------------------- */
-/*                              Max Items Example                              */
-/* -------------------------------------------------------------------------- */
-
-export const MaxItems: Story = {
-  render: () => (
-    <Breadcrumbs
-      items={[
-        { label: "Home" },
-        { label: "Section" },
-        { label: "Category" },
-        { label: "SubCategory" },
-        { label: "Product" },
-        { label: "Details" },
-      ]}
-      maxItems={4}
-    />
-  ),
-}
-
-/* -------------------------------------------------------------------------- */
-/*                           Clickable Items Example                           */
-/* -------------------------------------------------------------------------- */
-
-export const ClickableItems: Story = {
-  render: () => (
-    <Breadcrumbs
-      items={[
-        {
-          label: "Home",
-          onClick: () => alert("Home clicked"),
-        },
-        {
-          label: "Library",
-          onClick: () => alert("Library clicked"),
-        },
-        { label: "Data" },
-      ]}
-    />
-  ),
-}
-
-/* -------------------------------------------------------------------------- */
-/*                        Mixed href + onClick Example                         */
-/* -------------------------------------------------------------------------- */
-
-export const Mixed: Story = {
-  render: () => (
-    <Breadcrumbs
-      items={[
-        { label: "Dashboard", href: "/" },
-        { label: "Users", onClick: () => alert("Users clicked") },
-        { label: "User Details" },
-      ]}
-    />
-  ),
+    return (
+      <Box p="20px">
+        <Typography variant="h3" text="Custom separator" mb="12px" />
+        <Breadcrumbs items={items} separator={<Icon name="ArrowRight" size={14} />} />
+      </Box>
+    )
+  },
 }

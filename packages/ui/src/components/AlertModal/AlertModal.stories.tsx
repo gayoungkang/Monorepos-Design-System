@@ -1,144 +1,83 @@
 import type { Meta, StoryObj } from "@storybook/react"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
-
+import { useCallback, useEffect } from "react"
 import AlertModal from "./AlertModal"
-import Button from "../Button/Button"
+import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
+import Button from "../Button/Button"
+import { Typography } from "../Typography/Typography"
 import { useAlertStore } from "../../stores/useAlertStore"
 
-/* -------------------------------------------------------------------------- */
-/*                                   META                                     */
-/* -------------------------------------------------------------------------- */
-
-const meta: Meta = {
-  title: "components/AlertModal",
+const meta: Meta<typeof AlertModal> = {
+  title: "Components/AlertModal",
   component: AlertModal,
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Story />
-        <AlertModal />
-      </ThemeProvider>
-    ),
-  ],
-  tags: ["autodocs"],
+  parameters: { layout: "fullscreen" },
 }
-
 export default meta
-type Story = StoryObj
 
-/* -------------------------------------------------------------------------- */
-/*                         내부 스토어 제어 헬퍼 함수                         */
-/* -------------------------------------------------------------------------- */
+type Story = StoryObj<typeof AlertModal>
 
-const openAlert = () => {
-  const { showAlert } = useAlertStore.getState()
-  showAlert({
-    type: "alert",
-    title: "알림",
-    message: "단순한 알림 메시지입니다.",
-    confirmText: "확인",
-    onConfirm: () => alert("Alert 확인 실행됨"),
-  })
+const OpenButtons = () => {
+  const showAlert = useAlertStore((s) => s.showAlert)
+
+  const openAlert = useCallback(() => {
+    showAlert({
+      type: "alert",
+      title: "알림",
+      message: "AlertModal 메시지 예시입니다.",
+      confirmText: "확인",
+      onConfirm: () => undefined,
+    })
+  }, [showAlert])
+
+  const openConfirm = useCallback(() => {
+    showAlert({
+      type: "confirm",
+      title: "삭제 확인",
+      message: "정말 삭제하시겠습니까?",
+      confirmText: "삭제",
+      cancelText: "취소",
+      onConfirm: () => undefined,
+      onCancel: () => undefined,
+    })
+  }, [showAlert])
+
+  const openLongMessage = useCallback(() => {
+    showAlert({
+      type: "alert",
+      title: "긴 메시지",
+      message:
+        "긴 메시지 줄바꿈/word-break 확인용 텍스트입니다. 아주아주아주아주아주아주 긴 문자열도 정상적으로 개행/줄바꿈되어야 합니다.",
+      confirmText: "확인",
+    })
+  }, [showAlert])
+
+  return (
+    <Flex gap="10px" wrap="wrap">
+      <Button text="Open Alert" variant="contained" color="primary" onClick={openAlert} />
+      <Button text="Open Confirm" variant="outlined" color="secondary" onClick={openConfirm} />
+      <Button text="Open Long Message" variant="text" color="normal" onClick={openLongMessage} />
+    </Flex>
+  )
 }
 
-const openConfirm = () => {
-  const { showAlert } = useAlertStore.getState()
-  showAlert({
-    type: "confirm",
-    title: "확인 요청",
-    message: "이 작업을 실행하시겠습니까?",
-    confirmText: "확인",
-    cancelText: "취소",
-    onConfirm: () => alert("Confirm 확인 실행됨"),
-    onCancel: () => alert("Confirm 취소 실행됨"),
-  })
-}
+const PlaygroundView = () => {
+  const resetAlert = useAlertStore((s) => s.resetAlert)
 
-const openCustom = () => {
-  const { showAlert } = useAlertStore.getState()
-  showAlert({
-    type: "alert",
-    title: "긴 메시지 예제",
-    message:
-      "여러 줄 메시지를 테스트하기 위한 예제입니다.\n텍스트가 길어도 정상적으로 줄바꿈과 정렬이 유지됩니다.",
-    confirmText: "닫기",
-  })
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                   STORIES                                  */
-/* -------------------------------------------------------------------------- */
-
-export const Default: Story = {
-  render: () => {
-    return (
-      <Flex direction="column" gap="12px">
-        <Button text="Open Alert" onClick={openAlert} />
-        <Button text="Open Confirm" onClick={openConfirm} />
-      </Flex>
-    )
-  },
-}
-
-export const AlertOnly: Story = {
-  render: () => {
-    return (
-      <Flex>
-        <Button text="Show Alert Modal" onClick={openAlert} />
-      </Flex>
-    )
-  },
-}
-
-export const ConfirmOnly: Story = {
-  render: () => {
-    return (
-      <Flex>
-        <Button text="Show Confirm Modal" onClick={openConfirm} />
-      </Flex>
-    )
-  },
-}
-
-export const LongMessage: Story = {
-  render: () => {
-    return (
-      <Flex>
-        <Button text="Show Long Message Alert" onClick={openCustom} />
-      </Flex>
-    )
-  },
-}
-
-/* -------------------------------------------------------------------------- */
-/*                추가: 커스텀 버튼 스타일 테스트 스토리                     */
-/* -------------------------------------------------------------------------- */
-
-export const CustomButtons: Story = {
-  render: () => {
-    const openStyledConfirm = () => {
-      const { showAlert } = useAlertStore.getState()
-      showAlert({
-        type: "confirm",
-        title: "커스텀 버튼",
-        message: "버튼 스타일을 변경할 수 있습니다.",
-        confirmText: "확인",
-        cancelText: "취소",
-        confirmButtonProps: {
-          color: "primary",
-          variant: "contained",
-        },
-        cancelButtonProps: {
-          color: "secondary",
-          variant: "outlined",
-        },
-        onConfirm: () => alert("Styled Confirm 실행됨"),
-        onCancel: () => alert("Styled Cancel 실행됨"),
-      })
+  useEffect(() => {
+    return () => {
+      resetAlert()
     }
+  }, [resetAlert])
 
-    return <Button text="Show Styled Confirm Modal" onClick={openStyledConfirm} />
-  },
+  return (
+    <Box p="20px">
+      <Typography variant="h3" text="AlertModal (Global Store Driven)" mb="12px" />
+      <OpenButtons />
+      <AlertModal />
+    </Box>
+  )
+}
+
+export const Playground: Story = {
+  render: () => <PlaygroundView />,
 }

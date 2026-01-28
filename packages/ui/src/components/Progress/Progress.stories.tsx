@@ -1,185 +1,165 @@
 import type { Meta, StoryObj } from "@storybook/react"
-import Progress, { type ProgressProps } from "./Progress"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
+import { useEffect, useMemo, useState } from "react"
+import Progress from "./Progress"
 import Flex from "../Flex/Flex"
+import Box from "../Box/Box"
+import { Typography } from "../Typography/Typography"
 
-const meta: Meta<ProgressProps> = {
-  title: "components/Progress",
+const meta: Meta<typeof Progress> = {
+  title: "Components/Progress",
   component: Progress,
-
+  parameters: {
+    layout: "centered",
+  },
   args: {
     type: "bar",
     variant: "indeterminate",
-    value: 0,
-    height: "4px",
+    value: 40,
     size: "36px",
-    color: theme.colors.primary[400],
-    backgroundColor: theme.colors.dim.default,
+    height: "4px",
+    label: "",
+    color: undefined,
+    backgroundColor: undefined,
   },
-
   argTypes: {
-    /* ---------------------------------- UI ---------------------------------- */
-    type: {
-      control: "radio",
-      options: ["bar", "Circular"],
-      description: "Progress type",
-    },
-    variant: {
-      control: "radio",
-      options: ["determinate", "indeterminate"],
-      description: "determinate 값 기반 / indeterminate 무한 로딩",
-    },
-    value: {
-      control: "number",
-      description: "determinate value (0~100)",
-    },
-    color: {
-      control: "text",
-      description: "progress color",
-    },
-    backgroundColor: {
-      control: "text",
-      description: "track / 배경 색상",
-    },
-    height: {
-      control: "text",
-      description: "bar 높이",
-    },
-    size: {
-      control: "text",
-      description: "Circular 크기",
-    },
-    label: { control: "text", description: "Progress 라벨" },
-
-    /* ---------------------------------- BaseMixinProps ---------------------------------- */
-    p: { control: "text" },
-    pt: { control: "text" },
-    pr: { control: "text" },
-    pb: { control: "text" },
-    pl: { control: "text" },
-    px: { control: "text" },
-    py: { control: "text" },
-
-    m: { control: "text" },
-    mt: { control: "text" },
-    mr: { control: "text" },
-    mb: { control: "text" },
-    ml: { control: "text" },
-    mx: { control: "text" },
-    my: { control: "text" },
-
-    width: { control: "text" },
-
-    sx: { control: false },
+    type: { control: "radio", options: ["bar", "Circular"] },
+    variant: { control: "radio", options: ["determinate", "indeterminate"] },
+    value: { control: { type: "range", min: 0, max: 100, step: 1 } },
+    size: { control: "text" },
+    height: { control: "text" },
+    label: { control: "text" },
+    color: { control: "text" },
+    backgroundColor: { control: "text" },
   },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Story />
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
 }
-
 export default meta
 
-type Story = StoryObj<ProgressProps>
+type Story = StoryObj<typeof Progress>
 
-/* ─────────── Default ─────────── */
-export const Default: Story = {
-  args: {
-    type: "bar",
-    variant: "indeterminate",
-  },
-}
+export const Playground: Story = {
+  render: (args) => {
+    const isDeterminate = args.variant === "determinate"
 
-/* ─────────── Determinate Bar ─────────── */
-export const DeterminateBar: Story = {
-  args: {
-    type: "bar",
-    variant: "determinate",
-    value: 65,
-    label: "진행률",
-  },
-}
+    return (
+      <Flex direction="column" gap="16px" align="center">
+        <Typography
+          variant="b2Regular"
+          text={`type=${args.type} / variant=${args.variant}${isDeterminate ? ` / value=${args.value}` : ""}`}
+        />
 
-/* ─────────── Indeterminate Bar ─────────── */
-export const IndeterminateBar: Story = {
-  args: {
-    type: "bar",
-    variant: "indeterminate",
-  },
-}
-
-/* ─────────── Determinate Circular ─────────── */
-export const DeterminateCircular: Story = {
-  args: {
-    type: "Circular",
-    variant: "determinate",
-    value: 80,
-    label: "진행중",
-  },
-}
-
-/* ─────────── Indeterminate Circular ─────────── */
-export const IndeterminateCircular: Story = {
-  args: {
-    type: "Circular",
-    variant: "indeterminate",
-  },
-}
-
-/* ─────────── Sizes ─────────── */
-export const Sizes: Story = {
-  render: () => (
-    <Flex align="center" gap="24px">
-      <Progress type="Circular" size="24px" />
-      <Progress type="Circular" size="36px" />
-      <Progress type="Circular" size="48px" />
-      <Progress type="Circular" size="64px" />
-    </Flex>
-  ),
-}
-
-/* ─────────── Colors ─────────── */
-export const Colors: Story = {
-  render: () => (
-    <Flex gap="16px" width={"50%"} height={"100vh"} align="center">
-      <Progress color={theme.colors.primary[400]} />
-      <Progress color={theme.colors.error[500]} />
-      <Progress color={theme.colors.success[500]} />
-      <Progress color={theme.colors.info[500]} />
-    </Flex>
-  ),
-}
-
-/* ─────────── Label Example ─────────── */
-export const WithLabel: Story = {
-  args: {
-    type: "bar",
-    variant: "determinate",
-    value: 45,
-    label: "45%",
-  },
-}
-
-/* ─────────── Demo Grid ─────────── */
-export const DemoGrid: Story = {
-  render: () => (
-    <Flex direction="column" gap="24px">
-      <Flex gap="24px">
-        <Progress type="bar" variant="determinate" value={30} />
-        <Progress type="bar" variant="indeterminate" />
+        <Box width={args.type === "bar" ? "320px" : "auto"}>
+          <Progress {...args} />
+        </Box>
       </Flex>
+    )
+  },
+}
 
-      <Flex gap="24px">
-        <Progress type="Circular" variant="determinate" value={70} />
-        <Progress type="Circular" variant="indeterminate" />
+export const AllCases: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => {
+    const [barValue, setBarValue] = useState(35)
+    const [circleValue, setCircleValue] = useState(65)
+
+    // * 데모용 determinate 값 자동 증가(루프)
+    useEffect(() => {
+      const t = setInterval(() => {
+        setBarValue((v) => (v >= 100 ? 0 : v + 5))
+        setCircleValue((v) => (v >= 100 ? 0 : v + 3))
+      }, 600)
+      return () => clearInterval(t)
+    }, [])
+
+    const rows = useMemo(
+      () => [
+        {
+          title: "Bar / Indeterminate",
+          node: (
+            <Box width="360px">
+              <Progress type="bar" variant="indeterminate" />
+            </Box>
+          ),
+        },
+        {
+          title: "Bar / Determinate (auto)",
+          node: (
+            <Box width="360px">
+              <Progress type="bar" variant="determinate" value={barValue} label="bar" />
+            </Box>
+          ),
+        },
+        {
+          title: "Bar / Determinate (thick + custom colors)",
+          node: (
+            <Box width="360px">
+              <Progress
+                type="bar"
+                variant="determinate"
+                value={72}
+                height="10px"
+                color="#4f46e5"
+                backgroundColor="#e5e7eb"
+              />
+            </Box>
+          ),
+        },
+        {
+          title: "Circular / Indeterminate (sizes)",
+          node: (
+            <Flex align="center" gap="16px">
+              <Progress type="Circular" variant="indeterminate" size="24px" />
+              <Progress type="Circular" variant="indeterminate" size="36px" />
+              <Progress type="Circular" variant="indeterminate" size="48px" />
+            </Flex>
+          ),
+        },
+        {
+          title: "Circular / Determinate (auto + label)",
+          node: (
+            <Progress
+              type="Circular"
+              variant="determinate"
+              value={circleValue}
+              label="Circular"
+              size="44px"
+            />
+          ),
+        },
+        {
+          title: "Circular / Determinate (custom colors)",
+          node: (
+            <Progress
+              type="Circular"
+              variant="determinate"
+              value={88}
+              size="44px"
+              color="#10b981"
+              backgroundColor="#d1fae5"
+              label="Circular"
+            />
+          ),
+        },
+      ],
+      [barValue, circleValue],
+    )
+
+    return (
+      <Flex direction="column" gap="18px" align="stretch" sx={{ width: "460px" }}>
+        {rows.map((r) => (
+          <Box
+            key={r.title}
+            sx={{
+              padding: "14px",
+              borderRadius: "12px",
+              backgroundColor: "white",
+              border: "1px solid rgba(0,0,0,0.08)",
+            }}
+          >
+            <Typography variant="b1Bold" text={r.title} mb={10} />
+            {r.node}
+          </Box>
+        ))}
       </Flex>
-    </Flex>
-  ),
+    )
+  },
 }

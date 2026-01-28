@@ -1,225 +1,483 @@
+// Select.stories.tsx
 import type { Meta, StoryObj } from "@storybook/react"
-import { ThemeProvider } from "styled-components"
+import React, { useEffect, useMemo, useState } from "react"
+import Select, { SelectOptionType, SelectValue, SelectProps } from "./Select"
+import Box from "../Box/Box"
+import Flex from "../Flex/Flex"
+import { Typography } from "../Typography/Typography"
 import { theme } from "../../tokens/theme"
 
-import Flex from "../Flex/Flex"
-import Select, { SelectOptionType, SelectProps } from "./Select"
+type SingleValue = string
+type MultiValue = string[]
 
-/* ---------------------------------------------------------------------
- * 공통 옵션
- * ------------------------------------------------------------------- */
-const sampleOptions: SelectOptionType[] = [
-  { value: "1", label: "옵션 1" },
-  { value: "2", label: "옵션 2" },
-  { value: "3", label: "옵션 3" },
+const baseOptions: SelectOptionType[] = [
+  { value: "", label: "선택 안 함" },
+  { value: "apple", label: "Apple" },
+  { value: "banana", label: "Banana" },
+  { value: "orange", label: "Orange" },
+  { value: "grape", label: "Grape" },
 ]
 
-/* ---------------------------------------------------------------------
- * 타입 분리: 단일 / 멀티
- * ------------------------------------------------------------------- */
-type SingleSelectProps = SelectProps<string>
-type MultiSelectProps = SelectProps<string[]>
+const multiOptions: SelectOptionType[] = [
+  { value: "ALL", label: "전체", isAllOption: true },
+  { value: "alpha", label: "Alpha" },
+  { value: "beta", label: "Beta" },
+  { value: "gamma", label: "Gamma" },
+  { value: "delta", label: "Delta" },
+]
 
-/* ---------------------------------------------------------------------
- * Meta 설정 (단일 선택 기준)
- * ------------------------------------------------------------------- */
-const meta: Meta<SingleSelectProps> = {
-  title: "components/Select",
-  component: Select as unknown as (props: SingleSelectProps) => JSX.Element,
+const actionButtonStyle: React.CSSProperties = {
+  padding: "6px 10px",
+  borderRadius: 8,
+  border: `1px solid ${theme.colors.border.default}`,
+  background: theme.colors.grayscale.white,
+  cursor: "pointer",
+  fontSize: 12,
+}
 
+const meta: Meta<typeof Select> = {
+  title: "Components/Select",
+  component: Select,
+  parameters: { layout: "centered" },
   args: {
-    label: "Select Label",
-    placeholder: "선택",
-    options: sampleOptions,
-    size: "M",
     variant: "outlined",
-  },
-
-  /* -------------------------------------------------------------------
-   * ArgTypes
-   * ------------------------------------------------------------------- */
+    multipleType: "default",
+    label: "Select",
+    options: baseOptions,
+    placeholder: "선택",
+    size: "M",
+    disabled: false,
+    readOnly: false,
+    required: false,
+    error: false,
+    helperText: "에러 메시지",
+    autoFocus: false,
+    isLoading: false,
+    labelPlacement: "top",
+    color: undefined,
+    popperProps: undefined,
+    labelProps: undefined,
+    typographyProps: undefined,
+    value: undefined,
+    defaultValue: undefined,
+    onChange: undefined,
+    onBlur: undefined,
+    onFocus: undefined,
+  } satisfies Partial<SelectProps>,
   argTypes: {
-    /* Select 기본 UI 옵션 */
+    variant: { control: { type: "radio" }, options: ["outlined", "filled", "standard"] },
+    multipleType: { control: { type: "radio" }, options: ["default", "chip", "multiple"] },
     label: { control: "text" },
-    placeholder: { control: "text" },
-    size: {
-      control: "radio",
-      options: ["S", "M", "L"],
-    },
-    variant: {
-      control: "radio",
-      options: ["outlined", "filled", "standard"],
-    },
-    disabled: { control: "boolean" },
+    options: { control: false },
+    value: { control: false },
+    defaultValue: { control: false },
+    onChange: { control: false },
+    onBlur: { control: false },
+    onFocus: { control: false },
     error: { control: "boolean" },
+    helperText: { control: "text" },
+    disabled: { control: "boolean" },
+    placeholder: { control: "text" },
+    size: { control: { type: "radio" }, options: ["S", "M", "L"] },
+    color: { control: "text" },
     required: { control: "boolean" },
     readOnly: { control: "boolean" },
+    autoFocus: { control: "boolean" },
     isLoading: { control: "boolean" },
-
-    multipleType: {
-      control: "radio",
-      options: ["default", "chip", "multiple"],
+    labelProps: { control: false },
+    typographyProps: { control: false },
+    labelPlacement: {
+      control: { type: "select" },
+      options: [
+        "top",
+        "top-start",
+        "top-end",
+        "bottom",
+        "bottom-start",
+        "bottom-end",
+        "left",
+        "right",
+      ],
     },
-
-    /* BaseMixinProps */
-    p: { control: "text" },
-    pt: { control: "text" },
-    pr: { control: "text" },
-    pb: { control: "text" },
-    pl: { control: "text" },
-    px: { control: "text" },
-    py: { control: "text" },
-
-    m: { control: "text" },
-    mt: { control: "text" },
-    mr: { control: "text" },
-    mb: { control: "text" },
-    ml: { control: "text" },
-    mx: { control: "text" },
-    my: { control: "text" },
-
-    width: { control: "text" },
-    height: { control: "text" },
-
-    /* sx는 object라 컨트롤 비활성화 */
-    sx: { control: false },
-
-    /* popperProps는 내부에서만 사용 (anchorRef, children, open 등) */
-    popperProps: {
-      table: { disable: true },
-    },
-
-    /* 서브 컴포넌트용 props 제어 비활성화 */
-    labelProps: { table: { disable: true } },
-    typographyProps: { table: { disable: true } },
-
-    /* 이벤트 핸들러들 Storybook에서 직접 제어하지 않음 */
-    onChange: { table: { disable: true } },
-    onBlur: { table: { disable: true } },
-    onFocus: { table: { disable: true } },
+    popperProps: { control: false },
   },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <div style={{ padding: "24px" }}>
-          <Story />
-        </div>
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
 }
 
 export default meta
 
-/* ---------------------------------------------------------------------
- * Story 타입 분리
- * ------------------------------------------------------------------- */
-type SingleStory = StoryObj<SingleSelectProps>
-type MultiStory = StoryObj<MultiSelectProps>
+type Story = StoryObj<typeof Select>
 
-/* ---------------------------------------------------------------------
- * 기본 Default (단일)
- * ------------------------------------------------------------------- */
-export const Default: SingleStory = {
-  args: {},
-}
-
-/* ---------------------------------------------------------------------
- * Sizes
- * ------------------------------------------------------------------- */
-export const Sizes: SingleStory = {
-  render: () => (
-    <Flex direction="column" gap="16px" width="240px">
-      <Select label="Size S" size="S" options={sampleOptions} />
-      <Select label="Size M" size="M" options={sampleOptions} />
-      <Select label="Size L" size="L" options={sampleOptions} />
-    </Flex>
-  ),
-}
-
-/* ---------------------------------------------------------------------
- * Variants
- * ------------------------------------------------------------------- */
-export const Variants: SingleStory = {
-  render: () => (
-    <Flex direction="column" gap="16px" width="240px">
-      <Select label="Outlined" variant="outlined" options={sampleOptions} />
-      <Select label="Filled" variant="filled" options={sampleOptions} />
-      <Select label="Standard" variant="standard" options={sampleOptions} />
-    </Flex>
-  ),
-}
-
-/* ---------------------------------------------------------------------
- * Disabled
- * ------------------------------------------------------------------- */
-export const DisabledVariants: SingleStory = {
+export const Playground: Story = {
   render: (args) => {
+    const isMulti = args.multipleType === "chip" || args.multipleType === "multiple"
+
+    const [single, setSingle] = useState<SelectValue<SingleValue>>("")
+    const [multi, setMulti] = useState<SelectValue<MultiValue>>(["alpha", "gamma"])
+
+    useEffect(() => {
+      if (!isMulti) return
+      if (!Array.isArray(multi)) setMulti([])
+    }, [isMulti, multi])
+
+    const options = useMemo(() => (isMulti ? multiOptions : baseOptions), [isMulti])
+
+    const currentValue: SelectValue<SingleValue | MultiValue> = isMulti ? multi : single
+
+    const setPresetSingle = (v: SingleValue) => setSingle(v)
+    const clearSingle = () => setSingle("")
+    const setPresetMulti = (v: MultiValue) => setMulti(v)
+    const clearMulti = () => setMulti([])
+
     return (
-      <Flex direction="column" gap="16px">
-        <Select {...args} label="Outlined Disabled" variant="outlined" disabled value="A" />
-        <Select {...args} label="Filled Disabled" variant="filled" disabled value="A" />
-        <Select {...args} label="Standard Disabled" variant="standard" disabled value="A" />
-      </Flex>
+      <Box
+        width="760px"
+        p={16}
+        sx={{ border: `1px solid ${theme.colors.border.default}`, borderRadius: 12 }}
+      >
+        <Flex direction="column" gap="12px">
+          <Typography
+            variant="b2Regular"
+            text="Playground (값 변경/리셋/프리셋 + 실제 선택 인터랙션)"
+          />
+
+          <Flex gap="8px" sx={{ flexWrap: "wrap" }}>
+            {!isMulti ? (
+              <>
+                <button style={actionButtonStyle} onClick={() => setPresetSingle("apple")}>
+                  Set: apple
+                </button>
+                <button style={actionButtonStyle} onClick={() => setPresetSingle("banana")}>
+                  Set: banana
+                </button>
+                <button style={actionButtonStyle} onClick={() => setPresetSingle("")}>
+                  Set: empty("")
+                </button>
+                <button style={actionButtonStyle} onClick={clearSingle}>
+                  Reset
+                </button>
+              </>
+            ) : (
+              <>
+                <button style={actionButtonStyle} onClick={() => setPresetMulti(["alpha"])}>
+                  Set: ["alpha"]
+                </button>
+                <button
+                  style={actionButtonStyle}
+                  onClick={() => setPresetMulti(["alpha", "beta", "gamma"])}
+                >
+                  Set: ["alpha","beta","gamma"]
+                </button>
+                <button
+                  style={actionButtonStyle}
+                  onClick={() => setPresetMulti(["alpha", "beta", "gamma", "delta"])}
+                >
+                  Set: all(except ALL)
+                </button>
+                <button style={actionButtonStyle} onClick={clearMulti}>
+                  Reset
+                </button>
+              </>
+            )}
+          </Flex>
+
+          <Select<any>
+            {...args}
+            options={options}
+            value={currentValue as any}
+            onChange={(v) => {
+              if (isMulti) setMulti(v as SelectValue<MultiValue>)
+              else setSingle(v as SelectValue<SingleValue>)
+            }}
+          />
+
+          <Box
+            p={12}
+            sx={{
+              border: `1px solid ${theme.colors.border.default}`,
+              borderRadius: 10,
+              backgroundColor: theme.colors.grayscale[50],
+            }}
+          >
+            <Typography
+              variant="b3Regular"
+              color={theme.colors.text.secondary}
+              text={`현재 값(JSON): ${JSON.stringify(currentValue)}`}
+            />
+            <Typography
+              mt={6}
+              variant="b3Regular"
+              color={theme.colors.text.secondary}
+              text={`모드: ${isMulti ? "MULTI" : "SINGLE"} / multipleType=${args.multipleType}`}
+            />
+          </Box>
+        </Flex>
+      </Box>
     )
   },
-  args: {
-    options: sampleOptions,
-    placeholder: "선택",
-    size: "M",
-  },
 }
 
-/* ---------------------------------------------------------------------
- * Error
- * ------------------------------------------------------------------- */
-export const ErrorState: SingleStory = {
-  args: {
-    error: true,
-    helperText: "에러가 있습니다.",
-  },
-}
+export const AllCases: Story = {
+  render: () => {
+    const [vOutlined, setVOutlined] = useState<SelectValue<SingleValue>>("")
+    const [vFilled, setVFilled] = useState<SelectValue<SingleValue>>("apple")
+    const [vStandard, setVStandard] = useState<SelectValue<SingleValue>>("banana")
 
-/* ---------------------------------------------------------------------
- * Loading
- * ------------------------------------------------------------------- */
-export const Loading: SingleStory = {
-  args: {
-    isLoading: true,
-  },
-}
+    const [vMultiDefault, setVMultiDefault] = useState<SelectValue<MultiValue>>(["alpha", "gamma"])
+    const [vMultiChip, setVMultiChip] = useState<SelectValue<MultiValue>>(["beta", "delta"])
+    const [vMultiAll, setVMultiAll] = useState<SelectValue<MultiValue>>([])
 
-/* ---------------------------------------------------------------------
- * Multiple Default (value: string[])
- * ------------------------------------------------------------------- */
-export const Multiple: MultiStory = {
-  args: {
-    multipleType: "default",
-    value: ["1", "2"],
-    options: sampleOptions,
-  },
-}
+    return (
+      <Box
+        width="980px"
+        p={16}
+        sx={{ border: `1px solid ${theme.colors.border.default}`, borderRadius: 12 }}
+      >
+        <Flex direction="column" gap="18px">
+          <Typography
+            variant="b2Regular"
+            text="AllCases (각 케이스 모두 실제 값 변경됨 + 값 표시)"
+          />
 
-/* ---------------------------------------------------------------------
- * Chip Multiple (value: string[])
- * ------------------------------------------------------------------- */
-export const ChipMultiple: MultiStory = {
-  args: {
-    multipleType: "chip",
-    value: ["1", "3"],
-    options: sampleOptions,
-  },
-}
+          <Flex gap="16px">
+            <Box width="300px">
+              <Select<SingleValue>
+                label="Outlined / S"
+                variant="outlined"
+                size="S"
+                options={baseOptions}
+                value={vOutlined}
+                onChange={setVOutlined}
+                placeholder="선택"
+                labelPlacement="top"
+              />
+              <Typography
+                mt={6}
+                variant="b3Regular"
+                color={theme.colors.text.secondary}
+                text={`값: ${JSON.stringify(vOutlined)}`}
+              />
+            </Box>
 
-/* ---------------------------------------------------------------------
- * Playground
- * ------------------------------------------------------------------- */
-export const Playground: SingleStory = {
-  args: {
-    label: "Playground",
-    placeholder: "선택",
+            <Box width="300px">
+              <Select<SingleValue>
+                label="Filled / M"
+                variant="filled"
+                size="M"
+                options={baseOptions}
+                value={vFilled}
+                onChange={setVFilled}
+                placeholder="선택"
+                labelPlacement="top"
+              />
+              <Typography
+                mt={6}
+                variant="b3Regular"
+                color={theme.colors.text.secondary}
+                text={`값: ${JSON.stringify(vFilled)}`}
+              />
+            </Box>
+
+            <Box width="300px">
+              <Select<SingleValue>
+                label="Standard / L"
+                variant="standard"
+                size="L"
+                options={baseOptions}
+                value={vStandard}
+                onChange={setVStandard}
+                placeholder="선택"
+                labelPlacement="top"
+              />
+              <Typography
+                mt={6}
+                variant="b3Regular"
+                color={theme.colors.text.secondary}
+                text={`값: ${JSON.stringify(vStandard)}`}
+              />
+            </Box>
+          </Flex>
+
+          <Flex gap="16px">
+            <Box width="300px">
+              <Select<SingleValue>
+                label="Disabled"
+                variant="outlined"
+                size="M"
+                options={baseOptions}
+                value={"apple"}
+                disabled
+                placeholder="선택"
+              />
+              <Typography
+                mt={6}
+                variant="b3Regular"
+                color={theme.colors.text.secondary}
+                text={`값: "apple" (고정)`}
+              />
+            </Box>
+
+            <Box width="300px">
+              <Select<SingleValue>
+                label="ReadOnly"
+                variant="outlined"
+                size="M"
+                options={baseOptions}
+                value={"banana"}
+                readOnly
+                placeholder="선택"
+              />
+              <Typography
+                mt={6}
+                variant="b3Regular"
+                color={theme.colors.text.secondary}
+                text={`값: "banana" (고정)`}
+              />
+            </Box>
+
+            <Box width="300px">
+              <Select<SingleValue>
+                label="Error + HelperText"
+                variant="outlined"
+                size="M"
+                options={baseOptions}
+                value={vOutlined}
+                onChange={setVOutlined}
+                error
+                helperText="필수 항목입니다."
+                placeholder="선택"
+              />
+              <Typography
+                mt={6}
+                variant="b3Regular"
+                color={theme.colors.text.secondary}
+                text={`값: ${JSON.stringify(vOutlined)}`}
+              />
+            </Box>
+          </Flex>
+
+          <Flex gap="16px">
+            <Box width="300px">
+              <Select<SingleValue>
+                label="Loading"
+                variant="outlined"
+                size="M"
+                options={baseOptions}
+                value={"apple"}
+                isLoading
+                placeholder="선택"
+              />
+              <Typography
+                mt={6}
+                variant="b3Regular"
+                color={theme.colors.text.secondary}
+                text={`값: "apple" (고정)`}
+              />
+            </Box>
+
+            <Box width="300px">
+              <Select<SingleValue>
+                label="Label Left"
+                variant="outlined"
+                size="M"
+                options={baseOptions}
+                value={vFilled}
+                onChange={setVFilled}
+                labelPlacement="left"
+                placeholder="선택"
+              />
+              <Typography
+                mt={6}
+                variant="b3Regular"
+                color={theme.colors.text.secondary}
+                text={`값: ${JSON.stringify(vFilled)}`}
+              />
+            </Box>
+
+            <Box width="300px">
+              <Select<SingleValue>
+                label="Label Bottom"
+                variant="outlined"
+                size="M"
+                options={baseOptions}
+                value={vStandard}
+                onChange={setVStandard}
+                labelPlacement="bottom"
+                placeholder="선택"
+              />
+              <Typography
+                mt={6}
+                variant="b3Regular"
+                color={theme.colors.text.secondary}
+                text={`값: ${JSON.stringify(vStandard)}`}
+              />
+            </Box>
+          </Flex>
+
+          <Typography
+            variant="b2Regular"
+            text="Multiple (default / chip / all option) - 모두 클릭으로 값 변경됨"
+          />
+
+          <Flex gap="16px">
+            <Box width="300px">
+              <Select<MultiValue>
+                label="multipleType=default"
+                variant="outlined"
+                size="M"
+                options={multiOptions}
+                value={vMultiDefault}
+                onChange={setVMultiDefault}
+                multipleType="default"
+                placeholder="선택"
+              />
+              <Typography
+                mt={6}
+                variant="b3Regular"
+                color={theme.colors.text.secondary}
+                text={`값: ${JSON.stringify(vMultiDefault)}`}
+              />
+            </Box>
+
+            <Box width="300px">
+              <Select<MultiValue>
+                label="multipleType=chip"
+                variant="outlined"
+                size="M"
+                options={multiOptions}
+                value={vMultiChip}
+                onChange={setVMultiChip}
+                multipleType="chip"
+                placeholder="선택"
+              />
+              <Typography
+                mt={6}
+                variant="b3Regular"
+                color={theme.colors.text.secondary}
+                text={`값: ${JSON.stringify(vMultiChip)}`}
+              />
+            </Box>
+
+            <Box width="300px">
+              <Select<MultiValue>
+                label="All Option Toggle"
+                variant="outlined"
+                size="M"
+                options={multiOptions}
+                value={vMultiAll}
+                onChange={setVMultiAll}
+                multipleType="multiple"
+                placeholder="선택"
+              />
+              <Typography
+                mt={6}
+                variant="b3Regular"
+                color={theme.colors.text.secondary}
+                text={`값: ${JSON.stringify(vMultiAll)}`}
+              />
+            </Box>
+          </Flex>
+        </Flex>
+      </Box>
+    )
   },
 }

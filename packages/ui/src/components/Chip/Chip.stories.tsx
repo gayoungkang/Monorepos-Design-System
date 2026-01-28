@@ -1,169 +1,98 @@
-import { useState } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
-import Chip, { type ChipProps } from "./Chip"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
-import { IconNames } from "../Icon/icon-loader"
+import { useMemo, useState } from "react"
+import Chip from "./Chip"
+import type { ChipProps } from "./Chip"
+import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
+import Button from "../Button/Button"
+import { Typography } from "../Typography/Typography"
+import { IconNames } from "../Icon/icon-loader"
 
-const meta: Meta<ChipProps> = {
-  title: "components/Chip",
+const meta: Meta<typeof Chip> = {
+  title: "Components/Chip",
   component: Chip,
-
+  parameters: { layout: "fullscreen" },
+  argTypes: {
+    label: { control: "text" },
+    size: { control: "radio", options: ["S", "M", "L"] },
+    variant: { control: "radio", options: ["contained", "outlined", "text"] },
+    disabled: { control: "boolean" },
+    color: { control: "color" },
+    startIcon: { control: "text" },
+    endIcon: { control: "text" },
+  },
   args: {
-    label: "Chip",
+    label: "디자인",
     size: "M",
     variant: "contained",
     disabled: false,
-    startIcon: undefined,
-    endIcon: undefined,
+    color: undefined,
   },
-
-  argTypes: {
-    /* ---------------------------------- UI ---------------------------------- */
-    variant: {
-      control: "radio",
-      options: ["contained", "outlined", "text"],
-      description: "Chip 스타일",
-    },
-    size: {
-      control: "radio",
-      options: ["S", "M", "L"],
-      description: "Chip 크기",
-    },
-    disabled: {
-      control: "boolean",
-      description: "비활성화",
-    },
-    color: {
-      control: "text",
-      description: "커스텀 배경/테두리 컬러 (선택)",
-    },
-
-    /* ---------------------------------- Events ---------------------------------- */
-    onClick: { control: false, description: "Chip 클릭 핸들러" },
-    onDelete: { control: false, description: "Chip 삭제 핸들러" },
-
-    /* ---------------------------------- Icons ---------------------------------- */
-    startIcon: { control: "text", description: "시작 아이콘" },
-    endIcon: { control: "text", description: "끝 아이콘" },
-
-    /* ---------------------------------- SubComponents ---------------------------------- */
-    iconProps: { control: false, description: "내부 Icon Props" },
-    typographyProps: { control: false, description: "Typography Props" },
-
-    /* ---------------------------------- BaseMixinProps ---------------------------------- */
-    p: { control: "text" },
-    pt: { control: "text" },
-    pr: { control: "text" },
-    pb: { control: "text" },
-    pl: { control: "text" },
-    px: { control: "text" },
-    py: { control: "text" },
-
-    m: { control: "text" },
-    mt: { control: "text" },
-    mr: { control: "text" },
-    mb: { control: "text" },
-    ml: { control: "text" },
-    mx: { control: "text" },
-    my: { control: "text" },
-
-    width: { control: "text" },
-    height: { control: "text" },
-
-    sx: { control: false },
-  },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Story />
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
 }
-
 export default meta
+type Story = StoryObj<typeof Chip>
 
-type Story = StoryObj<ChipProps>
-
-/* ─────────── Default ─────────── */
-export const Default: Story = {}
-
-/* ─────────── Variants ─────────── */
-export const Variants: Story = {
-  render: () => (
-    <div style={{ display: "flex", gap: 12 }}>
-      <Chip label="Contained" variant="contained" />
-      <Chip label="Outlined" variant="outlined" />
-      <Chip label="Text" variant="text" />
-    </div>
-  ),
-}
-
-/* ─────────── Sizes ─────────── */
-export const Sizes: Story = {
-  render: () => (
-    <Flex gap={"12px"}>
-      <Chip label="Small" size="S" />
-      <Chip label="Medium" size="M" />
-      <Chip label="Lage" size="L" />
-    </Flex>
-  ),
-}
-
-/* ─────────── Icons ─────────── */
-export const WithStartIcon: Story = {
-  args: {
-    label: "Start Icon",
-    startIcon: IconNames[0],
-  },
-}
-
-export const WithEndIcon: Story = {
-  args: {
-    label: "End Icon",
-    endIcon: IconNames[1],
-  },
-}
-
-export const WithBothIcons: Story = {
-  args: {
-    label: "With Icons",
-    startIcon: IconNames[0],
-    endIcon: IconNames[1],
-  },
-}
-
-/* ─────────── Deletable (삭제 버튼 클릭 가능) ─────────── */
-export const Deletable: Story = {
+export const Playground: Story = {
   render: (args) => {
-    const [visible, setVisible] = useState(true)
-
-    if (!visible) return <div>삭제됨</div>
-
-    return <Chip {...args} label="삭제 가능" onDelete={() => setVisible(false)} />
-  },
-}
-
-/* ─────────── Clickable (Chip 자체 클릭 동작) ─────────── */
-export const Clickable: Story = {
-  render: (args) => {
-    const [clicked, setClicked] = useState(false)
-
     return (
-      <Chip {...args} label={clicked ? "클릭됨!" : "Click Me"} onClick={() => setClicked(true)} />
+      <Box p="20px">
+        <Typography variant="h3" text="Chip Playground" mb="12px" />
+        <Flex gap="12px" align="center" wrap="wrap">
+          <Chip {...(args as ChipProps)} />
+          <Chip {...(args as ChipProps)} startIcon={IconNames[0]} />
+          <Chip {...(args as ChipProps)} endIcon={IconNames[0]} />
+          <Chip {...(args as ChipProps)} onDelete={() => undefined} />
+          <Chip {...(args as ChipProps)} startIcon={IconNames[0]} onDelete={() => undefined} />
+        </Flex>
+      </Box>
     )
   },
 }
 
-/* ─────────── Disabled ─────────── */
-export const Disabled: Story = {
-  args: {
-    label: "Disabled",
-    disabled: true,
+export const ClickAndDeleteInteraction: Story = {
+  render: () => {
+    const [log, setLog] = useState<string[]>([])
+
+    const push = (msg: string) => setLog((prev) => [msg, ...prev].slice(0, 6))
+
+    const chips = useMemo(
+      () => [
+        { label: "Chip A", variant: "contained" as const },
+        { label: "Chip B", variant: "outlined" as const },
+        { label: "Chip C", variant: "text" as const },
+      ],
+      [],
+    )
+
+    return (
+      <Box p="20px">
+        <Typography variant="h3" text="Click vs Delete (stopPropagation)" mb="12px" />
+
+        <Flex gap="10px" mb="12px">
+          <Button text="Clear" variant="outlined" color="normal" onClick={() => setLog([])} />
+        </Flex>
+
+        <Flex gap="12px" align="center" wrap="wrap" mb="14px">
+          {chips.map((c) => (
+            <Chip
+              key={c.label}
+              label={c.label}
+              variant={c.variant}
+              onClick={() => push(`${c.label}: onClick`)}
+              onDelete={() => push(`${c.label}: onDelete`)}
+              startIcon={IconNames[0]}
+            />
+          ))}
+        </Flex>
+
+        <Box>
+          <Typography
+            variant="b3Regular"
+            text={log.length ? log.join(" / ") : "no logs"}
+            color="#666666"
+          />
+        </Box>
+      </Box>
+    )
   },
 }

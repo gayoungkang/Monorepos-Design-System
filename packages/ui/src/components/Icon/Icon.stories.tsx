@@ -1,127 +1,149 @@
 import type { Meta, StoryObj } from "@storybook/react"
+import React, { useMemo, useState } from "react"
 import Icon, { type IconProps } from "./Icon"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
-import { IconName, IconNames } from "./icon-loader"
+import { IconNames, type IconName } from "./icon-loader"
+import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
+import Button from "../Button/Button"
 import { Typography } from "../Typography/Typography"
 
-const meta: Meta<IconProps> = {
-  title: "components/Icon",
+const meta: Meta<typeof Icon> = {
+  title: "Components/Icon",
   component: Icon,
-
-  args: {
-    name: IconNames[0],
-    size: 24,
-    color: theme.colors.grayscale[700],
-    strokeWidth: 0,
-  },
-
+  parameters: { layout: "fullscreen" },
   argTypes: {
-    /* ---------------------------------- Icon Props ---------------------------------- */
-    name: {
-      control: "text",
-      description: "아이콘 이름 (IconName union)",
-    },
-    size: {
-      control: "text",
-      description: "아이콘 크기",
-    },
-    color: {
-      control: "text",
-      description: "아이콘 색상 (CSS color 또는 theme token)",
-    },
-    strokeWidth: {
-      control: "number",
-      description: "SVG stroke-width",
-    },
-
-    /* ---------------------------------- BaseMixinProps ---------------------------------- */
-    p: { control: "text" },
-    pt: { control: "text" },
-    pr: { control: "text" },
-    pb: { control: "text" },
-    pl: { control: "text" },
-    px: { control: "text" },
-    py: { control: "text" },
-
-    m: { control: "text" },
-    mt: { control: "text" },
-    mr: { control: "text" },
-    mb: { control: "text" },
-    ml: { control: "text" },
-    mx: { control: "text" },
-    my: { control: "text" },
-
-    width: { control: "text" },
-    height: { control: "text" },
-
-    sx: { control: false },
+    name: { control: "text" },
+    size: { control: "text" },
+    color: { control: "color" },
+    strokeWidth: { control: "number" },
+    paint: { control: "radio", options: ["auto", "fill", "stroke", "both"] },
+    ariaLabel: { control: "text" },
   },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Story />
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
+  args: {
+    name: "CloseLine" as any,
+    size: 24,
+    color: "",
+    strokeWidth: 1.5,
+    paint: "auto",
+    ariaLabel: "",
+  },
 }
-
 export default meta
-type Story = StoryObj<IconProps>
+type Story = StoryObj<typeof Icon>
 
-/* ─────────── Default ─────────── */
-export const Default: Story = {}
+export const Playground: Story = {
+  render: (args) => {
+    const [inlineColor, setInlineColor] = useState<string>("")
 
-/* ─────────── Sizes ─────────── */
-export const Sizes: Story = {
-  render: () => (
-    <Flex gap="20px" align="center">
-      <Icon name={IconNames[0]} size={12} />
-      <Icon name={IconNames[0]} size={16} />
-      <Icon name={IconNames[0]} size={24} />
-      <Icon name={IconNames[0]} size={32} />
-      <Icon name={IconNames[0]} size={48} />
-    </Flex>
-  ),
-}
+    return (
+      <Box p="20px">
+        <Typography variant="h3" text="Icon Playground" mb="12px" />
 
-/* ─────────── Colors ─────────── */
-export const Colors: Story = {
-  render: () => (
-    <Flex gap="24px">
-      <Icon name={IconNames[0]} size={24} color={theme.colors.primary[400]} />
-      <Icon name={IconNames[0]} size={24} color={theme.colors.success[500]} />
-      <Icon name={IconNames[0]} size={24} color={theme.colors.error[500]} />
-      <Icon name={IconNames[0]} size={24} color={theme.colors.grayscale[500]} />
-    </Flex>
-  ),
-}
+        <Flex gap="12px" align="center" mb="12px" wrap="wrap">
+          <Box>
+            <Icon {...(args as IconProps)} color={inlineColor || (args as any).color} />
+          </Box>
 
-/* ─────────── StrokeWidth ─────────── */
-export const StrokeWidth: Story = {
-  render: () => (
-    <Flex gap="20px" align="center">
-      <Icon name={IconNames[0]} size={32} strokeWidth={0} />
-      <Icon name={IconNames[0]} size={32} strokeWidth={1} />
-      <Icon name={IconNames[0]} size={32} strokeWidth={2} />
-    </Flex>
-  ),
-}
-
-/* ─────────── Icon Gallery (Optional) ─────────── */
-export const IconGallery: Story = {
-  render: () => (
-    <Flex style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
-      {IconNames.map((icon) => (
-        <Flex key={icon} width={"80px"} align="center" direction="column" gap="6px">
-          <Icon name={icon as IconName} size={24} />
-          <Typography text={icon} />
+          <Flex gap="8px" align="center" wrap="wrap">
+            <Button
+              text="Use default(currentColor)"
+              variant="outlined"
+              color="normal"
+              onClick={() => setInlineColor("")}
+            />
+            <Button
+              text="Set #333"
+              variant="outlined"
+              color="normal"
+              onClick={() => setInlineColor("#333333")}
+            />
+            <Button
+              text="Set #FF4D4F"
+              variant="outlined"
+              color="normal"
+              onClick={() => setInlineColor("#FF4D4F")}
+            />
+          </Flex>
         </Flex>
-      ))}
-    </Flex>
-  ),
+
+        <Typography
+          variant="b3Regular"
+          text={`aria: ${args.ariaLabel ? `role=img, aria-label="${args.ariaLabel}"` : "aria-hidden=true"}`}
+          color="#666666"
+        />
+      </Box>
+    )
+  },
+}
+
+export const PaintModes: Story = {
+  render: () => {
+    const paints: IconProps["paint"][] = ["auto", "fill", "stroke", "both"]
+    const icon: IconName = "ArrowDown" as any
+
+    return (
+      <Box p="20px">
+        <Typography variant="h3" text="paint (auto/fill/stroke/both)" mb="12px" />
+
+        <Flex gap="18px" align="center" wrap="wrap">
+          {paints.map((p) => (
+            <Flex key={p} direction="column" align="center" gap="6px">
+              <Icon
+                name={icon}
+                size={28}
+                paint={p}
+                strokeWidth={1.5}
+                color="#333333"
+                ariaLabel={p}
+              />
+              <Typography variant="b3Regular" text={p ?? ""} />
+            </Flex>
+          ))}
+        </Flex>
+      </Box>
+    )
+  },
+}
+
+export const Sizes: Story = {
+  render: () => {
+    const sizes = useMemo(() => [12, 16, 20, 24, 28, 32, 40], [])
+
+    return (
+      <Box p="20px">
+        <Typography variant="h3" text="sizes" mb="12px" />
+
+        <Flex gap="14px" align="center" wrap="wrap">
+          {sizes.map((s) => (
+            <Flex key={s} direction="column" align="center" gap="6px">
+              <Icon name={IconNames[0]} size={s} color="#333333" ariaLabel={`size-${s}`} />
+              <Typography variant="b3Regular" text={String(s)} />
+            </Flex>
+          ))}
+        </Flex>
+      </Box>
+    )
+  },
+}
+
+export const A11yExamples: Story = {
+  render: () => {
+    return (
+      <Box p="20px">
+        <Typography variant="h3" text="a11y" mb="12px" />
+
+        <Flex gap="18px" align="center" wrap="wrap">
+          <Flex direction="column" gap="6px" align="center">
+            <Icon name={IconNames[3]} size={24} color="#333333" />
+            <Typography variant="b3Regular" text="decorative (aria-hidden)" />
+          </Flex>
+
+          <Flex direction="column" gap="6px" align="center">
+            <Icon name={IconNames[3]} size={24} color="#333333" ariaLabel="information" />
+            <Typography variant="b3Regular" text='role="img" + aria-label' />
+          </Flex>
+        </Flex>
+      </Box>
+    )
+  },
 }

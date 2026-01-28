@@ -1,187 +1,157 @@
-import { useState } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
-import Slider, { SliderProps } from "./Slider"
+import { useEffect, useMemo, useState } from "react"
+import Slider, { SliderProps, SliderValue } from "./Slider"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
-import { IconNames } from "../Icon/icon-loader"
+import { Typography } from "../Typography/Typography"
+import Button from "../Button/Button"
 
-const meta: Meta<SliderProps> = {
-  title: "components/Slider",
+const meta: Meta<typeof Slider> = {
+  title: "Components/Slider",
   component: Slider,
+  parameters: {
+    layout: "centered",
+  },
+  argTypes: {
+    value: { control: false },
+    onChange: { action: "onChange" },
+    onChangeEnd: { action: "onChangeEnd" },
+    min: { control: { type: "number" } },
+    max: { control: { type: "number" } },
+    step: { control: { type: "number" } },
+    disabled: { control: { type: "boolean" } },
+    track: { control: { type: "radio" }, options: ["normal", "inset", "none"] },
+    label: { control: { type: "text" } },
+    labelProps: { control: false },
+    startIcon: { control: { type: "text" } },
+    endIcon: { control: { type: "text" } },
+    iconSize: { control: { type: "text" } },
+  },
   args: {
-    value: 40,
+    value: 50,
     min: 0,
     max: 100,
     step: 1,
     disabled: false,
     track: "normal",
-    label: "슬라이더",
+    label: "Slider",
+    startIcon: "",
+    endIcon: "",
+    iconSize: 16,
   },
-  argTypes: {
-    value: { control: "object" },
-    min: { control: "number" },
-    max: { control: "number" },
-    step: { control: "number" },
-    disabled: { control: "boolean" },
-    track: { control: "radio", options: ["normal", "inset", "none"] },
-    label: { control: "text" },
-    startIcon: { control: "text" },
-    endIcon: { control: "text" },
-    p: { control: "text" },
-    m: { control: "text" },
-    width: { control: "text" },
-    sx: { control: false },
-  },
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Box p="20px" width="500px">
-          <Story />
-        </Box>
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
 }
 
 export default meta
+type Story = StoryObj<typeof Slider>
 
-type Story = StoryObj<SliderProps>
+const isRangeValue = (v: SliderValue): v is [number, number] => Array.isArray(v)
 
-/* -------------------------------------------------------------------------- */
-/*                                  DEFAULT                                   */
-/* -------------------------------------------------------------------------- */
+const Controlled = (args: SliderProps) => {
+  const [mode, setMode] = useState<"single" | "range">(
+    isRangeValue(args.value) ? "range" : "single",
+  )
 
-export const Default: Story = {
-  render: (args) => {
-    const [val, setVal] = useState<number>(args.value as number)
+  const initial = useMemo<SliderValue>(() => {
+    if (mode === "range")
+      return isRangeValue(args.value) ? args.value : ([20, 80] as [number, number])
+    return isRangeValue(args.value) ? args.value[0] : (args.value as number)
+  }, [args.value, mode])
 
-    return (
-      <Slider
-        {...args}
-        value={val}
-        onChange={(v) => setVal(v as number)}
-        onChangeEnd={(v) => console.log("onChangeEnd:", v)}
-      />
-    )
-  },
-}
+  const [val, setVal] = useState<SliderValue>(initial)
 
-/* -------------------------------------------------------------------------- */
-/*                              RANGE SLIDER                                  */
-/* -------------------------------------------------------------------------- */
+  useEffect(() => {
+    setVal(initial)
+  }, [initial])
 
-export const Range: Story = {
-  render: () => {
-    const [val, setVal] = useState<[number, number]>([20, 80])
+  const setSingle = () => {
+    setMode("single")
+    setVal((prev) => (isRangeValue(prev) ? prev[0] : prev))
+  }
 
-    return (
-      <Slider
-        value={val}
-        onChange={(v) => setVal(v as [number, number])}
-        onChangeEnd={(v) => console.log("onChangeEnd:", v)}
-        label="범위 선택"
-      />
-    )
-  },
-}
+  const setRange = () => {
+    setMode("range")
+    setVal((prev) => (isRangeValue(prev) ? prev : ([20, 80] as [number, number])))
+  }
 
-/* -------------------------------------------------------------------------- */
-/*                              TRACK VARIANTS                                 */
-/* -------------------------------------------------------------------------- */
-
-export const TrackVariants: Story = {
-  render: () => {
-    const [v1, setV1] = useState(30)
-    const [v2, setV2] = useState(50)
-    const [v3, setV3] = useState(70)
-
-    return (
-      <Flex direction="column" gap="24px">
-        <Slider
-          value={v1}
-          onChange={(v) => setV1(v as number)}
-          track="normal"
-          label="Normal Track"
-        />
-        <Slider value={v2} onChange={(v) => setV2(v as number)} track="inset" label="Inset Track" />
-        <Slider value={v3} onChange={(v) => setV3(v as number)} track="none" label="No Track" />
+  return (
+    <Flex direction="column" gap="12px" width="520px">
+      <Flex align="center" justify="space-between">
+        <Typography text="Mode" variant="b2Regular" />
+        <Flex gap="8px">
+          <Button text="Single" onClick={setSingle} />
+          <Button variant="outlined" text="Range" onClick={setRange} />
+        </Flex>
       </Flex>
-    )
-  },
-}
 
-/* -------------------------------------------------------------------------- */
-/*                          START / END ICONS                                  */
-/* -------------------------------------------------------------------------- */
-
-export const WithIcons: Story = {
-  render: () => {
-    const [val, setVal] = useState(40)
-
-    return (
-      <Slider
-        value={val}
-        onChange={(v) => setVal(v as number)}
-        label="아이콘 포함"
-        startIcon={IconNames[0]}
-        endIcon={IconNames[0]}
-      />
-    )
-  },
-}
-
-/* -------------------------------------------------------------------------- */
-/*                               DISABLED STATE                                */
-/* -------------------------------------------------------------------------- */
-
-export const Disabled: Story = {
-  render: () => <Slider value={50} disabled label="Disabled Slider" />,
-}
-
-/* -------------------------------------------------------------------------- */
-/*                        CUSTOM MIN/MAX/STEP                                  */
-/* -------------------------------------------------------------------------- */
-
-export const CustomRange: Story = {
-  render: () => {
-    const [value, setValue] = useState(5)
-
-    return (
-      <Slider
-        value={value}
-        min={0}
-        max={10}
-        step={0.5}
-        label="0 ~ 10 (step 0.5)"
-        onChange={(v) => setValue(v as number)}
-      />
-    )
-  },
-}
-
-/* -------------------------------------------------------------------------- */
-/*                          MULTIPLE SLIDERS                                   */
-/* -------------------------------------------------------------------------- */
-
-export const MultipleExamples: Story = {
-  render: () => {
-    const [v1, setV1] = useState(10)
-    const [v2, setV2] = useState(40)
-    const [range, setRange] = useState<[number, number]>([30, 70])
-
-    return (
-      <Flex direction="column" gap="28px">
-        <Slider value={v1} label="Slider 1" onChange={(v) => setV1(v as number)} />
-        <Slider value={v2} label="Slider 2" onChange={(v) => setV2(v as number)} />
+      <Flex direction="column" gap="8px">
         <Slider
-          value={range}
-          label="Range Slider"
-          onChange={(v) => setRange(v as [number, number])}
+          {...args}
+          value={val}
+          onChange={(next) => {
+            setVal(next)
+            args.onChange?.(next)
+          }}
+          onChangeEnd={(next) => {
+            args.onChangeEnd?.(next)
+          }}
         />
+
+        <Box sx={{ padding: "8px 10px", borderRadius: "10px", backgroundColor: "grayscale.50" }}>
+          <Typography
+            text={`value: ${Array.isArray(val) ? `[${val[0]}, ${val[1]}]` : val}`}
+            variant="b2Regular"
+          />
+        </Box>
+      </Flex>
+    </Flex>
+  )
+}
+
+export const Playground: Story = {
+  render: (args) => <Controlled {...(args as SliderProps)} />,
+}
+
+export const AllCases: Story = {
+  render: (args) => {
+    const common = args as SliderProps
+
+    return (
+      <Flex direction="column" gap="18px" width="720px">
+        <Typography text="Single" variant="h3" />
+        <Flex direction="column" gap="12px">
+          <Controlled {...common} value={40} label="Default" />
+          <Controlled {...common} value={40} label="Track inset" track="inset" />
+          <Controlled {...common} value={40} label="Track none" track="none" />
+          <Controlled {...common} value={40} label="Disabled" disabled />
+          <Controlled
+            {...common}
+            value={40}
+            label="With icons"
+            startIcon={"chevron-left"}
+            endIcon={"chevron-right"}
+            iconSize={16}
+          />
+          <Controlled {...common} value={40} label="Step 5" step={5} />
+          <Controlled {...common} value={40} label="Min/Max (10~60)" min={10} max={60} />
+        </Flex>
+
+        <Typography text="Range" variant="h3" />
+        <Flex direction="column" gap="12px">
+          <Controlled {...common} value={[20, 80]} label="Default" />
+          <Controlled {...common} value={[20, 80]} label="Track inset" track="inset" />
+          <Controlled {...common} value={[20, 80]} label="Track none" track="none" />
+          <Controlled {...common} value={[20, 80]} label="Disabled" disabled />
+          <Controlled
+            {...common}
+            value={[20, 80]}
+            label="With icons"
+            startIcon={"minus"}
+            endIcon={"plus"}
+            iconSize={16}
+          />
+          <Controlled {...common} value={[20, 80]} label="Step 10" step={10} />
+          <Controlled {...common} value={[20, 80]} label="Min/Max (10~60)" min={10} max={60} />
+        </Flex>
       </Flex>
     )
   },

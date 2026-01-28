@@ -1,231 +1,226 @@
-import { useMemo, useState } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
-import Stepper, { StepperOptionType } from "./Stepper"
-import Box from "../Box/Box"
+import { useMemo, useState } from "react"
+import Stepper, { StepperOptionType, StepperProps } from "./Stepper"
 import Flex from "../Flex/Flex"
+import Box from "../Box/Box"
+import { Typography } from "../Typography/Typography"
 import Button from "../Button/Button"
 import Divider from "../Divider/Divider"
-import { theme } from "../../tokens/theme"
-import { IconName, IconNames } from "../Icon/icon-loader"
+import { DirectionType } from "../../types"
 
-/* ------------------------------------------------------------------ */
-/* meta */
-/* ------------------------------------------------------------------ */
+type ValueType = string
 
-const meta: Meta<typeof Stepper> = {
+const StepperString = (props: StepperProps<ValueType>) => <Stepper<ValueType> {...props} />
+
+const meta: Meta<typeof StepperString> = {
   title: "Components/Stepper",
-  component: Stepper,
+  component: StepperString,
+  parameters: {
+    layout: "centered",
+  },
   argTypes: {
     options: { control: false },
     value: { control: false },
-    orientation: { control: "radio", options: ["horizontal", "vertical"] },
-    linear: { control: "boolean" },
+    orientation: { control: { type: "radio" }, options: ["horizontal", "vertical"] },
+    linear: { control: { type: "boolean" } },
     connector: { control: false },
     onSelect: { control: false },
     TypographyProps: { control: false },
+    circleSize: { control: { type: "text" } },
+    iconSize: { control: { type: "text" } },
+    completedIconSize: { control: { type: "text" } },
+    stepIconSize: { control: { type: "text" } },
   },
   args: {
     orientation: "horizontal",
     linear: true,
+    circleSize: 24,
+    iconSize: 14,
+    completedIconSize: 12,
+    stepIconSize: 14,
   },
-  decorators: [(Story) => <Story />],
 }
 
 export default meta
+type Story = StoryObj<typeof StepperString>
 
-type Story = StoryObj<typeof Stepper>
+const buildOptions = (
+  overrides?: Partial<StepperOptionType<ValueType>>[],
+): StepperOptionType<ValueType>[] => {
+  const base: StepperOptionType<ValueType>[] = [
+    { value: "step-1", label: "Step 1", children: "CheckLine" },
+    { value: "step-2", label: "Step 2", children: "CloseLine" },
+    { value: "step-3", label: "Step 3" },
+    { value: "step-4", label: "Step 4" },
+  ]
 
-/* ------------------------------------------------------------------ */
-/* helpers */
-/* ------------------------------------------------------------------ */
+  if (!overrides) return base
+  return base.map((o, i) => ({ ...o, ...(overrides[i] ?? {}) }))
+}
 
-const makeOptions = (activeIndex: number): StepperOptionType<string>[] => [
-  {
-    value: "step-1",
-    children: IconNames[0],
-    label:
-      "Lorem ipsum dolor sit, amet consectetur adipisicing elit. Cumque magnam hic quaerat dolores voluptatibus nam! Ex doloribus et recusandae at beatae? Harum, eum! Excepturi eaque, nihil quae at totam culpa! Modi, distinctio dolor explicabo sit temporibus eos aspernatur molestiae sunt placeat. Alias perspiciatis quae omnis, deleniti delectus dolorem facere amet maiores. Saepe eius minus consectetur officiis quia aliquam doloribus enim.",
-  },
-  {
-    value: "step-2",
-    children: "Configure settings",
-    label: "Step",
-  },
-  {
-    value: "step-3",
-    children: IconNames[1],
-    label: activeIndex === 2 ? "Error" : "Step",
-    error: activeIndex === 2,
-  },
-  {
-    value: "step-4",
-    children: "Finish",
-    label: "Step",
-  },
-  {
-    value: "step-5",
-    label: "disabled",
-    disabled: true,
-  },
-]
+const Controlled = (args: StepperProps<ValueType>) => {
+  const [orientation, setOrientation] = useState<DirectionType>(
+    (args.orientation ?? "horizontal") as DirectionType,
+  )
+  const [linear, setLinear] = useState<boolean>(args.linear ?? true)
+  const [value, setValue] = useState<ValueType | null>("step-1")
+  const [useCustomConnector, setUseCustomConnector] = useState(false)
 
-/* ------------------------------------------------------------------ */
-/* stories */
-/* ------------------------------------------------------------------ */
+  const options = useMemo(() => buildOptions(), [])
+
+  const connector = useMemo(() => {
+    if (!useCustomConnector) return undefined
+    return (
+      <Divider
+        direction={orientation}
+        sx={{
+          zIndex: 1,
+          opacity: 0.6,
+        }}
+      />
+    )
+  }, [orientation, useCustomConnector])
+
+  return (
+    <Flex direction="column" gap="12px" width="760px">
+      <Flex justify="space-between" align="center">
+        <Typography text="Stepper Playground" variant="h3" />
+        <Flex gap="8px">
+          <Button
+            text={orientation === "horizontal" ? "Horizontal" : "Vertical"}
+            variant="outlined"
+            onClick={() => setOrientation((p) => (p === "horizontal" ? "vertical" : "horizontal"))}
+          />
+          <Button
+            text={linear ? "Linear: ON" : "Linear: OFF"}
+            variant="outlined"
+            onClick={() => setLinear((p) => !p)}
+          />
+          <Button
+            text={useCustomConnector ? "Connector: Custom" : "Connector: Default"}
+            variant="outlined"
+            onClick={() => setUseCustomConnector((p) => !p)}
+          />
+          <Button text="Reset" onClick={() => setValue("step-1")} />
+        </Flex>
+      </Flex>
+
+      <Box sx={{ padding: "12px", borderRadius: "12px", backgroundColor: "grayscale.50" }}>
+        <Typography
+          variant="b2Regular"
+          text={`value: ${value ?? "null"} / orientation: ${orientation} / linear: ${String(linear)}`}
+        />
+      </Box>
+
+      <StepperString
+        {...args}
+        options={options}
+        value={value}
+        orientation={orientation}
+        linear={linear}
+        connector={connector}
+        onSelect={(v, idx) => {
+          setValue(v)
+        }}
+      />
+    </Flex>
+  )
+}
 
 export const Playground: Story = {
-  render: (args) => {
-    const [activeIndex, setActiveIndex] = useState(1)
-
-    const options = useMemo(() => makeOptions(activeIndex), [activeIndex])
-    const value = options[activeIndex]?.value ?? null
-
-    const canPrev = activeIndex > 0
-    const canNext = activeIndex < options.length - 1
-
-    // * StepperProps가 HTMLAttributes를 합치며 onSelect가 ReactEventHandler와 교차 타입이 된 케이스 대응
-    // * (event) 시그니처도 만족하면서 내부에서 (value, index) 형태로 사용 가능하도록 가변 인수로 처리
-    const handleSelect = (...argsAny: any[]) => {
-      const valueArg = argsAny[0] as string
-      const indexArg = argsAny[1] as number
-      if (typeof indexArg === "number") setActiveIndex(indexArg)
-    }
-
-    return (
-      <Flex direction="column" gap={16} width="100%" align="center" justify="center">
-        <Flex gap={8} align="center" wrap="wrap">
-          <Button
-            text="Prev"
-            variant="outlined"
-            disabled={!canPrev}
-            onClick={() => setActiveIndex((n) => Math.max(0, n - 1))}
-          />
-
-          <Button
-            text="Next"
-            variant="contained"
-            disabled={!canNext}
-            onClick={() => setActiveIndex((n) => Math.min(options.length - 1, n + 1))}
-          />
-
-          <Button text=" Reset" variant="text" onClick={() => setActiveIndex(0)} />
-        </Flex>
-
-        <Stepper
-          {...args}
-          options={options}
-          value={value}
-          connector={<Divider direction={args.orientation} sx={{ zIndex: theme.zIndex.base }} />}
-          onSelect={handleSelect as any}
-        />
-
-        <Box
-          p={"12px"}
-          bgColor={theme.colors.grayscale[50]}
-          sx={{
-            border: `1px solid ${theme.colors.border.default}`,
-            borderRadius: theme.borderRadius[8],
-          }}
-        >
-          Current step: {activeIndex + 1} / {options.length}
-        </Box>
-      </Flex>
-    )
-  },
+  render: (args) => <Controlled {...(args as StepperProps<ValueType>)} />,
 }
 
-export const Vertical: Story = {
-  args: {
-    orientation: "vertical",
-    linear: true,
-  },
+export const Variants: Story = {
   render: (args) => {
-    const [activeIndex, setActiveIndex] = useState(0)
+    const [valueA, setValueA] = useState<ValueType | null>("step-2")
+    const [valueB, setValueB] = useState<ValueType | null>("step-1")
 
-    const options = useMemo(() => makeOptions(activeIndex), [activeIndex])
-    const value = options[activeIndex]?.value ?? null
-
-    const handleSelect = (...argsAny: any[]) => {
-      const indexArg = argsAny[1] as number
-      if (typeof indexArg === "number") setActiveIndex(indexArg)
-    }
-
-    return (
-      <Flex direction="column" gap={16} width="100%" align="center" justify="center">
-        <Stepper
-          {...args}
-          options={options}
-          value={value}
-          connector={<Divider direction={args.orientation} sx={{ zIndex: theme.zIndex.base }} />}
-          onSelect={handleSelect as any}
-        />
-
-        <Flex gap={8} align="center" wrap="wrap">
-          <Button
-            text="Prev"
-            variant="outlined"
-            onClick={() => setActiveIndex((n) => Math.max(0, n - 1))}
-          />
-
-          <Button
-            text="Next"
-            variant="contained"
-            onClick={() => setActiveIndex((n) => Math.min(options.length - 1, n + 1))}
-          />
-        </Flex>
-      </Flex>
-    )
-  },
-}
-
-export const AlternativeLabel: Story = {
-  args: {
-    orientation: "horizontal",
-    linear: true,
-  },
-  render: (args) => {
-    const [activeIndex, setActiveIndex] = useState(2)
-
-    const options = useMemo(
-      () => [
-        ...makeOptions(activeIndex),
-        {
-          value: "step-6",
-          children: "More2Line" as IconName,
-          label: "More",
-          completed: activeIndex > 5,
-        },
-      ],
-      [activeIndex],
+    const optionsDefault = useMemo(() => buildOptions(), [])
+    const optionsStates = useMemo(
+      () =>
+        buildOptions([
+          { completed: true, label: "Completed" },
+          { error: true, label: "Error" },
+          { disabled: true, label: "Disabled" },
+          { hidden: false, label: "Normal" },
+        ]),
+      [],
     )
 
-    const value = options[activeIndex]?.value ?? null
-
-    const handleSelect = (...argsAny: any[]) => {
-      const indexArg = argsAny[1] as number
-      if (typeof indexArg === "number") setActiveIndex(indexArg)
-    }
+    const optionsWithHidden = useMemo(
+      () =>
+        buildOptions([
+          { label: "Visible" },
+          { hidden: true, label: "Hidden" },
+          { label: "Visible" },
+          { label: "Visible" },
+        ]),
+      [],
+    )
 
     return (
-      <Flex direction="column" gap={16} width="100%">
-        <Stepper
+      <Flex direction="column" gap="18px" width="980px">
+        <Typography text="Horizontal / Linear" variant="h3" />
+        <StepperString
           {...args}
-          options={options}
-          value={value}
-          connector={<Divider direction={args.orientation} sx={{ zIndex: theme.zIndex.base }} />}
-          onSelect={handleSelect as any}
+          options={optionsDefault}
+          value={valueA}
+          orientation="horizontal"
+          linear
+          onSelect={(v) => setValueA(v)}
         />
 
-        <Box
-          p={"12px"}
-          bgColor={theme.colors.grayscale[50]}
-          sx={{
-            border: `1px solid ${theme.colors.border.default}`,
-            borderRadius: theme.borderRadius[8],
-          }}
-        >
-          nonLinear=true: any enabled step can be selected. Disabled step cannot be selected.
-        </Box>
+        <Typography text="Horizontal / Non-Linear (free select)" variant="h3" />
+        <StepperString
+          {...args}
+          options={optionsDefault}
+          value={valueA}
+          orientation="horizontal"
+          linear={false}
+          onSelect={(v) => setValueA(v)}
+        />
+
+        <Typography text="Vertical / Linear" variant="h3" />
+        <StepperString
+          {...args}
+          options={optionsDefault}
+          value={valueB}
+          orientation="vertical"
+          linear
+          onSelect={(v) => setValueB(v)}
+        />
+
+        <Typography text="States (completed / error / disabled)" variant="h3" />
+        <StepperString
+          {...args}
+          options={optionsStates}
+          value={valueA}
+          orientation="horizontal"
+          linear={false}
+          onSelect={(v) => setValueA(v)}
+        />
+
+        <Typography text="Hidden steps" variant="h3" />
+        <StepperString
+          {...args}
+          options={optionsWithHidden}
+          value={valueA}
+          orientation="horizontal"
+          linear={false}
+          onSelect={(v) => setValueA(v)}
+        />
+
+        <Typography text="Custom connector" variant="h3" />
+        <StepperString
+          {...args}
+          options={optionsDefault}
+          value={valueA}
+          orientation="horizontal"
+          linear={false}
+          connector={<Divider direction="horizontal" sx={{ opacity: 0.3 }} />}
+          onSelect={(v) => setValueA(v)}
+        />
       </Flex>
     )
   },

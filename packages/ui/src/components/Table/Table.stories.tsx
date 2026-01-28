@@ -1,6 +1,5 @@
-// Table.stories.tsx
 import type { Meta, StoryObj } from "@storybook/react"
-import React, { useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import Table from "./Table"
 import type {
   ColumnProps,
@@ -105,7 +104,7 @@ const buildColumns = (
   ] as ColumnProps<Row>[]
 
 const meta: Meta<typeof Table> = {
-  title: "Table/Operational/Table",
+  title: "Components/Table",
   component: Table,
   parameters: { layout: "fullscreen" },
 }
@@ -501,7 +500,6 @@ export const Guardrail_BadColumnConfigRef: Story = {
       [onQueryChange, query],
     )
 
-    // ❌ 의도적 위반: useMemo 없이 매 렌더 새 columnConfig 생성
     const columnConfig = buildColumns(onSortChange)
 
     const filtered = useMemo(

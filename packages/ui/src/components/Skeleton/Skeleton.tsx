@@ -2,7 +2,6 @@ import { ReactNode } from "react"
 import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import { indeterminateAnimation } from "../../tokens/keyframes"
-import { theme } from "../../tokens/theme"
 import { css } from "styled-components"
 
 export type SkeletonProps = BaseMixinProps & {
@@ -12,32 +11,71 @@ export type SkeletonProps = BaseMixinProps & {
   animation?: "wave" | "none"
   children?: ReactNode
 }
+
+type SkeletonItemStyleProps = {
+  variant: NonNullable<SkeletonProps["variant"]>
+  width?: string | number
+  height?: string | number
+  animation: NonNullable<SkeletonProps["animation"]>
+}
 /**---------------------------------------------------------------------------/
-
-* ! Skeleton
-*
-* * 로딩 상태를 표현하기 위한 스켈레톤 UI 컴포넌트
-* * 텍스트, 사각형, 둥근 사각형, 원형 형태 지원
-* * width / height 기반 크기 커스터마이징 가능
-* * wave 애니메이션 또는 애니메이션 비활성화 옵션 제공
-* * children 전달 시 실제 콘텐츠 영역을 숨기고 스켈레톤으로 대체 렌더링
-* * pseudo-element 기반 shimmer(wave) 애니메이션 구현
-* * BaseMixin 기반 외부 스타일 확장 지원
-* * theme 기반 색상 및 borderRadius 토큰 활용
-
-* @module Skeleton
-* 콘텐츠 로딩 중 자리 표시자로 사용되는 스켈레톤 컴포넌트입니다.
-* - variant 옵션으로 다양한 형태의 스켈레톤 표현
-* - animation 옵션으로 로딩 애니메이션 제어
-* - children이 존재할 경우 실제 레이아웃을 유지한 채 로딩 상태 표현
-*
-* @usage
-* <Skeleton variant="text" width="100%" />
-* <Skeleton variant="circular" width={40} height={40} />
-* <Skeleton>
-*   <Content />
-* </Skeleton>
-
+ *
+ * ! Skeleton
+ *
+ * * 로딩 상태에서 콘텐츠 자리 표시자로 사용되는 스켈레톤 UI 컴포넌트입니다.
+ * * `variant`로 text / rectangular / rounded / circular 형태를 지원합니다.
+ * * `width`/`height`로 크기를 지정할 수 있으며, `animation`으로 wave(쉬머) 또는 none을 선택합니다.
+ * * `children`이 있으면 실제 콘텐츠 레이아웃을 유지한 채(visibility: hidden) 스켈레톤을 오버레이 형태로 렌더링합니다.
+ * * pseudo-element(::after) + keyframes로 shimmer(wave) 애니메이션을 구현합니다.
+ * * BaseMixinProps를 지원하여 외부 sx/p/m 등 공통 스타일 확장이 가능합니다.
+ *
+ * * 동작 규칙
+ *   * children 처리:
+ *     * `children`이 존재하면 `SkeletonWrapper` 내부에
+ *       * 스켈레톤(SkeletonItem)
+ *       * 숨겨진 실제 콘텐츠(ContentWrapper: visibility hidden)
+ *       를 함께 렌더링하여 레이아웃 점프 없이 로딩 상태를 표현합니다.
+ *   * 단일 렌더링:
+ *     * `children`이 없으면 `SkeletonItem`만 렌더링합니다.
+ *   * animation:
+ *     * `animation === "wave"`일 때만 `::after` 쉬머 레이어를 생성하고 indeterminateAnimation을 적용합니다.
+ *     * `animation === "none"`이면 애니메이션 레이어를 생성하지 않습니다.
+ *
+ * * 레이아웃/스타일 관련 규칙
+ *   * 크기:
+ *     * `width`/`height`는 number면 px로 변환, string이면 그대로 사용하며 기본 width는 "100%"입니다.
+ *     * text variant는 기본적으로 `height: 1em`을 제공하여 텍스트 라인 높이에 맞춥니다.
+ *   * variant 스타일(getVariantStyle):
+ *     * circular: border-radius 50%
+ *     * rounded: theme.borderRadius[8]
+ *     * rectangular: theme.borderRadius[0]
+ *     * text(기본): theme.borderRadius[4] + height 1em
+ *   * wave 쉬머:
+ *     * `::after`는 너비 40%의 그라데이션 레이어로, indeterminateAnimation으로 좌우 이동 애니메이션을 수행합니다.
+ *   * 배경색:
+ *     * 기본 배경은 theme.colors.grayscale[200]을 사용합니다.
+ *
+ * * 데이터 처리 규칙
+ *   * 입력 props 계약:
+ *     * `variant`: 형태 결정(text/rectangular/rounded/circular)
+ *     * `width`/`height`: 스켈레톤 크기
+ *     * `animation`: "wave" | "none"
+ *     * `children`: 존재 시 레이아웃 보존 모드(오버레이)로 동작
+ *   * 내부 계산:
+ *     * 형태별 기본 높이/라운딩은 getVariantStyle에서 결정됩니다.
+ *   * 서버/클라이언트 제어:
+ *     * 순수 프리젠테이션 컴포넌트로, 상태 관리나 외부 데이터 제어 로직을 포함하지 않습니다.
+ *
+ * @module Skeleton
+ * 콘텐츠 로딩 중 자리 표시자로 사용되는 스켈레톤 컴포넌트입니다.
+ *
+ * @usage
+ * <Skeleton variant="text" width="100%" />
+ * <Skeleton variant="circular" width={40} height={40} />
+ * <Skeleton>
+ *   <Content />
+ * </Skeleton>
+ *
 /---------------------------------------------------------------------------**/
 
 const Skeleton = ({
@@ -48,12 +86,22 @@ const Skeleton = ({
   children,
   ...others
 }: SkeletonProps) => {
-  // * children가 있는 경우 실제 콘텐츠 위에 스켈레톤을 오버레이 형태로 렌더링
+  // * children이 있는 경우: 레이아웃 유지 + overlay가 실제 영역을 100% 덮도록 width/height 기본값을 100%로 강제
   if (children) {
+    const overlayWidth = width ?? "100%"
+    const overlayHeight = height ?? "100%"
+
     return (
       <SkeletonWrapper {...others}>
-        <SkeletonItem variant={variant} width={width} height={height} animation={animation} />
         <ContentWrapper>{children}</ContentWrapper>
+        <Overlay>
+          <SkeletonItem
+            variant={variant}
+            width={overlayWidth}
+            height={overlayHeight}
+            animation={animation}
+          />
+        </Overlay>
       </SkeletonWrapper>
     )
   }
@@ -70,52 +118,57 @@ const Skeleton = ({
   )
 }
 
-// * variant 값에 따라 border-radius 및 기본 높이 스타일을 반환
-const getVariantStyle = (variant: SkeletonProps["variant"]) => {
+// * variant 값에 따라 border-radius 및 text 기본 높이(조건부) 적용
+const getVariantCss = (variant: SkeletonProps["variant"], hasExplicitHeight: boolean) => {
   switch (variant) {
     case "circular":
-      return `
-          border-radius: 50%;
-        `
+      return css`
+        border-radius: 50%;
+      `
     case "rounded":
-      return `
-          border-radius: ${theme.borderRadius[8]};
-        `
+      return css`
+        border-radius: ${({ theme }) => theme.borderRadius[8]};
+      `
     case "rectangular":
-      return `
-          border-radius: ${theme.borderRadius[0]};
-        `
+      return css`
+        border-radius: ${({ theme }) => theme.borderRadius[0]};
+      `
     case "text":
     default:
-      return `
-          border-radius: ${theme.borderRadius[4]};
-          height: 1em;
-        `
+      return css`
+        border-radius: ${({ theme }) => theme.borderRadius[4]};
+        ${hasExplicitHeight ? "" : "height: 1em;"}
+      `
   }
 }
 
-const SkeletonWrapper = styled.div`
+const SkeletonWrapper = styled.div<BaseMixinProps>`
   position: relative;
   display: inline-block;
+  width: 100%;
+
+  ${({ ...props }) => BaseMixin(props as any)}
 `
 
 const ContentWrapper = styled.div`
   visibility: hidden;
 `
 
-const SkeletonItem = styled.div<{
-  variant: SkeletonProps["variant"]
-  width?: string | number
-  height?: string | number
-  animation: "wave" | "none"
-}>`
+const Overlay = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+`
+
+const SkeletonItem = styled.div<SkeletonItemStyleProps & BaseMixinProps>`
   position: relative;
   overflow: hidden;
-  background-color: ${theme.colors.grayscale[200]};
+  background-color: ${({ theme }) => theme.colors.grayscale[200]};
+
   width: ${({ width }) => (typeof width === "number" ? `${width}px` : (width ?? "100%"))};
   height: ${({ height }) => (typeof height === "number" ? `${height}px` : (height ?? "auto"))};
 
-  ${({ variant }) => getVariantStyle(variant)}
+  ${({ variant, height }) => getVariantCss(variant, height !== undefined)}
 
   ${({ animation }) =>
     animation === "wave" &&
@@ -124,7 +177,7 @@ const SkeletonItem = styled.div<{
         content: "";
         position: absolute;
         top: 0;
-        left: 0;
+        left: -40%;
         height: 100%;
         width: 40%;
         background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
@@ -132,7 +185,7 @@ const SkeletonItem = styled.div<{
       }
     `}
 
-  ${BaseMixin};
+  ${({ ...props }) => BaseMixin(props as any)}
 `
 
 export default Skeleton

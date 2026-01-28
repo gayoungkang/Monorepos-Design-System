@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-
 import { theme } from "../../tokens/theme"
 import { circularIndeterminate, indeterminateAnimation } from "../../tokens/keyframes"
 import { BaseMixinProps } from "../../tokens/baseMixin"
@@ -17,29 +16,54 @@ export type ProgressProps = BaseMixinProps & {
   label?: string
   backgroundColor?: string
 }
-/**
+/**---------------------------------------------------------------------------/
+ *
+ * ! Progress
+ *
+ * * 진행 상태를 표시하는 Progress 컴포넌트입니다. (bar / Circular 타입 지원)
+ * * `type`에 따라 Bar(가로) 또는 Circular(SVG 원형)로 렌더링됩니다.
+ * * `variant`에 따라 determinate(값 기반) / indeterminate(무한 로딩) 모드로 동작합니다.
+ * * determinate 모드에서는 `value`(0~100)를 기준으로 내부 `animatedValue`를 증가시켜 부드럽게 반영합니다.
+ *
+ * * 동작 규칙
+ *   * determinate:
+ *     * `value`까지 requestAnimationFrame 기반으로 `animatedValue`를 1씩 증가시켜 진행률을 표현합니다.
+ *     * Bar 타입은 width(%), Circular 타입은 strokeDashoffset으로 진행률을 표시합니다.
+ *   * indeterminate:
+ *     * Bar 타입은 `indeterminateAnimation`으로 무한 이동 애니메이션을 수행합니다.
+ *     * Circular 타입은 `circularIndeterminate`로 원형 회전/진행 애니메이션을 수행합니다.
+ *   * `variant`가 determinate가 아니면 `animatedValue`는 0으로 초기화됩니다.
+ *
+ * * 레이아웃/스타일 관련 규칙
+ *   * Bar:
+ *     * Track은 `height`, `backgroundColor`를 사용하고 borderRadius + overflow hidden으로 클리핑합니다.
+ *     * determinate Bar는 width 전환(0.4s)으로 부드럽게 변화합니다.
+ *     * indeterminate Bar는 absolute 배치 + keyframes 애니메이션으로 표현됩니다.
+ *   * Circular:
+ *     * `size`를 wrapper 및 svg width/height로 사용합니다.
+ *     * radius(18) 고정, circumference 기반 dasharray/dashoffset을 계산합니다.
+ *   * Label:
+ *     * `label`이 있고 determinate일 때만 표시되며, 중앙 absolute 배치로 렌더링됩니다.
+ *
+ * * 데이터 처리 규칙
+ *   * 입력 props 계약:
+ *     * `type`: "bar" | "Circular" (기본 "bar")
+ *     * `variant`: "determinate" | "indeterminate" (기본 "indeterminate")
+ *     * `value`: determinate 진행률 값 (기본 0)
+ *     * `color`, `backgroundColor`, `height`, `size`는 스타일 제어용 옵션입니다.
+ *   * 내부 계산:
+ *     * `animatedValue`는 determinate에서만 value까지 증가하며, Circular은 dashOffset을 계산합니다.
+ *   * 서버/클라이언트 제어:
+ *     * 진행률 값(`value`)은 외부 제어값을 사용하고, 시각적 부드러움만 내부 애니메이션으로 보정합니다.
+ *
  * @module Progress
- * 다양한 로딩 상태를 시각적으로 표현하는 컴포넌트로, 선형(bar)과 원형(Circular) 타입을 지원합니다.
+ * bar / Circular 형태의 진행률 UI를 제공하며 determinate/indeterminate 로딩 상태를 표시합니다.
  *
- * - determinate: 진행률에 따라 값이 증가하는 로딩 바
- * - indeterminate: 진행률 없이 반복 애니메이션되는 무한 로딩 바
- * - Circular 타입은 SVG 기반 원형 그래프 형태로 표시됨
- *
- * @props
- * - type : 로딩 형태 ("bar" | "Circular")
- * - variant : determinate(값 기반) 또는 indeterminate(무한 애니메이션)
- * - value : determinate 모드일 때의 퍼센트 값 (0~100)
- * - color : 프로그레스 색상
- * - backgroundColor : 배경 색상
- * - height : bar 타입일 때의 높이
- * - size : Circular 타입일 때의 원 크기
- * - label : 퍼센트 텍스트 표시
- * - others : BaseMixinProps 스타일 확장
- *
- * @사용법
- * <Progress type="bar" variant="determinate" value={60} label="진행중" />
+ * @usage
+ * <Progress type="bar" variant="determinate" value={60} />
  * <Progress type="Circular" variant="indeterminate" />
- */
+ *
+/---------------------------------------------------------------------------**/
 
 const Progress = ({
   type = "bar",
@@ -54,26 +78,25 @@ const Progress = ({
 }: ProgressProps) => {
   const [animatedValue, setAnimatedValue] = useState(0)
 
-  // *  determinate일 경우 value까지 부드럽게 증가 애니메이션, 아니면 0으로 초기화
+  // * determinate일 경우 value까지 부드럽게 증가 애니메이션, 아니면 0으로 초기화
   useEffect(() => {
     if (variant === "determinate") {
       const step = () => {
         setAnimatedValue((prev) => {
           const nextValue = Math.min(value, prev + 1)
-          if (nextValue < value) {
-            requestAnimationFrame(step)
-          }
+          if (nextValue < value) requestAnimationFrame(step)
           return nextValue
         })
       }
 
       step()
-    } else {
-      setAnimatedValue(0)
+      return
     }
+
+    setAnimatedValue(0)
   }, [value, variant])
 
-  // * 원형 프로그레스의 진행률에 따른 stroke-dashoffset 계산 (퍼센트 기반)
+  // * Circular 타입: stroke-dashoffset으로 진행률 표현 + indeterminate 애니메이션 지원
   if (type === "Circular") {
     const radius = 18
     const circumference = 2 * Math.PI * radius
@@ -109,6 +132,7 @@ const Progress = ({
             />
           )}
         </svg>
+
         {label && variant === "determinate" && (
           <Typography
             text={`${Math.round(animatedValue)}%`}
@@ -140,6 +164,7 @@ const Progress = ({
           }}
         />
       )}
+
       <Track $bg={backgroundColor} $height={height}>
         {variant === "determinate" ? (
           <Bar $color={color} $value={animatedValue} />

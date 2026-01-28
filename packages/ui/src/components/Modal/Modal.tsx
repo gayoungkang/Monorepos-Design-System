@@ -30,37 +30,71 @@ export type BasicModalProps = BaseMixinProps & {
   closeText?: string
   allowBackdrop?: boolean
   bodySx?: BaseMixinProps
+  container?: HTMLElement
 }
-/**
+/**---------------------------------------------------------------------------/
+ *
+ * ! Modal
+ *
+ * * 포털(Portal) 기반의 기본 모달 다이얼로그 컴포넌트
+ * * open 상태일 때만 렌더링되며, 모달 스택에서 최상단(isTop) 모달에 한해 ESC 닫기/스크롤 잠금/포커스 처리를 수행
+ * * header/footer를 커스텀 컴포넌트로 대체할 수 있으며, 기본 UI는 title/confirm/close 조합으로 제공
+ * * children은 Suspense로 감싸 지연 로딩 시 로딩 인디케이터를 표시
+ *
+ * * 동작 규칙
+ *   * 주요 분기 조건 및 처리 우선순위
+ *     * open === false 이면 null 반환(렌더링/이벤트 모두 없음)
+ *     * open === true 이고 isTop === true 인 경우에만:
+ *       * ESC 키 입력 시 onClose 호출
+ *       * document.body overflow를 hidden으로 설정하여 스크롤 잠금
+ *       * confirm 버튼(buttonRef)에 포커스 부여(queueMicrotask로 렌더 이후 보장)
+ *     * allowBackdrop === true 인 경우에만 오버레이 클릭으로 onClose 호출
+ *     * headerComponent/footComponent가 제공되면 기본 헤더/푸터 대신 해당 컴포넌트를 우선 렌더링
+ *   * 이벤트 처리 방식
+ *     * overlay onClick: allowBackdrop가 true일 때만 onClose 실행
+ *     * modal 컨텐츠 onClick: e.stopPropagation()으로 overlay 클릭 버블링 차단
+ *     * ESC keydown: isTop 모달일 때만 onClose 실행
+ *   * disabled 상태에서 차단되는 동작
+ *     * 해당 없음(기본 모달 자체는 disabled 플래그를 가지지 않음)
+ *
+ * * 레이아웃/스타일 관련 규칙
+ *   * Portal로 container(기본 document.body)에 렌더링
+ *   * overlay는 fixed + inset:0 + dim 배경 + zIndex(MODAL_ZINDEX) 적용
+ *   * 모달 본문은 maxHeight(90vh) + overflow hidden, body 영역(Box)는 overflowY:auto로 스크롤 처리
+ *   * AnimatedBox에 fadeInUp 애니메이션을 적용해 진입 모션 제공
+ *   * 기본 헤더: title 렌더 + 우측 닫기(IconButton) + Divider
+ *   * 기본 푸터: close/confirm 버튼 + Divider
+ *
+ * * 데이터 처리 규칙
+ *   * 입력 props 계약(필수/선택)
+ *     * open: 필수(모달 표시 여부)
+ *     * width: 모달 너비(기본 "420px")
+ *     * title: 기본 헤더 사용 시 제목 문자열(옵션)
+ *     * headerComponent/footerComponent: 기본 헤더/푸터 대체용(옵션, 제공 시 우선)
+ *     * onClose/onConfirm: 기본 버튼/ESC/백드롭에서 호출되는 콜백(옵션)
+ *     * confirmText/closeText + confirmButtonProps/closeButtonProps: 기본 버튼 문구/옵션 확장
+ *     * allowBackdrop: true일 때만 overlay 클릭 닫기 허용
+ *     * bodySx: 본문(Box) 영역 BaseMixinProps 확장(패딩/스타일 오버라이드)
+ *     * container: Portal 대상 엘리먼트(기본 document.body)
+ *   * 내부 계산 로직 요약
+ *     * useModalStack(open)으로 최상단 여부를 판단해 전역 이벤트/스크롤 잠금 적용 범위를 제한
+ *     * Suspense fallback으로 Circular Progress를 기본 로딩 표시로 사용
+ *   * 클라이언트 제어 컴포넌트 (DOM 이벤트/Portal 기반, 서버 제어 없음)
+ *
  * @module Modal
- * 재사용 가능한 기본 모달 컴포넌트로, 포털을 이용해 화면 중앙에 고정된 모달 창을 띄웁니다.
- *
- * - 열림/닫힘(open) 상태 관리
- * - 타이틀 또는 커스텀 헤더(headerComponent) 지원
- * - 백드롭 클릭 시 닫기 기능(allowBackdrop)
- * - ESC 키로 닫기, ENTER 키로 확인(onConfirm) 동작 지원
- * - 스크롤 잠금 및 키보드 이벤트 등록/해제 자동 처리
- * - 본문(children)을 Suspense로 감싸 로딩 대기 UI 제공
- * - 푸터 영역에 커스텀 컴포넌트(footerComponent) 삽입 가능
- * - 너비(width) 기본값 420px, 스타일 커스터마이징 가능
- *
- * @props
- * - open : 모달 열림 여부
- * - title : 기본 헤더에 표시할 제목 텍스트
- * - children : 모달 본문 내용
- * - footerComponent : 모달 푸터에 렌더링할 컴포넌트
- * - headerComponent : 기본 헤더 대신 렌더링할 커스텀 헤더
- * - onClose : 모달 닫기 이벤트 핸들러
- * - onConfirm : 확인(Enter 키) 이벤트 핸들러
- * - width : 모달 너비 (기본 420px)
- * - allowBackdrop : 백드롭 클릭 시 모달 닫기 허용 여부
- * - bodySx : 모달 children 영역 스타일 커스텀마이징 가능
+ * 모달 스택과 연동되는 기본 Portal 모달 컴포넌트
  *
  * @usage
- * <Modal open={isOpen} title="알림" onClose={handleClose} onConfirm={handleConfirm}>
- *   모달 본문 내용
+ * <Modal
+ *   open={open}
+ *   title="확인"
+ *   onClose={() => setOpen(false)}
+ *   onConfirm={handleConfirm}
+ * >
+ *   {children}
  * </Modal>
- */
+ *
+/---------------------------------------------------------------------------**/
 
 const Modal = ({
   open,
@@ -77,38 +111,39 @@ const Modal = ({
   width = "420px",
   allowBackdrop = false,
   bodySx,
+  container,
   ...others
 }: BasicModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const { isTop } = useModalStack(open)
 
-  // * 키보드 이벤트 핸들러: ESC 시 onClose
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (!isTop) return
-    if (e.key === "Escape") onClose?.()
-  }
-
-  // * 첫 렌더시 ENTER 입력으로 confirm 호출 할 수 있도록 confirm 포커스
+  // * open + 최상단 모달일 때만: ESC 닫기 + body 스크롤 잠금 + confirm 버튼 포커스
   useEffect(() => {
-    buttonRef.current?.focus()
-  }, [buttonRef.current])
+    if (!open || !isTop) return
 
-  // * open 상태에 따른 키 이벤트 등록 및 스크롤 잠금 처리
-  useEffect(() => {
-    if (open) {
-      document.addEventListener("keydown", handleKeyDown)
-      document.body.style.overflow = "hidden"
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose?.()
     }
+
+    document.addEventListener("keydown", handleKeyDown)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    // 포커스는 DOM이 렌더된 이후에 보장
+    queueMicrotask(() => {
+      buttonRef.current?.focus()
+    })
+
     return () => {
       document.removeEventListener("keydown", handleKeyDown)
-      document.body.style.overflow = ""
+      document.body.style.overflow = prevOverflow
     }
-  }, [open, isTop])
+  }, [open, isTop, onClose])
 
   if (!open) return null
 
-  return ReactDOM.createPortal(
+  const overlay = (
     <Flex
       onClick={() => allowBackdrop && onClose?.()}
       direction="column"
@@ -128,6 +163,9 @@ const Modal = ({
           ref={modalRef}
           width={width}
           onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-label={title ?? "modal"}
           sx={{
             maxHeight: "90vh",
             overflow: "hidden",
@@ -186,9 +224,10 @@ const Modal = ({
           )}
         </Flex>
       </AnimatedBox>
-    </Flex>,
-    document.body,
+    </Flex>
   )
+
+  return ReactDOM.createPortal(overlay, container ?? document.body)
 }
 
 const AnimatedBox = styled(Box)`

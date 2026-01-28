@@ -1,8 +1,9 @@
-import { ReactNode, useCallback, useState } from "react"
-import { BaseMixinProps } from "../../tokens/baseMixin"
+import type { ReactNode } from "react"
+import { useCallback, useId, useState } from "react"
+import { useTheme } from "styled-components"
+import type { BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import { fadeInUp } from "../../tokens/keyframes"
-import { theme } from "../../tokens/theme"
 import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
 import { Typography } from "../Typography/Typography"
@@ -31,7 +32,11 @@ export type AccordionProps = BaseMixinProps & {
 * * 펼침 영역에 fadeInUp 애니메이션 적용
 * * BaseMixin 기반 외부 스타일 확장 지원
 * * theme 기반 색상, border, radius 시스템 활용
-
+*
+* * 접근성
+*   * summary를 button으로 렌더링(키보드 Enter/Space 지원)
+*   * aria-expanded / aria-controls / aria-disabled 적용
+*
 * @module Accordion
 * 콘텐츠 그룹을 접고 펼쳐 정보를 단계적으로 노출하기 위한 컴포넌트입니다.
 * - expanded prop 제공 시 controlled 방식으로 동작
@@ -54,13 +59,16 @@ const Accordion = ({
   children,
   ...others
 }: AccordionProps) => {
+  const theme = useTheme()
+  const detailsId = useId()
+
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded)
 
   // * expanded prop 존재 여부로 controlled / uncontrolled 모드 판별
   const isControlled = expanded !== undefined
 
   // * 현재 아코디언 열림 상태 계산
-  const isExpanded = isControlled ? expanded : internalExpanded
+  const isExpanded = isControlled ? !!expanded : internalExpanded
 
   // * 클릭 시 아코디언 열림 상태를 토글하고 상태 변경을 외부로 알림
   const handleToggle = useCallback(() => {
@@ -72,8 +80,15 @@ const Accordion = ({
   }, [disabled, isExpanded, isControlled, onChange])
 
   return (
-    <Root disabled={disabled} {...others}>
-      <Summary onClick={handleToggle} disabled={disabled}>
+    <Root $disabled={disabled} {...others}>
+      <SummaryButton
+        type="button"
+        onClick={handleToggle}
+        disabled={disabled}
+        aria-disabled={disabled || undefined}
+        aria-expanded={isExpanded}
+        aria-controls={detailsId}
+      >
         <Flex align="center" justify="space-between" width="100%">
           {typeof summary === "string" ? (
             <Typography
@@ -84,6 +99,7 @@ const Accordion = ({
           ) : (
             summary
           )}
+
           <Icon
             name="ArrowDown"
             size={16}
@@ -94,34 +110,53 @@ const Accordion = ({
             }}
           />
         </Flex>
-      </Summary>
-      {isExpanded && <Details>{children}</Details>}
+      </SummaryButton>
+
+      {isExpanded && (
+        <Details id={detailsId} role="region" aria-hidden={!isExpanded}>
+          {children}
+        </Details>
+      )}
     </Root>
   )
 }
 
-const Root = styled(Box)<{ disabled?: boolean }>`
-  border: 1px solid ${theme.colors.border.default};
-  border-radius: ${theme.borderRadius[4]};
-  background-color: ${({ disabled }) =>
-    disabled ? theme.colors.grayscale[100] : theme.colors.grayscale.white};
-  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
+const Root = styled(Box)<{ $disabled?: boolean }>`
+  border: 1px solid ${({ theme }) => theme.colors.border.default};
+  border-radius: ${({ theme }) => theme.borderRadius[4]};
+  background-color: ${({ theme, $disabled }) =>
+    $disabled ? theme.colors.grayscale[100] : theme.colors.grayscale.white};
+  opacity: ${({ $disabled }) => ($disabled ? 0.6 : 1)};
 `
 
-const Summary = styled.div<{ disabled?: boolean }>`
+const SummaryButton = styled.button`
+  width: 100%;
   padding: 12px 16px;
-  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+  cursor: pointer;
   user-select: none;
+  background: transparent;
+  border: 0;
+  text-align: left;
 
-  &:hover {
-    background-color: ${({ disabled }) => (disabled ? "transparent" : theme.colors.grayscale[50])};
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: ${({ theme }) => theme.colors.grayscale[50]};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.primary[200]};
+    outline-offset: 2px;
+    border-radius: ${({ theme }) => theme.borderRadius[4]};
   }
 `
 
 const Details = styled.div`
   padding: 12px 16px;
   animation: ${fadeInUp} 0.2s ease;
-  border-top: 1px solid ${theme.colors.border.default};
+  border-top: 1px solid ${({ theme }) => theme.colors.border.default};
 `
 
 export default Accordion

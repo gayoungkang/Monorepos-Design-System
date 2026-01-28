@@ -1,4 +1,4 @@
-import { HTMLAttributes, ReactNode, useMemo } from "react"
+import { HTMLAttributes, ReactNode, useMemo, useCallback } from "react"
 import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import { theme } from "../../tokens/theme"
@@ -8,7 +8,6 @@ import Divider from "../Divider/Divider"
 import Icon from "../Icon/Icon"
 import { IconName } from "../Icon/icon-loader"
 import Flex from "../Flex/Flex"
-import Box from "../Box/Box"
 
 export type StepperOptionType<Value extends string | number = string> = {
   children?: string | ReactNode | IconName
@@ -22,7 +21,7 @@ export type StepperOptionType<Value extends string | number = string> = {
 }
 
 export type StepperProps<Value extends string | number = string> = BaseMixinProps &
-  Omit<HTMLAttributes<HTMLDivElement>, keyof BaseMixinProps> & {
+  Omit<HTMLAttributes<HTMLDivElement>, keyof BaseMixinProps | "onSelect"> & {
     options: StepperOptionType<Value>[]
     value: Value | null
     orientation?: DirectionType
@@ -30,40 +29,101 @@ export type StepperProps<Value extends string | number = string> = BaseMixinProp
     connector?: ReactNode
     onSelect?: (value: Value, index: number) => void
     TypographyProps?: Partial<TypographyProps>
+
+    circleSize?: number | string
+    iconSize?: number | string
+    completedIconSize?: number | string
+    stepIconSize?: number | string
   }
 
-// * children이 IconName 타입인지 여부를 판별
+// * children이 IconName 타입인지 여부를 판별(프로젝트 정책: string이면 아이콘으로 처리)
 const isIconName = (v: unknown): v is IconName => typeof v === "string"
-
 /**---------------------------------------------------------------------------/
-
-* ! Stepper
-*
-* * 단계(step) 흐름을 시각적으로 표현하는 Stepper 컴포넌트
-* * horizontal / vertical 방향 레이아웃 지원
-* * linear / non-linear 흐름 제어 지원
-* * 현재 값(value)을 기준으로 active / completed / disabled / error 상태 계산
-* * hidden 옵션을 제외한 step만 렌더링
-* * step 클릭 시 onSelect 또는 option.onClick 콜백 호출
-* * 완료(completed) 상태 시 체크 아이콘 렌더링
-* * children 값에 따라 아이콘 / 커스텀 아이콘 / step 번호 자동 판별
-* * 커넥터(connector) 커스터마이징 또는 기본 Divider 렌더링 지원
-* * BaseMixin 기반 외부 스타일 확장 지원
-* * theme 기반 색상, z-index, 타이포그래피 시스템 활용
-*
-* @module Stepper
-* 다단계 진행 상태를 표현하기 위한 Stepper 컴포넌트입니다.
-* - `options`를 기반으로 step 목록을 구성하며 hidden 옵션은 렌더링에서 제외
-* - `value`를 기준으로 현재 활성 step 및 완료 상태를 자동 계산
-* - `linear`가 true인 경우 이전 step까지만 선택 가능
-* - `non-linear` 흐름에서는 자유로운 step 선택 가능
-* - `connector`를 통해 단계 간 연결 UI를 커스터마이징 가능
-* - label은 문자열 또는 ReactNode 모두 지원
-*
-* @usage
-* <Stepper options={options} value={value} onSelect={setValue} />
-* <Stepper options={options} value={value} orientation="vertical" linear={false} />
-
+ *
+ * ! Stepper
+ *
+ * * 단계(steps) 흐름을 시각화하고 선택(선택 가능 시)을 제공하는 Stepper 컴포넌트입니다.
+ * * `options` 목록을 기반으로 step을 렌더링하며, `hidden` 옵션은 렌더 대상에서 제외됩니다.
+ * * `value`로 현재 활성(step)을 결정하고, `linear` 규칙에 따라 미래 step(아직 도달하지 않은 step) 선택을 제한합니다.
+ * * 각 step은 active/completed/disabled/error 상태를 내부 계산 규칙으로 결정하며, 아이콘/번호/커스텀 노드 표시를 지원합니다.
+ * * 커넥터는 `connector` prop이 우선이며, 없으면 Divider를 orientation 방향에 맞게 사용합니다.
+ * * 아이콘 크기 관련 값은 circleSize를 기준으로 기본값을 계산하고, 외부에서 전달된 값이 있으면 이를 우선합니다(상위 계산 규칙 준수).
+ *
+ * * 동작 규칙
+ *   * 표시 대상:
+ *     * `visibleOptions = options.filter(o => !o.hidden)`로 hidden step은 제외합니다.
+ *   * 활성 step 계산:
+ *     * `activeIndex`는 `value`가 null이면 -1, 아니면 visibleOptions에서 value 매칭 index입니다.
+ *   * 상태 계산(getStepState):
+ *     * `active = idx === activeIndex`
+ *     * `completed`:
+ *       * option.completed가 boolean이면 그 값을 우선 사용
+ *       * 아니면 `activeIndex >= 0`일 때 `idx < activeIndex`면 completed로 처리
+ *     * `disabled = !!option.disabled`, `error = !!option.error`
+ *   * 선택 처리(handleSelect):
+ *     * onSelect/option.onClick 둘 다 없으면 선택 로직을 수행하지 않습니다.
+ *     * disabled면 선택을 차단합니다.
+ *     * `linear === true`이고 `activeIndex >= 0`일 때, `idx > activeIndex`(미래 step)는 선택을 차단합니다.
+ *     * 허용되는 경우 `option.onClick()` 후 `onSelect(option.value, idx)`를 호출합니다.
+ *   * 클릭 가능 여부(clickable):
+ *     * `(onSelect || option.onClick)`이 존재하고,
+ *       `!linear || idx <= activeIndex || activeIndex < 0` 조건을 만족하면 clickable로 처리합니다.
+ *     * clickable && !disabled일 때만 onClick을 부여하고 cursor/user-select을 활성화합니다.
+ *   * 아이콘 콘텐츠(renderIconContent):
+ *     * completed면 CheckLine 아이콘을 표시합니다.
+ *     * children이 없으면 step 번호(idx + 1)를 표시합니다.
+ *     * children이 string이면 IconName으로 간주하여 아이콘으로 렌더링합니다.
+ *     * 그 외 ReactNode는 그대로 렌더링합니다.
+ *
+ * * 레이아웃/스타일 관련 규칙
+ *   * orientation:
+ *     * 루트는 orientation에 따라 Flex direction을 column/row로 전환합니다.
+ *     * StepRoot는 horizontal이면 column(아이콘+라벨), vertical이면 row(커넥터+아이콘) 형태로 구성됩니다.
+ *   * 커넥터(ConnectorWrap):
+ *     * idx !== 0일 때만 이전 step과의 연결을 렌더링합니다.
+ *     * horizontal: 가운데 라인을 좌우로 확장(left/right calc)하여 연결선을 표현합니다.
+ *     * vertical: 좌측 고정 x 위치(left: 28px)에서 위(28px)부터 아래까지 세로 라인을 표현합니다.
+ *     * pointer-events: none으로 커넥터가 클릭을 가로채지 않도록 합니다.
+ *   * 아이콘 원형(DefaultIconRoot):
+ *     * circleSize를 width/height로 사용하며, 상태에 따라 border/background/color가 변경됩니다.
+ *       * error: error[500] 우선
+ *       * completed/active: primary[400]
+ *       * 기본: border.default
+ *     * completed일 때는 배경 primary[400] + 텍스트(아이콘) 색상을 background.default로 반전합니다.
+ *   * 라벨:
+ *     * option.label이 string이면 Typography로 렌더링하며 ellipsis 및 maxWidth 등을 적용합니다.
+ *     * option.label이 ReactNode면 그대로 렌더링합니다.
+ *   * disabled 시각 처리:
+ *     * StepRoot에 opacity 0.5를 적용하여 비활성 상태를 표시합니다.
+ *
+ * * 데이터 처리 규칙
+ *   * 입력 props 계약:
+ *     * `options`: 각 step 정의(value, label/children, hidden/disabled/completed/error, onClick)
+ *     * `value`: 현재 활성 step value (null 가능)
+ *     * `orientation`: "horizontal" | "vertical"
+ *     * `linear`: true면 순차 진행만 허용(미래 step 선택 제한)
+ *     * `connector`: 커넥터 커스텀 노드(우선 적용)
+ *     * `onSelect`: step 선택 콜백(value, index)
+ *     * `TypographyProps`: label이 string일 때 Typography에 전달되는 추가 props
+ *     * `circleSize/iconSize/completedIconSize/stepIconSize`: 아이콘/원형 크기(기본은 circleSize 기반 계산)
+ *   * 내부 계산:
+ *     * visibleOptions/activeIndex 기반으로 completed 자동 계산을 수행합니다(명시 completed가 없을 때만).
+ *     * 아이콘 크기 기본값은 circleSize를 수치로 환산한 비율로 산출합니다.
+ *   * 서버/클라이언트 제어:
+ *     * 활성 step은 외부 `value`가 단일 소스이며, 내부에서는 파생 상태(activeIndex/completed 등)만 계산합니다.
+ *
+ * @module Stepper
+ * 단계 흐름 UI를 제공하며, orientation/linear 규칙, 상태(active/completed/disabled/error) 표시 및 선택 이벤트(onSelect)를 지원합니다.
+ *
+ * @usage
+ * <Stepper
+ *   options={[{ value: "a", label: "A" }, { value: "b", label: "B" }]}
+ *   value={"a"}
+ *   orientation="horizontal"
+ *   linear
+ *   onSelect={(v) => setValue(v)}
+ * />
+ *
 /---------------------------------------------------------------------------**/
 
 const Stepper = <Value extends string | number = string>({
@@ -74,6 +134,10 @@ const Stepper = <Value extends string | number = string>({
   connector,
   onSelect,
   TypographyProps: typographyProps,
+  circleSize = 24,
+  iconSize,
+  completedIconSize,
+  stepIconSize,
   ...baseProps
 }: StepperProps<Value>) => {
   // * hidden 옵션을 제외한 표시 대상 step 목록
@@ -85,51 +149,71 @@ const Stepper = <Value extends string | number = string>({
     return visibleOptions.findIndex((o) => o.value === value)
   }, [value, visibleOptions])
 
+  const resolvedSizes = useMemo(() => {
+    const cs = circleSize
+    const toNumber = (v: number | string) => (typeof v === "number" ? v : Number(v))
+    const csNum = typeof cs === "number" ? cs : toNumber(cs)
+
+    const defaultCompletedIcon = Number.isFinite(csNum) ? Math.max(10, Math.round(csNum * 0.5)) : 12
+    const defaultStepIcon = Number.isFinite(csNum) ? Math.max(10, Math.round(csNum * 0.58)) : 14
+
+    return {
+      circleSize: cs,
+      completedIconSize: completedIconSize ?? defaultCompletedIcon,
+      stepIconSize: stepIconSize ?? iconSize ?? defaultStepIcon,
+    }
+  }, [circleSize, completedIconSize, iconSize, stepIconSize])
+
   // * 현재 step 상태를 옵션/activeIndex 기준으로 계산
-  const getStepState = (idx: number, option: StepperOptionType<Value>) => {
-    const active = idx === activeIndex
-    const completed =
-      typeof option.completed === "boolean"
-        ? option.completed
-        : activeIndex >= 0
-          ? idx < activeIndex
-          : false
-    const disabled = !!option.disabled
-    const error = !!option.error
-    return { active, completed, disabled, error }
-  }
+  const getStepState = useCallback(
+    (idx: number, option: StepperOptionType<Value>) => {
+      const active = idx === activeIndex
+      const completed =
+        typeof option.completed === "boolean"
+          ? option.completed
+          : activeIndex >= 0
+            ? idx < activeIndex
+            : false
+      const disabled = !!option.disabled
+      const error = !!option.error
+      return { active, completed, disabled, error }
+    },
+    [activeIndex],
+  )
 
   // * 클릭 이벤트는 linear 여부에 따라 제어
-  const handleSelect = (idx: number, option: StepperOptionType<Value>) => {
-    if (!onSelect && !option.onClick) return
+  const handleSelect = useCallback(
+    (idx: number, option: StepperOptionType<Value>) => {
+      if (!onSelect && !option.onClick) return
 
-    const { disabled } = getStepState(idx, option)
-    if (disabled) return
+      const { disabled } = getStepState(idx, option)
+      if (disabled) return
 
-    if (linear && idx > activeIndex && activeIndex >= 0) return
+      if (linear && idx > activeIndex && activeIndex >= 0) return
 
-    option.onClick?.()
-    onSelect?.(option.value, idx)
-  }
+      option.onClick?.()
+      onSelect?.(option.value, idx)
+    },
+    [activeIndex, getStepState, linear, onSelect],
+  )
 
-  // * 아이콘 영역: completed면 체크, children이 IconName이면 아이콘, 없으면 빈 박스, 그 외는 step 번호
-  const renderIconContent = (
-    idx: number,
-    children: StepperOptionType<Value>["children"],
-    completed?: boolean,
-  ) => {
-    if (completed) return <Icon name="CheckLine" size={12} />
-    if (children === null || children === undefined) return <Box />
-    if (typeof children === "string" && isIconName(children))
-      return <Icon name={children} size={14} />
-    return idx + 1
-  }
+  // * 아이콘 영역: completed면 체크, children이 string이면 아이콘, ReactNode면 그대로, 없으면 step 번호
+  const renderIconContent = useCallback(
+    (idx: number, children: StepperOptionType<Value>["children"], completed?: boolean) => {
+      if (completed) return <Icon name="CheckLine" size={resolvedSizes.completedIconSize} />
+      if (children === null || children === undefined) return idx + 1
+      if (typeof children === "string" && isIconName(children))
+        return <Icon name={children} size={resolvedSizes.stepIconSize} />
+      return children
+    },
+    [resolvedSizes.completedIconSize, resolvedSizes.stepIconSize],
+  )
 
   // * 커넥터 렌더링 (connector 우선, 없으면 Divider)
-  const renderConnector = () => {
+  const renderConnector = useCallback(() => {
     if (connector) return connector
     return <Divider direction={orientation} sx={{ zIndex: theme.zIndex.base }} />
-  }
+  }, [connector, orientation])
 
   return (
     <Flex
@@ -163,7 +247,12 @@ const Stepper = <Value extends string | number = string>({
 
             <StepLabelRoot $orientation={orientation} $linear={linear}>
               <Flex direction="column" align={"center"} gap={6}>
-                <DefaultIconRoot $active={active} $completed={completed} $error={error}>
+                <DefaultIconRoot
+                  $size={resolvedSizes.circleSize}
+                  $active={active}
+                  $completed={completed}
+                  $error={error}
+                >
                   {renderIconContent(idx, option.children, completed)}
                 </DefaultIconRoot>
 
@@ -278,12 +367,13 @@ const StepLabelRoot = styled.div<
 `
 
 const DefaultIconRoot = styled.div<{
+  $size: number | string
   $active: boolean
   $completed: boolean
   $error: boolean
 }>`
-  width: 24px;
-  height: 24px;
+  width: ${({ $size }) => (typeof $size === "number" ? `${$size}px` : $size)};
+  height: ${({ $size }) => (typeof $size === "number" ? `${$size}px` : $size)};
   border-radius: 999px;
   display: inline-flex;
   align-items: center;

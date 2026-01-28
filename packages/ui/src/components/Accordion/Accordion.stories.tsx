@@ -1,144 +1,141 @@
 import type { Meta, StoryObj } from "@storybook/react"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
-import Accordion, { AccordionProps } from "./Accordion"
+import { useMemo, useState } from "react"
+import Accordion from "./Accordion"
+import type { AccordionProps } from "./Accordion"
 import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
+import Button from "../Button/Button"
 import { Typography } from "../Typography/Typography"
-import { useState } from "react"
 
-/* -------------------------------------------------------------------------- */
-/*                                    Meta                                    */
-/* -------------------------------------------------------------------------- */
-
-const meta: Meta<AccordionProps> = {
-  title: "components/Accordion",
+const meta: Meta<typeof Accordion> = {
+  title: "Components/Accordion",
   component: Accordion,
-
-  args: {
-    summary: "Accordion Title",
-    defaultExpanded: false,
-    disabled: false,
-  },
-
+  parameters: { layout: "fullscreen" },
   argTypes: {
-    summary: { control: "text" },
+    expanded: { control: "boolean" },
     defaultExpanded: { control: "boolean" },
     disabled: { control: "boolean" },
-    expanded: { control: false },
-    onChange: { control: false },
+    onChange: { action: "onChange" },
+    summary: { control: false },
+    children: { control: false },
   },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Box p="24px" width="400px">
-          <Story />
-        </Box>
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
+  args: {
+    disabled: false,
+    defaultExpanded: false,
+  },
 }
 
 export default meta
+type Story = StoryObj<typeof Accordion>
 
-type Story = StoryObj<AccordionProps>
-
-/* -------------------------------------------------------------------------- */
-/*                                  Default                                   */
-/* -------------------------------------------------------------------------- */
-
-export const Default: Story = {
-  render: (args) => (
-    <Accordion {...args}>
-      <Typography text="기본 아코디언 내용입니다." />
-    </Accordion>
-  ),
-}
-
-/* -------------------------------------------------------------------------- */
-/*                               Uncontrolled                                  */
-/* -------------------------------------------------------------------------- */
+const Content = () => (
+  <Box
+    sx={{
+      backgroundColor: "#ffffff",
+      borderRadius: "12px",
+      border: "1px solid #e5e7eb",
+      padding: "12px",
+    }}
+  >
+    <Typography
+      variant="b2Regular"
+      text="Details 영역입니다. 텍스트/컴포넌트/리스트 등 어떤 콘텐츠도 들어갈 수 있습니다."
+    />
+  </Box>
+)
 
 export const Uncontrolled: Story = {
-  render: () => (
-    <Accordion summary="Uncontrolled Accordion" defaultExpanded>
-      <Typography text="defaultExpanded=true 로 동작합니다." />
-    </Accordion>
-  ),
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                Controlled                                   */
-/* -------------------------------------------------------------------------- */
-
-export const Controlled: Story = {
-  render: () => {
-    const [open, setOpen] = useState(false)
-
+  render: (args) => {
     return (
-      <Accordion
-        summary={`Controlled Accordion (expanded = ${open})`}
-        expanded={open}
-        onChange={setOpen}
-      >
-        <Typography text="Story 내부에서 expanded 상태를 제어합니다." />
-      </Accordion>
+      <Box p="20px" width="720px">
+        <Typography variant="h3" text="Uncontrolled (defaultExpanded)" mb="12px" />
+        <Accordion {...(args as AccordionProps)} summary="Uncontrolled Accordion">
+          <Content />
+        </Accordion>
+      </Box>
     )
   },
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                  Disabled                                   */
-/* -------------------------------------------------------------------------- */
+export const Controlled: Story = {
+  render: () => {
+    const [expanded, setExpanded] = useState(false)
+
+    return (
+      <Box p="20px" width="720px">
+        <Typography variant="h3" text="Controlled (expanded/onChange)" mb="12px" />
+
+        <Flex gap="10px" mb="12px" align="center">
+          <Button
+            text={expanded ? "Collapse" : "Expand"}
+            variant="outlined"
+            color="normal"
+            onClick={() => setExpanded((v) => !v)}
+          />
+          <Typography variant="b3Regular" text={`expanded = ${String(expanded)}`} color="#666666" />
+        </Flex>
+
+        <Accordion
+          expanded={expanded}
+          onChange={(next) => setExpanded(next)}
+          summary={<Typography variant="b1Bold" text="Controlled Accordion Summary (Custom)" />}
+        >
+          <Content />
+        </Accordion>
+      </Box>
+    )
+  },
+}
 
 export const Disabled: Story = {
-  render: () => (
-    <Accordion summary="Disabled Accordion" disabled>
-      <Typography text="비활성 상태에서는 토글되지 않습니다." />
-    </Accordion>
-  ),
+  render: () => {
+    return (
+      <Box p="20px" width="720px">
+        <Typography variant="h3" text="Disabled" mb="12px" />
+        <Accordion disabled summary="Disabled Accordion">
+          <Content />
+        </Accordion>
+      </Box>
+    )
+  },
 }
 
-/* -------------------------------------------------------------------------- */
-/*                             Multiple Accordions                             */
-/* -------------------------------------------------------------------------- */
+export const MultipleAndSingleOpen: Story = {
+  render: () => {
+    const items = useMemo(
+      () => [
+        { id: "a", title: "Section A" },
+        { id: "b", title: "Section B" },
+        { id: "c", title: "Section C" },
+      ],
+      [],
+    )
 
-export const Multiple: Story = {
-  render: () => (
-    <Flex direction="column" gap="12px">
-      <Accordion summary="첫 번째 아코디언">
-        <Typography text="첫 번째 내용입니다." />
-      </Accordion>
+    const [openId, setOpenId] = useState<string | null>("a")
 
-      <Accordion summary="두 번째 아코디언" defaultExpanded>
-        <Typography text="두 번째 내용입니다." />
-      </Accordion>
+    return (
+      <Box p="20px" width="720px">
+        <Typography variant="h3" text="Multiple (single-open behavior)" mb="12px" />
+        <Typography
+          variant="b3Regular"
+          text={`openId = ${openId ?? "null"}`}
+          color="#666666"
+          mb="12px"
+        />
 
-      <Accordion summary="세 번째 아코디언">
-        <Typography text="세 번째 내용입니다." />
-      </Accordion>
-    </Flex>
-  ),
-}
-
-/* -------------------------------------------------------------------------- */
-/*                           Custom Summary Component                          */
-/* -------------------------------------------------------------------------- */
-
-export const CustomSummary: Story = {
-  render: () => (
-    <Accordion
-      summary={
-        <Flex align="center" gap="8px">
-          <Typography text="🔧 커스텀 Summary" variant="b1Medium" />
-          <Typography text="(아이콘, 텍스트 조합 가능)" variant="b3Regular" />
+        <Flex direction="column" gap="10px">
+          {items.map((it) => (
+            <Accordion
+              key={it.id}
+              expanded={openId === it.id}
+              onChange={(next) => setOpenId(next ? it.id : null)}
+              summary={it.title}
+            >
+              <Content />
+            </Accordion>
+          ))}
         </Flex>
-      }
-    >
-      <Typography text="summary 에 ReactNode 전달하여 원하는 UI 구성 가능" />
-    </Accordion>
-  ),
+      </Box>
+    )
+  },
 }

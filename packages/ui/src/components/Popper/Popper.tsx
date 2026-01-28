@@ -18,30 +18,60 @@ export type PopperProps = {
   width?: "auto" | "anchor" | "max-content"
   onClose?: () => void
 }
-
-/**
+/**---------------------------------------------------------------------------/
+ *
+ * ! Popper
+ *
+ * * anchorRef 기준으로 children을 document.body에 portal 렌더링하는 위치 고정 레이어 컴포넌트
+ * * open=true일 때만 마운트되며, ResizeObserver + scroll/resize 이벤트로 위치를 동기화
+ * * placement/offsetX/offsetY/width 옵션으로 기준 위치/오프셋/너비 정책을 제어
+ * * RAF 스케줄링으로 1프레임 1회만 위치 계산을 수행해 연속 이벤트(scroll/resize/resizeObserver)를 합침
+ * * ESC 및 바깥 클릭(pointerdown capture)으로 닫기(onClose) 트리거 지원
+ * * showArrow 옵션으로 placement에 따라 화살표(Arrow) 위치를 분기 렌더링
+ *
+ * * 동작 규칙
+ *   * 주요 분기 조건 및 처리 우선순위
+ *     * open=false면 null 반환(언마운트)
+ *     * anchorRef.current / containerRef.current가 없으면 위치 계산/옵저빙을 수행하지 않음
+ *     * fixed 포지셔닝이 아닌 absolute + scrollX/scrollY 보정으로 문서 기준 좌표를 유지
+ *     * width 정책: "anchor"면 anchorRect.width, "max-content"면 "max-content", 그 외 "auto"
+ *   * 이벤트 처리 방식
+ *     * scroll(캡처, true) / resize / ResizeObserver(popover/anchor) 발생 시 scheduleUpdate로 RAF 1회 업데이트
+ *     * Escape 키 입력 시 onClose 호출
+ *     * document pointerdown(capture, true)에서 popper/anchor 외부 클릭 시 onClose 호출
+ *   * disabled 상태에서 차단되는 동작
+ *     * 별도 disabled 없음(open 제어로만 동작)
+ *
+ * * 레이아웃/스타일 관련 규칙
+ *   * z-index: POPOVER_ZINDEX 사용
+ *   * StyledPopper: max-height(height), overflow-y:auto, box-shadow/round/padding, popover keyframes 애니메이션 적용
+ *   * Arrow: placement별로 top/bottom/left/right에 절대 배치, 45도 회전으로 삼각형 표현
+ *
+ * * 데이터 처리 규칙
+ *   * 입력 props 계약(필수/선택)
+ *     * anchorRef: 필수(기준 엘리먼트 ref)
+ *     * open: 필수(마운트/언마운트 제어)
+ *     * placement/offsetX/offsetY/width/height/showArrow/onClose: 옵션
+ *   * 내부 계산 로직 요약
+ *     * anchorRect/popperRect 기반 base 좌표를 placement별로 계산 후 offsetX/Y 및 window.scrollX/Y를 더해 style 반영
+ *     * scheduleUpdate로 RAF 단위로 updatePosition 호출을 합침
+ *   * 서버 제어/클라이언트 제어 여부
+ *     * 클라이언트 전용(DOM 측정/portal/observer 사용)
+ *
  * @module Popper
- * 기준 요소(anchorRef) 위치를 기반으로 지정된 방향(placement)과 간격(offset)으로 팝업(Popper)을 띄우는 컴포넌트입니다.
- * 다양한 위치 설정, 화살표 표시, 반응형 너비 조정을 지원합니다.
+ * anchorRef 기준으로 위치를 계산해 portal로 띄우는 팝오버/드롭다운 베이스 컴포넌트
  *
- * - 위치는 top, bottom, left, right 및 해당 방향의 start/end 조합을 제공합니다.
- * - anchorRef 기준 위치에서 상대적으로 Popper 위치를 계산합니다.
- * - 리사이즈 시 anchor 너비 반영하여 일관된 UI를 유지합니다.
- * - 옵션으로 화살표(Arrow) 표시가 가능합니다.
- * - open 여부에 따라 조건부 렌더링합니다.
+ * @usage
+ * <Popper
+ *   open={open}
+ *   anchorRef={anchorRef}
+ *   placement="bottom-start"
+ *   onClose={() => setOpen(false)}
+ * >
+ *   {children}
+ * </Popper>
  *
- * @props
- * - anchorRef: Popper의 기준 위치가 되는 HTMLElement의 ref
- * - children: Popper 내부에 표시될 콘텐츠
- * - placement: Popper가 열릴 위치 (기본값: "bottom")
- * - offsetX: X축 추가 오프셋(px, 기본값: 0)
- * - offsetY: Y축 추가 오프셋(px, 기본값: 8)
- * - open: Popper 표시 여부
- * - showArrow: 화살표 표시 여부 (기본값: false)
- * - height: Popper 최대 높이 (기본값: "300px")
- * - width: Popper 너비 지정 ("auto" | "anchor" | "max-content", 기본값: "auto")
- * - onClose: 외부 클릭 / ESC 등으로 닫기 트리거가 필요할 때 사용하는 콜백 (옵션)
- */
+/---------------------------------------------------------------------------**/
 
 const Popper = forwardRef<HTMLDivElement, PopperProps>(
   (
@@ -61,111 +91,131 @@ const Popper = forwardRef<HTMLDivElement, PopperProps>(
   ) => {
     const [style, setStyle] = useState<React.CSSProperties>({})
     const containerRef = useRef<HTMLDivElement | null>(null)
+    const rafIdRef = useRef<number | null>(null)
 
-    useLayoutEffect(() => {
+    // * ref 병합 (containerRef + forwardRef)
+    const setMergedRef = (node: HTMLDivElement | null) => {
+      containerRef.current = node
+      if (typeof ref === "function") ref(node)
+      else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
+    }
+
+    // * 1프레임 1회로 위치 업데이트를 합치는 스케줄러
+    const scheduleUpdate = () => {
+      if (rafIdRef.current !== null) return
+      rafIdRef.current = window.requestAnimationFrame(() => {
+        rafIdRef.current = null
+        updatePosition()
+      })
+    }
+
+    // * 실제 위치 계산/반영
+    const updatePosition = () => {
       const anchor = anchorRef.current
       const popper = containerRef.current
       if (!anchor || !popper || !open) return
 
-      const updatePosition = () => {
-        const anchorRect = anchor.getBoundingClientRect()
-        const popperRect = popper.getBoundingClientRect()
+      const anchorRect = anchor.getBoundingClientRect()
+      const popperRect = popper.getBoundingClientRect()
 
-        const getPosition = () => {
-          switch (placement) {
-            case "top":
-              return {
-                left: anchorRect.left + anchorRect.width / 2 - popperRect.width / 2 + offsetX,
-                top: anchorRect.top - popperRect.height - offsetY,
-              }
-            case "top-start":
-              return {
-                left: anchorRect.left + offsetX,
-                top: anchorRect.top - popperRect.height - offsetY,
-              }
-            case "top-end":
-              return {
-                left: anchorRect.right - popperRect.width + offsetX,
-                top: anchorRect.top - popperRect.height - offsetY,
-              }
-            case "bottom":
-              return {
-                left: anchorRect.left + anchorRect.width / 2 - popperRect.width / 2 + offsetX,
-                top: anchorRect.bottom + offsetY,
-              }
-            case "bottom-start":
-              return { left: anchorRect.left + offsetX, top: anchorRect.bottom + offsetY }
-            case "bottom-end":
-              return {
-                left: anchorRect.right - popperRect.width + offsetX,
-                top: anchorRect.bottom + offsetY,
-              }
-            case "left":
-              return {
-                left: anchorRect.left - popperRect.width - offsetX,
-                top: anchorRect.top + anchorRect.height / 2 - popperRect.height / 2 + offsetY,
-              }
-            case "left-start":
-              return {
-                left: anchorRect.left - popperRect.width - offsetX,
-                top: anchorRect.top + offsetY,
-              }
-            case "left-end":
-              return {
-                left: anchorRect.left - popperRect.width - offsetX,
-                top: anchorRect.bottom - popperRect.height + offsetY,
-              }
-            case "right":
-              return {
-                left: anchorRect.right + offsetX,
-                top: anchorRect.top + anchorRect.height / 2 - popperRect.height / 2 + offsetY,
-              }
-            case "right-start":
-              return { left: anchorRect.right + offsetX, top: anchorRect.top + offsetY }
-            case "right-end":
-              return {
-                left: anchorRect.right + offsetX,
-                top: anchorRect.bottom - popperRect.height + offsetY,
-              }
-            default:
-              return {
-                left: anchorRect.left + anchorRect.width / 2 - popperRect.width / 2 + offsetX,
-                top: anchorRect.bottom + offsetY,
-              }
-          }
+      const base = (() => {
+        switch (placement) {
+          case "top":
+            return {
+              left: anchorRect.left + anchorRect.width / 2 - popperRect.width / 2,
+              top: anchorRect.top - popperRect.height,
+            }
+          case "top-start":
+            return { left: anchorRect.left, top: anchorRect.top - popperRect.height }
+          case "top-end":
+            return {
+              left: anchorRect.right - popperRect.width,
+              top: anchorRect.top - popperRect.height,
+            }
+
+          case "bottom":
+            return {
+              left: anchorRect.left + anchorRect.width / 2 - popperRect.width / 2,
+              top: anchorRect.bottom,
+            }
+          case "bottom-start":
+            return { left: anchorRect.left, top: anchorRect.bottom }
+          case "bottom-end":
+            return { left: anchorRect.right - popperRect.width, top: anchorRect.bottom }
+
+          case "left":
+            return {
+              left: anchorRect.left - popperRect.width,
+              top: anchorRect.top + anchorRect.height / 2 - popperRect.height / 2,
+            }
+          case "left-start":
+            return { left: anchorRect.left - popperRect.width, top: anchorRect.top }
+          case "left-end":
+            return {
+              left: anchorRect.left - popperRect.width,
+              top: anchorRect.bottom - popperRect.height,
+            }
+
+          case "right":
+            return {
+              left: anchorRect.right,
+              top: anchorRect.top + anchorRect.height / 2 - popperRect.height / 2,
+            }
+          case "right-start":
+            return { left: anchorRect.right, top: anchorRect.top }
+          case "right-end":
+            return { left: anchorRect.right, top: anchorRect.bottom - popperRect.height }
+
+          default:
+            return {
+              left: anchorRect.left + anchorRect.width / 2 - popperRect.width / 2,
+              top: anchorRect.bottom,
+            }
         }
+      })()
 
-        const position = getPosition()
-        const calculatedWidth =
-          width === "anchor" ? anchorRect.width : width === "max-content" ? "max-content" : "auto"
+      const calculatedWidth: React.CSSProperties["width"] =
+        width === "anchor" ? anchorRect.width : width === "max-content" ? "max-content" : "auto"
 
-        setStyle({
-          position: "absolute",
-          top: position.top + window.scrollY,
-          left: position.left + window.scrollX,
-          zIndex: POPOVER_ZINDEX,
-          width: calculatedWidth,
-        })
-      }
+      setStyle({
+        position: "absolute",
+        top: base.top + offsetY + window.scrollY,
+        left: base.left + offsetX + window.scrollX,
+        zIndex: POPOVER_ZINDEX,
+        width: calculatedWidth,
+      })
+    }
+
+    useLayoutEffect(() => {
+      if (!open) return
+
+      const anchor = anchorRef.current
+      const popper = containerRef.current
+      if (!anchor || !popper) return
 
       updatePosition()
 
-      const roPopper = new ResizeObserver(updatePosition)
+      const roPopper = new ResizeObserver(scheduleUpdate)
       roPopper.observe(popper)
 
-      const roAnchor = new ResizeObserver(updatePosition)
+      const roAnchor = new ResizeObserver(scheduleUpdate)
       roAnchor.observe(anchor)
 
-      window.addEventListener("scroll", updatePosition, true)
-      window.addEventListener("resize", updatePosition)
+      window.addEventListener("scroll", scheduleUpdate, true)
+      window.addEventListener("resize", scheduleUpdate)
 
       return () => {
         roPopper.disconnect()
         roAnchor.disconnect()
-        window.removeEventListener("scroll", updatePosition, true)
-        window.removeEventListener("resize", updatePosition)
+        window.removeEventListener("scroll", scheduleUpdate, true)
+        window.removeEventListener("resize", scheduleUpdate)
+
+        if (rafIdRef.current !== null) {
+          cancelAnimationFrame(rafIdRef.current)
+          rafIdRef.current = null
+        }
       }
-    }, [anchorRef, placement, offsetX, offsetY, open, width])
+    }, [open, placement, offsetX, offsetY, width])
 
     useLayoutEffect(() => {
       if (!open) return
@@ -200,16 +250,7 @@ const Popper = forwardRef<HTMLDivElement, PopperProps>(
     if (!open) return null
 
     return createPortal(
-      <StyledPopper
-        ref={(node) => {
-          containerRef.current = node
-          if (typeof ref === "function") ref(node)
-          else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
-        }}
-        placement={placement}
-        height={height}
-        style={style}
-      >
+      <StyledPopper ref={setMergedRef} placement={placement} height={height} style={style}>
         {showArrow && <Arrow placement={placement} />}
         {children}
       </StyledPopper>,
@@ -312,4 +353,5 @@ const Arrow = styled.div<{ placement: DirectionalPlacement }>`
   }}
 `
 
+Popper.displayName = "Popper"
 export default Popper

@@ -1,259 +1,179 @@
-import { useState } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
+import { useMemo, useState } from "react"
+import Tabs, { TabProps, TabOptionsType } from "./Tabs"
 import Flex from "../Flex/Flex"
-import { TabProps, Tabs } from "./Tabs"
 import Box from "../Box/Box"
+import { Typography } from "../Typography/Typography"
+import Button from "../Button/Button"
 
-const meta: Meta<TabProps> = {
-  title: "components/Tabs",
+const meta: Meta<typeof Tabs> = {
+  title: "Components/Tabs",
   component: Tabs,
-  args: {
-    size: "M",
-    value: "tab1",
-    color: "primary",
-    options: [
-      { label: "탭 1", value: "tab1" },
-      { label: "탭 2", value: "tab2" },
-      { label: "탭 3", value: "tab3" },
-      { label: "탭 4", value: "tab4" },
-      { label: "탭 5", value: "tab5" },
-      { label: "탭 6", value: "tab6" },
-    ],
-    scrollbarVisible: false,
-    scrollButtonsVisible: false,
+  parameters: {
+    layout: "centered",
   },
   argTypes: {
-    size: {
-      control: "radio",
-      options: ["S", "M", "L"],
-      description: "탭 높이/폰트 크기 사이즈",
-    },
-    value: {
-      control: false,
-      description: "현재 선택된 탭 value",
-    },
-    color: {
-      control: "radio",
-      options: ["primary", "secondary", "normal"],
-      description: "활성 탭/인디케이터 색상",
-    },
-    options: {
-      control: "object",
-      description: "탭 목록 설정",
-    },
-    scrollbarVisible: {
-      control: "boolean",
-      description: "스크롤바 표시 여부",
-    },
-    scrollButtonsVisible: {
-      control: "boolean",
-      description: "좌우 스크롤 버튼 표시 여부",
-    },
-    onSelect: {
-      control: false,
-      description: "탭 선택 콜백",
-    },
-
-    // BaseMixin 공통 (일부만 노출)
-    width: { control: "text" },
-    m: { control: "text" },
-    mt: { control: "text" },
-    mr: { control: "text" },
-    mb: { control: "text" },
-    ml: { control: "text" },
-    mx: { control: "text" },
-    my: { control: "text" },
-    p: { control: "text" },
-    pt: { control: "text" },
-    pr: { control: "text" },
-    pb: { control: "text" },
-    pl: { control: "text" },
-    px: { control: "text" },
-    py: { control: "text" },
-    sx: { control: false },
+    options: { control: false },
+    value: { control: false },
+    size: { control: { type: "radio" }, options: ["S", "M", "L"] },
+    color: { control: { type: "text" } },
+    onSelect: { control: false },
+    scrollbarVisible: { control: { type: "boolean" } },
+    scrollButtonsVisible: { control: { type: "boolean" } },
   },
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Box style={{ maxWidth: 720 }}>
-          <Story />
-        </Box>
-      </ThemeProvider>
-    ),
-  ],
-  tags: ["autodocs"],
+  args: {
+    size: "M",
+    color: "primary",
+    scrollbarVisible: true,
+    scrollButtonsVisible: false,
+  },
 }
 
 export default meta
+type Story = StoryObj<typeof Tabs>
 
-type Story = StoryObj<TabProps>
+const buildOptions = (count: number, prefix = "tab"): TabOptionsType[] =>
+  Array.from({ length: count }).map((_, i) => ({
+    label: `${prefix.toUpperCase()} ${i + 1}`,
+    value: `${prefix}-${i + 1}`,
+  }))
 
-// * 기본 동작 + Controls 연동
-export const Default: Story = {
-  render: (args) => {
-    const [current, setCurrent] = useState<string | null>(
-      args.value ?? args.options[0]?.value ?? null,
-    )
+const Controlled = (args: TabProps & { initialCount?: number }) => {
+  const count = args.initialCount ?? 6
+  const [value, setValue] = useState<string | null>("tab-1")
 
-    return (
+  const [withHidden, setWithHidden] = useState(false)
+  const [withDisabled, setWithDisabled] = useState(false)
+
+  const options = useMemo(() => {
+    const base = buildOptions(count, "tab")
+    return base.map((o, idx) => ({
+      ...o,
+      hidden: withHidden ? idx === 2 : false,
+      disabled: withDisabled ? idx === 4 : false,
+      label: idx >= 6 ? `Very Long Label Tab ${idx + 1} - Lorem ipsum` : o.label,
+    }))
+  }, [count, withHidden, withDisabled])
+
+  useMemo(() => {
+    const exists = options.some((o) => o.value === value && !o.hidden)
+    if (!exists) setValue(options.find((o) => !o.hidden)?.value ?? null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options])
+
+  return (
+    <Flex direction="column" gap="12px" width="760px">
+      <Flex justify="space-between" align="center">
+        <Typography text="Tabs Playground" variant="h3" />
+        <Flex gap="8px">
+          <Button
+            variant="outlined"
+            text={withHidden ? "Hidden: ON" : "Hidden: OFF"}
+            onClick={() => setWithHidden((p) => !p)}
+          />
+          <Button
+            variant="outlined"
+            text={withDisabled ? "Disabled: ON" : "Disabled: OFF"}
+            onClick={() => setWithDisabled((p) => !p)}
+          />
+          <Button text="Select 1" onClick={() => setValue("tab-1")} />
+          <Button text="Select last" onClick={() => setValue(`tab-${count}`)} />
+        </Flex>
+      </Flex>
+
       <Tabs
         {...args}
-        value={current}
+        options={options}
+        value={value}
         onSelect={(v) => {
-          setCurrent(v)
+          setValue(v)
         }}
       />
-    )
-  },
+
+      <Box sx={{ padding: "10px 12px", borderRadius: "12px", backgroundColor: "grayscale.50" }}>
+        <Typography text={`value: ${value ?? "null"}`} variant="b2Regular" />
+        <Typography
+          text="키보드: TabList 포커스 후 ←/→, Home/End 이동, Enter/Space 선택"
+          variant="b3Regular"
+          color="text.secondary"
+        />
+      </Box>
+    </Flex>
+  )
 }
 
-/* 색상별 예시 */
-export const Colors: Story = {
-  render: () => {
-    const [selectedPrimary, setSelectedPrimary] = useState("tab1")
-    const [selectedSecondary, setSelectedSecondary] = useState("tab1")
-    const [selectedNormal, setSelectedNormal] = useState("tab1")
-
-    const options = [
-      { label: "탭 1", value: "tab1" },
-      { label: "탭 2", value: "tab2" },
-      { label: "탭 3", value: "tab3" },
-      { label: "탭 4", value: "tab4" },
-      { label: "탭 5", value: "tab5" },
-    ]
-
-    return (
-      <Flex direction="column" gap="16px">
-        <Tabs
-          size="M"
-          color="primary"
-          options={options}
-          value={selectedPrimary}
-          onSelect={setSelectedPrimary}
-          scrollbarVisible
-          scrollButtonsVisible={false}
-        />
-        <Tabs
-          size="M"
-          color="secondary"
-          options={options}
-          value={selectedSecondary}
-          onSelect={setSelectedSecondary}
-          scrollbarVisible
-          scrollButtonsVisible={false}
-        />
-        <Tabs
-          size="M"
-          color="normal"
-          options={options}
-          value={selectedNormal}
-          onSelect={setSelectedNormal}
-          scrollbarVisible
-          scrollButtonsVisible={false}
-        />
-      </Flex>
-    )
-  },
+export const Playground: Story = {
+  render: (args) => <Controlled {...(args as TabProps)} />,
 }
 
-// * 사이즈 비교
-export const Sizes: Story = {
-  render: () => {
-    const [small, setSmall] = useState("tab1")
-    const [medium, setMedium] = useState("tab1")
-    const [large, setLarge] = useState("tab1")
-
-    const options = [
-      { label: "탭 1", value: "tab1" },
-      { label: "탭 2", value: "tab2" },
-      { label: "탭 3", value: "tab3" },
-      { label: "탭 4", value: "tab4" },
-      { label: "탭 5", value: "tab5" },
-      { label: "탭 6", value: "tab6" },
-    ]
-
-    return (
-      <Flex direction="column" gap="16px">
-        <Tabs
-          size="S"
-          color="primary"
-          options={options}
-          value={small}
-          onSelect={setSmall}
-          scrollbarVisible
-          scrollButtonsVisible
-        />
-        <Tabs
-          size="M"
-          color="secondary"
-          options={options}
-          value={medium}
-          onSelect={setMedium}
-          scrollbarVisible
-          scrollButtonsVisible
-        />
-        <Tabs
-          size="L"
-          color="primary"
-          options={options}
-          value={large}
-          onSelect={setLarge}
-          scrollbarVisible
-          scrollButtonsVisible
-        />
-      </Flex>
-    )
-  },
-}
-
-// * 스크롤 / 버튼 동작 확인용 (탭 많이 생성)
-export const ScrollAndButtons: Story = {
+export const Variants: Story = {
   render: (args) => {
-    const [current, setCurrent] = useState("tab-1")
+    const common = args as TabProps
+    const [v1, setV1] = useState<string | null>("tab-2")
+    const [v2, setV2] = useState<string | null>("tab-1")
 
-    const manyTabs = Array.from({ length: 20 }).map((_, idx) => ({
-      label: `탭 ${idx + 1}`,
-      value: `tab-${idx + 1}`,
-    }))
-
-    return (
-      <Tabs
-        {...args}
-        options={manyTabs}
-        value={current}
-        onSelect={setCurrent}
-        scrollbarVisible={args.scrollbarVisible}
-        scrollButtonsVisible={args.scrollButtonsVisible}
-      />
+    const optionsShort = useMemo(() => buildOptions(4, "tab"), [])
+    const optionsMany = useMemo(() => buildOptions(12, "tab"), [])
+    const optionsManyMixed = useMemo(
+      () =>
+        buildOptions(12, "tab").map((o, idx) => ({
+          ...o,
+          label: `Tab ${idx + 1} - Very Long Label ${idx + 1}`,
+          disabled: idx === 7,
+          hidden: idx === 3,
+        })),
+      [],
     )
-  },
-}
-
-// * hidden / disabled 옵션 조합
-export const HiddenAndDisabled: Story = {
-  render: () => {
-    const [current, setCurrent] = useState("tab1")
-
-    const options = [
-      { label: "탭 1", value: "tab1" },
-      { label: "탭 2 (hidden)", value: "tab2", hidden: true },
-      { label: "탭 3 (disabled)", value: "tab3", disabled: true },
-      { label: "탭 4", value: "tab4" },
-      { label: "탭 5", value: "tab5" },
-    ]
 
     return (
-      <Tabs
-        size="M"
-        color="primary"
-        options={options}
-        value={current}
-        onSelect={setCurrent}
-        scrollbarVisible
-        scrollButtonsVisible
-      />
+      <Flex direction="column" gap="18px" width="980px">
+        <Typography text="Basic (no scroll buttons)" variant="h3" />
+        <Tabs
+          {...common}
+          options={optionsShort}
+          value={v1}
+          onSelect={(v) => setV1(v)}
+          scrollButtonsVisible={false}
+          scrollbarVisible
+        />
+
+        <Typography text="Many tabs (scrollbar visible)" variant="h3" />
+        <Tabs
+          {...common}
+          options={optionsMany}
+          value={v1}
+          onSelect={(v) => setV1(v)}
+          scrollButtonsVisible={false}
+          scrollbarVisible
+        />
+
+        <Typography text="Many tabs (scroll buttons visible)" variant="h3" />
+        <Tabs
+          {...common}
+          options={optionsMany}
+          value={v1}
+          onSelect={(v) => setV1(v)}
+          scrollButtonsVisible
+          scrollbarVisible={false}
+        />
+
+        <Typography text="Hidden/Disabled/Long labels" variant="h3" />
+        <Tabs
+          {...common}
+          options={optionsManyMixed}
+          value={v2}
+          onSelect={(v) => setV2(v)}
+          scrollButtonsVisible
+          scrollbarVisible={false}
+        />
+
+        <Box sx={{ padding: "10px 12px", borderRadius: "12px", backgroundColor: "grayscale.50" }}>
+          <Typography
+            text={`valueA: ${v1 ?? "null"} / valueB: ${v2 ?? "null"}`}
+            variant="b2Regular"
+          />
+        </Box>
+      </Flex>
     )
   },
 }

@@ -1,260 +1,226 @@
 import type { Meta, StoryObj } from "@storybook/react"
-import { useState } from "react"
-import { ThemeProvider } from "styled-components"
-
-import RadioGroup from "./RadioGroup"
-import { theme } from "../../tokens/theme"
+import { useMemo, useState } from "react"
+import RadioGroup, { DataType, RadioGroupProps } from "./RadioGroup"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
+import { Typography } from "../Typography/Typography"
 
-/* -------------------------------------------------------------------------- */
-/*                          Interactive Wrapper (필수)                         */
-/* -------------------------------------------------------------------------- */
+type ValueType = string | number
 
-const RadioGroupInteractive = (props: any) => {
-  const [value, setValue] = useState(props.value ?? null)
-
-  return (
-    <RadioGroup
-      {...props}
-      value={value}
-      onChange={(v) => {
-        setValue(v)
-        props.onChange?.(v)
-      }}
-    />
-  )
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                   META                                      */
-/* -------------------------------------------------------------------------- */
-
-const meta: Meta<any> = {
-  title: "components/RadioGroup",
-  component: RadioGroupInteractive,
-
-  args: {
-    label: "라디오 선택",
-    required: false,
-    direction: "horizontal",
-    disabled: false,
-    size: "M",
-    error: false,
-    helperText: "",
-    labelPlacement: "top",
-    data: [
-      { text: "옵션 1", value: "1" },
-      { text: "옵션 2", value: "2" },
-      { text: "옵션 3", value: "3" },
-    ],
-    value: "",
+const meta: Meta<typeof RadioGroup<ValueType>> = {
+  title: "Components/RadioGroup",
+  component: RadioGroup<ValueType>,
+  parameters: {
+    layout: "padded",
   },
-
   argTypes: {
-    /* ------------------------------ UI Props ------------------------------ */
+    value: { control: false },
+    onChange: { control: false },
+    data: { control: false },
+    direction: { control: "radio", options: ["horizontal", "vertical"] },
+    disabled: { control: "boolean" },
+    name: { control: "text" },
     label: { control: "text" },
     required: { control: "boolean" },
-
-    size: {
-      control: "radio",
-      options: ["S", "M", "L"],
-      description: "라디오 크기",
-    },
-
-    direction: {
-      control: "radio",
-      options: ["horizontal", "vertical"],
-      description: "배치 방향",
-    },
-
-    disabled: { control: "boolean" },
     error: { control: "boolean" },
     helperText: { control: "text" },
-
+    labelProps: { control: false },
     labelPlacement: {
       control: "select",
-      options: ["top-start", "top-end", "bottom-start", "bottom-end", "left", "right"],
+      options: [
+        "top",
+        "top-start",
+        "top-end",
+        "bottom",
+        "bottom-start",
+        "bottom-end",
+        "left",
+        "right",
+      ],
     },
-
-    name: { control: "text" },
-
-    data: { control: false },
-    value: { control: false },
-
-    /* -------------------------- BaseMixinProps -------------------------- */
-    p: { control: "text" },
-    pt: { control: "text" },
-    pr: { control: "text" },
-    pb: { control: "text" },
-    pl: { control: "text" },
-
-    px: { control: "text" },
-    py: { control: "text" },
-
-    m: { control: "text" },
-    mt: { control: "text" },
-    mr: { control: "text" },
-    mb: { control: "text" },
-    ml: { control: "text" },
-    mx: { control: "text" },
-    my: { control: "text" },
-
-    width: { control: "text" },
-    height: { control: "text" },
-    backgroundColor: { control: "text" },
-
-    sx: {
-      control: "object",
-      table: { type: { summary: "SxProps" } },
-    },
+    size: { control: "radio", options: ["S", "M", "L"] },
+    p: { control: false },
+    m: { control: false },
+    px: { control: false },
+    my: { control: false },
+    width: { control: false },
+    height: { control: false },
+    bgColor: { control: false },
+    sx: { control: false },
   },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Box width="360px">
-          <Story />
-        </Box>
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
-}
+} satisfies Meta<typeof RadioGroup<ValueType>>
 
 export default meta
-type Story = StoryObj<any>
+type Story = StoryObj<typeof RadioGroup<ValueType>>
 
-/* -------------------------------------------------------------------------- */
-/*                                  STORIES                                   */
-/* -------------------------------------------------------------------------- */
+const stringData: DataType<string>[] = [
+  { text: "옵션 A", value: "A" },
+  { text: "옵션 B", value: "B" },
+  { text: "옵션 C", value: "C" },
+]
 
-export const Default: Story = {}
+const numberData: DataType<number>[] = [
+  { text: "1번", value: 1 },
+  { text: "2번", value: 2 },
+  { text: "3번", value: 3 },
+]
 
-export const Horizontal: Story = {
-  args: { direction: "horizontal" },
-}
-
-export const Vertical: Story = {
-  args: { direction: "vertical" },
-}
-
-export const WithLabel: Story = {
+export const Playground: Story = {
   args: {
-    label: "라벨 포함",
-    required: true,
-  },
-}
+    direction: "horizontal",
+    disabled: false,
+    name: "playground",
+    label: "라디오 그룹",
+    required: false,
+    error: false,
+    helperText: "에러 메시지 예시",
+    labelPlacement: "top",
+    size: "M",
+    data: stringData as DataType<ValueType>[],
+  } as RadioGroupProps<ValueType>,
+  render: (args) => {
+    const data = useMemo(() => args.data ?? (stringData as DataType<ValueType>[]), [args.data])
+    const [value, setValue] = useState<ValueType>((data?.[0]?.value as ValueType) ?? "A")
 
-export const Disabled: Story = {
-  args: {
-    disabled: true,
-  },
-}
-
-export const ErrorState: Story = {
-  args: {
-    error: true,
-    helperText: "필수 항목입니다.",
-  },
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                 SIZE VARIANTS                               */
-/* -------------------------------------------------------------------------- */
-
-export const Sizes: Story = {
-  render: (args) => (
-    <Flex direction="column" gap="20px">
-      <RadioGroupInteractive {...args} size="S" label="Size S" />
-      <RadioGroupInteractive {...args} size="M" label="Size M" />
-      <RadioGroupInteractive {...args} size="L" label="Size L" />
-    </Flex>
-  ),
-}
-
-/* -------------------------------------------------------------------------- */
-/*                             LABEL PLACEMENTS                                */
-/* -------------------------------------------------------------------------- */
-
-export const LabelPositions: Story = {
-  render: (args) => (
-    <Flex direction="column" gap="24px">
-      <RadioGroupInteractive {...args} labelPlacement="top" label="Top" />
-      <RadioGroupInteractive {...args} labelPlacement="bottom" label="Bottom" />
-      <RadioGroupInteractive {...args} labelPlacement="left" label="Left" />
-      <RadioGroupInteractive {...args} labelPlacement="right" label="Right" />
-    </Flex>
-  ),
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                  CUSTOM DATA                                */
-/* -------------------------------------------------------------------------- */
-
-export const CustomData: Story = {
-  args: {
-    data: [
-      { text: "Apple", value: "apple" },
-      { text: "Banana", value: "banana" },
-      { text: "Grape", value: "grape" },
-    ],
-  },
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                   DEMO GRID                                 */
-/* -------------------------------------------------------------------------- */
-
-export const DemoGrid: Story = {
-  render: () => (
-    <Flex direction="column" gap="24px">
-      <Box>
-        <RadioGroupInteractive
-          label="기본"
-          data={[
-            { text: "옵션 1", value: "1" },
-            { text: "옵션 2", value: "2" },
-          ]}
+    return (
+      <Flex direction="column" gap="12px">
+        <Typography text={`선택값: ${String(value)}`} variant="b2Regular" color="text.primary" />
+        <RadioGroup<ValueType>
+          {...args}
+          data={data}
+          value={value}
+          onChange={(v) => {
+            setValue(v)
+            args.onChange?.(v)
+          }}
         />
-      </Box>
+      </Flex>
+    )
+  },
+}
 
-      <Box>
-        <RadioGroupInteractive
-          direction="vertical"
-          label="세로 모드"
-          data={[
-            { text: "A", value: "A" },
-            { text: "B", value: "B" },
-            { text: "C", value: "C" },
-          ]}
-        />
-      </Box>
+export const AllCases: Story = {
+  args: {
+    labelProps: {},
+  } as RadioGroupProps<ValueType>,
+  render: () => {
+    const [v1, setV1] = useState<ValueType>("A")
+    const [v2, setV2] = useState<ValueType>("B")
+    const [v3, setV3] = useState<ValueType>(1)
+    const [v4, setV4] = useState<ValueType>(2)
 
-      <Box>
-        <RadioGroupInteractive
-          label="에러 상태"
-          error
-          helperText="필수 선택입니다."
-          data={[
-            { text: "Yes", value: "yes" },
-            { text: "No", value: "no" },
-          ]}
-        />
-      </Box>
-
-      <Box>
-        <RadioGroupInteractive
-          label="사이즈 비교"
+    return (
+      <Flex direction="column" gap="20px">
+        <Typography text="String / Horizontal / Top" variant="b2Regular" color="text.primary" />
+        <RadioGroup<ValueType>
+          data={stringData as DataType<ValueType>[]}
+          value={v1}
+          onChange={setV1}
+          direction="horizontal"
+          label="라디오 그룹"
+          labelPlacement="top"
           size="M"
-          data={[
-            { text: "Small", value: "S" },
-            { text: "Medium", value: "M" },
-            { text: "Large", value: "L" },
-          ]}
         />
-      </Box>
-    </Flex>
-  ),
+
+        <Typography text="String / Vertical / Left" variant="b2Regular" color="text.primary" />
+        <RadioGroup<ValueType>
+          data={stringData as DataType<ValueType>[]}
+          value={v2}
+          onChange={setV2}
+          direction="vertical"
+          label="라디오 그룹"
+          labelPlacement="left"
+          size="L"
+        />
+
+        <Typography
+          text="Number / Horizontal / Bottom + Error"
+          variant="b2Regular"
+          color="text.primary"
+        />
+        <RadioGroup<ValueType>
+          data={numberData as DataType<ValueType>[]}
+          value={v3}
+          onChange={setV3}
+          direction="horizontal"
+          label="숫자 라디오"
+          labelPlacement="bottom"
+          size="S"
+          error
+          helperText="필수 선택 항목입니다."
+        />
+
+        <Typography text="Disabled" variant="b2Regular" color="text.primary" />
+        <Box>
+          <RadioGroup<ValueType>
+            data={numberData as DataType<ValueType>[]}
+            value={v4}
+            onChange={setV4}
+            direction="horizontal"
+            label="비활성 라디오"
+            labelPlacement="right"
+            size="M"
+            disabled
+          />
+        </Box>
+      </Flex>
+    )
+  },
+}
+
+export const Variants: Story = {
+  render: () => {
+    const [value, setValue] = useState<ValueType>("A")
+
+    const cases: Array<{
+      title: string
+      props: Omit<RadioGroupProps<ValueType>, "data" | "value" | "onChange">
+    }> = [
+      { title: "S / top", props: { size: "S", label: "Label", labelPlacement: "top" } },
+      { title: "M / left", props: { size: "M", label: "Label", labelPlacement: "left" } },
+      { title: "L / right", props: { size: "L", label: "Label", labelPlacement: "right" } },
+      { title: "M / bottom-start", props: { size: "M", label: "Label", labelPlacement: "bottom" } },
+      {
+        title: "Error",
+        props: {
+          size: "M",
+          label: "Label",
+          labelPlacement: "top",
+          error: true,
+          helperText: "에러 상태",
+        },
+      },
+      {
+        title: "Disabled",
+        props: { size: "M", label: "Label", labelPlacement: "top", disabled: true },
+      },
+      {
+        title: "Vertical",
+        props: { size: "M", label: "Label", labelPlacement: "top", direction: "vertical" },
+      },
+    ]
+
+    return (
+      <Flex direction="column" gap="16px">
+        <Typography
+          text={`공용 선택값: ${String(value)}`}
+          variant="b2Regular"
+          color="text.primary"
+        />
+        <Flex direction="column" gap="14px">
+          {cases.map((c) => (
+            <Flex key={c.title} direction="column" gap="8px">
+              <Typography text={c.title} variant="b2Regular" color="text.primary" />
+              <RadioGroup<ValueType>
+                data={stringData as DataType<ValueType>[]}
+                value={value}
+                onChange={setValue}
+                {...c.props}
+              />
+            </Flex>
+          ))}
+        </Flex>
+      </Flex>
+    )
+  },
 }

@@ -1,279 +1,292 @@
-import { useState } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
-import { ThemeProvider } from "styled-components"
-import { theme } from "../../tokens/theme"
-import List, { ListProps } from "./List"
-import { IconNames } from "../Icon/icon-loader"
+import React, { useMemo, useState } from "react"
+import List, { ListItemProps, ListProps } from "./List"
 import Box from "../Box/Box"
+import Flex from "../Flex/Flex"
+import Button from "../Button/Button"
+import IconButton from "../IconButton/IconButton"
+import { Typography } from "../Typography/Typography"
+import { IconNames } from "../Icon/icon-loader"
 
-/* -------------------------------------------------------------------------- */
-/*                                    Meta                                    */
-/* -------------------------------------------------------------------------- */
-
-const meta: Meta<ListProps> = {
-  title: "components/List",
+const meta: Meta<typeof List> = {
+  title: "Components/List",
   component: List,
-
+  parameters: { layout: "fullscreen" },
+  argTypes: {
+    items: { control: false },
+  },
   args: {
     dense: false,
     disablePadding: false,
+    title: "Settings",
     separator: true,
   },
-
-  argTypes: {
-    dense: { control: "boolean" },
-    disablePadding: { control: "boolean" },
-    separator: { control: "boolean" },
-  },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Box width="340px">
-          <Story />
-        </Box>
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
 }
-
 export default meta
-type Story = StoryObj<ListProps>
+type Story = StoryObj<typeof List>
 
-/* -------------------------------------------------------------------------- */
-/*                                  Default                                   */
-/* -------------------------------------------------------------------------- */
+const buildItems = (params: {
+  selectedIndex: number | null
+  setSelectedIndex: (i: number | null) => void
+  simpleChecked: boolean
+  setSimpleChecked: (v: boolean) => void
+  groupValues: string[]
+  setGroupValues: (v: string[]) => void
+  switchChecked: boolean
+  setSwitchChecked: (v: boolean) => void
+}): ListItemProps[] => {
+  const {
+    selectedIndex,
+    setSelectedIndex,
+    simpleChecked,
+    setSimpleChecked,
+    groupValues,
+    setGroupValues,
+    switchChecked,
+    setSwitchChecked,
+  } = params
 
-export const Default: Story = {
-  args: {
-    title: "Default List",
-    items: [{ label: "Item One" }, { label: "Item Two" }, { label: "Item Three" }],
-  },
+  return [
+    {
+      label: "Profile",
+      selected: selectedIndex === 0,
+      onClick: () => setSelectedIndex(selectedIndex === 0 ? null : 0),
+      startItem: [
+        { type: "Avatar", props: { name: "Jane Doe", size: "M" } },
+        { type: "Icon", props: { name: IconNames[0] } },
+      ],
+      endItem: [
+        {
+          type: "IconButton",
+          props: {
+            icon: IconNames[0],
+            variant: "outlined",
+            toolTip: "More actions",
+          },
+        },
+      ],
+    },
+    {
+      label: "Notifications",
+      selected: selectedIndex === 1,
+      onClick: () => setSelectedIndex(selectedIndex === 1 ? null : 1),
+      startItem: [{ type: "Icon", props: { name: IconNames[0] } }],
+      endItem: [
+        {
+          type: "Switch",
+          props: {
+            checked: switchChecked,
+            label: "On",
+            onChange: () => setSwitchChecked(!switchChecked),
+          },
+        },
+      ],
+    },
+    {
+      label: "Single Check (wrapped by CheckBoxGroup)",
+      selected: selectedIndex === 2,
+      onClick: () => setSelectedIndex(selectedIndex === 2 ? null : 2),
+      startItem: [
+        {
+          type: "CheckBox",
+          props: {
+            checked: simpleChecked,
+            label: "Enable",
+            onChange: setSimpleChecked,
+          },
+        },
+      ],
+      endItem: [
+        {
+          type: "IconButton",
+          props: {
+            icon: IconNames[0],
+            variant: "text",
+            toolTip: "Single checkbox example",
+          },
+        },
+      ],
+    },
+    {
+      label: "Group CheckBox",
+      selected: selectedIndex === 3,
+      onClick: () => setSelectedIndex(selectedIndex === 3 ? null : 3),
+      startItem: [
+        {
+          type: "CheckBox",
+          props: {
+            value: groupValues,
+            onChange: (v: any) => setGroupValues(v),
+            data: [
+              { text: "A", value: "A" },
+              { text: "B", value: "B" },
+              { text: "C", value: "C" },
+            ],
+            direction: "horizontal",
+            allCheck: true,
+            allCheckText: "All",
+            size: "M",
+          } as any,
+        },
+      ],
+    },
+    {
+      label: "Disabled item",
+      disabled: true,
+      selected: false,
+      startItem: [{ type: "Icon", props: { name: "LockLine" as any } }],
+      endItem: [
+        {
+          type: "IconButton",
+          props: {
+            icon: IconNames[0],
+            disabled: true,
+            toolTip: "disabled",
+          },
+        },
+      ],
+    },
+  ]
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                With Avatar                                 */
-/* -------------------------------------------------------------------------- */
-
-export const WithAvatar: Story = {
-  args: {
-    title: "With Avatar",
-    items: [
-      {
-        label: "Alice",
-        startItem: [{ type: "Avatar", props: { name: "Alice", size: "S" } }],
-      },
-      {
-        label: "Bob",
-        startItem: [{ type: "Avatar", props: { name: "Bob", size: "S" } }],
-      },
-    ],
-  },
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                With Icons                                  */
-/* -------------------------------------------------------------------------- */
-
-export const WithIcons: Story = {
-  args: {
-    title: "With Icons",
-    items: [
-      { label: "Icon 1", startItem: [{ type: "Icon", props: { name: IconNames[0] } }] },
-      { label: "Icon 2", startItem: [{ type: "Icon", props: { name: IconNames[1] } }] },
-      { label: "Icon 3", startItem: [{ type: "Icon", props: { name: IconNames[2] } }] },
-    ],
-  },
-}
-
-/* -------------------------------------------------------------------------- */
-/*                               With CheckBox                                */
-/* -------------------------------------------------------------------------- */
-
-export const WithCheckBox: Story = {
+export const Playground: Story = {
   render: (args) => {
-    const [checkedMap, setCheckedMap] = useState({
-      notify: true,
-      newsletter: false,
-    })
+    const [dense, setDense] = useState<boolean>(!!args.dense)
+    const [disablePadding, setDisablePadding] = useState<boolean>(!!args.disablePadding)
+    const [separator, setSeparator] = useState<boolean>(args.separator ?? true)
+
+    const [selectedIndex, setSelectedIndex] = useState<number | null>(0)
+
+    const [simpleChecked, setSimpleChecked] = useState<boolean>(true)
+    const [groupValues, setGroupValues] = useState<string[]>(["A"])
+    const [switchChecked, setSwitchChecked] = useState<boolean>(true)
+
+    const items = useMemo(
+      () =>
+        buildItems({
+          selectedIndex,
+          setSelectedIndex,
+          simpleChecked,
+          setSimpleChecked,
+          groupValues,
+          setGroupValues,
+          switchChecked,
+          setSwitchChecked,
+        }),
+      [groupValues, selectedIndex, simpleChecked, switchChecked],
+    )
 
     return (
-      <List
-        {...args}
-        title="Checklist"
-        items={[
-          {
-            label: "Receive notifications",
-            startItem: [
-              {
-                type: "CheckBox",
-                props: {
-                  checked: checkedMap.notify,
-                  label: "",
-                  onChange: () => setCheckedMap((prev) => ({ ...prev, notify: !prev.notify })),
-                },
-              },
-            ],
-          },
-          {
-            label: "Subscribe newsletter",
-            startItem: [
-              {
-                type: "CheckBox",
-                props: {
-                  checked: checkedMap.newsletter,
-                  label: "",
-                  onChange: () =>
-                    setCheckedMap((prev) => ({ ...prev, newsletter: !prev.newsletter })),
-                },
-              },
-            ],
-          },
-        ]}
-      />
+      <Box p="20px">
+        <Typography variant="h3" text="List Playground" mb="12px" />
+
+        <Flex gap="8px" align="center" mb="12px" wrap="wrap">
+          <Button
+            text={`dense: ${dense ? "true" : "false"}`}
+            variant="outlined"
+            color="normal"
+            onClick={() => setDense((p) => !p)}
+          />
+          <Button
+            text={`disablePadding: ${disablePadding ? "true" : "false"}`}
+            variant="outlined"
+            color="normal"
+            onClick={() => setDisablePadding((p) => !p)}
+          />
+          <Button
+            text={`separator: ${separator ? "true" : "false"}`}
+            variant="outlined"
+            color="normal"
+            onClick={() => setSeparator((p) => !p)}
+          />
+          <IconButton
+            icon={IconNames[0]}
+            toolTip="Reset selection"
+            variant="outlined"
+            onClick={() => setSelectedIndex(0)}
+          />
+        </Flex>
+
+        <Box sx={{ width: "520px", border: "1px solid #eee" }}>
+          <List
+            {...(args as ListProps)}
+            dense={dense}
+            disablePadding={disablePadding}
+            separator={separator}
+            items={items}
+          />
+        </Box>
+
+        <Box mt="12px">
+          <Typography
+            variant="b3Regular"
+            color="#666666"
+            text={`selectedIndex=${selectedIndex ?? "null"}, single=${simpleChecked ? "on" : "off"}, group=[${groupValues.join(
+              ",",
+            )}], switch=${switchChecked ? "on" : "off"}`}
+          />
+        </Box>
+      </Box>
     )
   },
 }
 
-/* -------------------------------------------------------------------------- */
-/*                          With IconButton (Actions)                          */
-/* -------------------------------------------------------------------------- */
-
-export const WithActions: Story = {
-  args: {
-    title: "With IconButton",
-    items: [
-      {
-        label: "Edit Profile",
-        endItem: [{ type: "IconButton", props: { icon: IconNames[8] } }],
-      },
-      {
-        label: "Remove User",
-        endItem: [{ type: "IconButton", props: { icon: IconNames[6] } }],
-      },
-    ],
-  },
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                With Switch                                  */
-/* -------------------------------------------------------------------------- */
-
-export const WithSwitch: Story = {
-  render: (args) => {
-    const [darkMode, setDarkMode] = useState(true)
-    const [emailAlerts, setEmailAlerts] = useState(false)
+export const DensityMatrix: Story = {
+  render: () => {
+    const variants = [
+      { dense: false, disablePadding: false },
+      { dense: true, disablePadding: false },
+      { dense: false, disablePadding: true },
+      { dense: true, disablePadding: true },
+    ] as const
 
     return (
-      <List
-        {...args}
-        title="With Switch"
-        items={[
-          {
-            label: "Dark Mode",
-            endItem: [
+      <Box p="20px">
+        <Typography variant="h3" text="dense × disablePadding" mb="12px" />
+
+        <Flex gap="16px" wrap="wrap">
+          {variants.map((v, idx) => {
+            const items: ListItemProps[] = [
               {
-                type: "Switch",
-                props: {
-                  label: "",
-                  checked: darkMode,
-                  onChange: () => setDarkMode((v) => !v),
-                },
+                label: "Clickable",
+                selected: idx % 2 === 0,
+                onClick: () => {},
+                startItem: [{ type: "Icon", props: { name: IconNames[0] } }],
+                endItem: [
+                  {
+                    type: "IconButton",
+                    props: { icon: IconNames[0], toolTip: "tooltip", variant: "outlined" },
+                  },
+                ],
               },
-            ],
-          },
-          {
-            label: "Email Alerts",
-            endItem: [
               {
-                type: "Switch",
-                props: {
-                  label: "",
-                  checked: emailAlerts,
-                  onChange: () => setEmailAlerts((v) => !v),
-                },
+                label: "Disabled",
+                disabled: true,
+                startItem: [{ type: "Icon", props: { name: IconNames[0] } }],
               },
-            ],
-          },
-        ]}
-      />
-    )
-  },
-}
+            ]
 
-/* -------------------------------------------------------------------------- */
-/*                               Selected Items                                */
-/* -------------------------------------------------------------------------- */
-
-export const SelectedItems: Story = {
-  args: {
-    title: "Selected Example",
-    items: [{ label: "Item A", selected: true }, { label: "Item B" }, { label: "Item C" }],
-  },
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                Disabled Items                               */
-/* -------------------------------------------------------------------------- */
-
-export const DisabledItems: Story = {
-  args: {
-    title: "Disabled Example",
-    items: [{ label: "Unavailable Feature", disabled: true }, { label: "Active Feature" }],
-  },
-}
-
-/* -------------------------------------------------------------------------- */
-/*                              Complex Multi UI                               */
-/* -------------------------------------------------------------------------- */
-
-export const ComplexItems: Story = {
-  render: (args) => {
-    const [autoSave, setAutoSave] = useState(true)
-    const [syncEnabled, setSyncEnabled] = useState(true)
-
-    return (
-      <List
-        {...args}
-        title="Complex UI Example"
-        separator
-        items={[
-          {
-            label: "User Info",
-            startItem: [{ type: "Avatar", props: { name: "GY", size: "S" } }],
-            endItem: [{ type: "IconButton", props: { icon: "More2Line" } }],
-          },
-          {
-            label: "Auto Save",
-            startItem: [{ type: "Icon", props: { name: IconNames[8] } }],
-            endItem: [
-              {
-                type: "Switch",
-                props: {
-                  label: "",
-                  checked: autoSave,
-                  onChange: () => setAutoSave((v) => !v),
-                },
-              },
-            ],
-          },
-          {
-            label: "Enable Sync",
-            startItem: [
-              {
-                type: "CheckBox",
-                props: {
-                  checked: syncEnabled,
-                  label: "",
-                  onChange: () => setSyncEnabled((v) => !v),
-                },
-              },
-            ],
-          },
-        ]}
-      />
+            return (
+              <Box key={idx} sx={{ width: "380px", border: "1px solid #eee" }}>
+                <Box p="10px">
+                  <Typography
+                    variant="b2Regular"
+                    text={`dense=${v.dense}, disablePadding=${v.disablePadding}`}
+                    color="#666666"
+                    mb="8px"
+                  />
+                </Box>
+                <List
+                  title="Example"
+                  dense={v.dense}
+                  disablePadding={v.disablePadding}
+                  items={items}
+                />
+              </Box>
+            )
+          })}
+        </Flex>
+      </Box>
     )
   },
 }

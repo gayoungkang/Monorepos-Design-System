@@ -1,226 +1,311 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import { useState } from "react"
-import { ThemeProvider } from "styled-components"
-import TextField, { textFieldProps } from "./TextField"
-import { theme } from "../../tokens/theme"
+import TextField, { TextFieldProps } from "./TextField"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
+import { Typography } from "../Typography/Typography"
+import Button from "../Button/Button"
 
-/* -------------------------------------------------------------------------- */
-/*                          Interactive Wrapper (필수)                         */
-/* -------------------------------------------------------------------------- */
-/* 
-Storybook Controls가 value를 변경해도 사용자가 직접 입력할 수 있도록
-TextField를 내부적으로 state로 감싸는 wrapper
-*/
-
-const TextFieldInteractive = (props: textFieldProps) => {
-  const [value, setValue] = useState(props.value ?? "")
-
-  return (
-    <TextField
-      {...props}
-      value={value}
-      onChange={(e) => {
-        setValue(e.target.value)
-        props.onChange?.(e)
-      }}
-    />
-  )
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                  META 설정                                  */
-/* -------------------------------------------------------------------------- */
-
-const meta: Meta<textFieldProps> = {
-  title: "components/TextField",
-  component: TextFieldInteractive,
-
+const meta: Meta<typeof TextField> = {
+  title: "Components/TextField",
+  component: TextField,
+  parameters: { layout: "centered" },
+  argTypes: {
+    variant: { control: { type: "radio" }, options: ["outlined", "filled", "standard"] },
+    size: { control: { type: "radio" }, options: ["S", "M", "L"] },
+    type: { control: { type: "text" } },
+    name: { control: { type: "text" } },
+    label: { control: { type: "text" } },
+    placeholder: { control: { type: "text" } },
+    value: { control: false },
+    onlyNumber: { control: { type: "boolean" } },
+    maxLength: { control: { type: "number" } },
+    onClear: { control: false },
+    onChange: { control: false },
+    onBlur: { control: false },
+    onFocus: { control: false },
+    onSearch: { control: false },
+    onKeyDown: { control: false },
+    onKeyUp: { control: false },
+    onClick: { control: false },
+    onMouseDown: { control: false },
+    onMouseUp: { control: false },
+    disabled: { control: { type: "boolean" } },
+    error: { control: { type: "boolean" } },
+    helperText: { control: { type: "text" } },
+    startIcon: { control: { type: "text" } },
+    endIcon: { control: { type: "text" } },
+    required: { control: { type: "boolean" } },
+    readOnly: { control: { type: "boolean" } },
+    labelPlacement: { control: { type: "radio" }, options: ["top", "bottom", "left", "right"] },
+    labelProps: { control: false },
+    iconProps: { control: false },
+    multiline: { control: { type: "boolean" } },
+    rows: { control: { type: "number" } },
+    clearable: { control: { type: "boolean" } },
+    autoFocus: { control: { type: "boolean" } },
+    onSearchEnter: { control: false },
+  },
   args: {
     variant: "outlined",
     size: "M",
-    placeholder: "입력하세요...",
-    label: "기본 텍스트필드",
-    required: false,
+    type: "text",
+    name: "field",
+    label: "Label",
+    placeholder: "Type here",
+    onlyNumber: false,
+    maxLength: undefined,
     disabled: false,
     error: false,
-    helperText: "",
-    multiline: false,
-    clearable: true,
-    type: "text",
+    helperText: "Helper text",
+    startIcon: "",
+    endIcon: "",
+    required: false,
+    readOnly: false,
     labelPlacement: "top",
+    multiline: false,
+    rows: 4,
+    clearable: true,
+    autoFocus: false,
   },
-
-  argTypes: {
-    /* ------------------------------ UI Props ------------------------------ */
-    variant: {
-      control: "radio",
-      options: ["outlined", "filled", "standard"],
-    },
-    size: {
-      control: "radio",
-      options: ["S", "M", "L"],
-    },
-    type: {
-      control: "radio",
-      options: ["text", "password", "search"],
-    },
-    label: { control: "text" },
-    placeholder: { control: "text" },
-    required: { control: "boolean" },
-    readOnly: { control: "boolean" },
-    disabled: { control: "boolean" },
-    clearable: { control: "boolean" },
-
-    multiline: { control: "boolean" },
-    rows: { control: "number" },
-
-    onlyNumber: { control: "boolean" },
-    maxLength: { control: "number" },
-
-    startIcon: { control: "text" },
-    endIcon: { control: "text" },
-
-    labelPlacement: {
-      control: "select",
-      options: ["top", "bottom", "left", "right"],
-    },
-
-    /* ------------------------------ 이벤트는 control 제외 ------------------------------ */
-    value: { control: false },
-    onChange: { control: false },
-
-    /* ------------------------------ BaseMixinProps ------------------------------ */
-    p: { control: "text" },
-    pt: { control: "text" },
-    pr: { control: "text" },
-    pb: { control: "text" },
-    pl: { control: "text" },
-    px: { control: "text" },
-    py: { control: "text" },
-
-    m: { control: "text" },
-    mt: { control: "text" },
-    mr: { control: "text" },
-    mb: { control: "text" },
-    ml: { control: "text" },
-    mx: { control: "text" },
-    my: { control: "text" },
-
-    width: { control: "text" },
-    height: { control: "text" },
-
-    sx: {
-      control: "object",
-      table: {
-        type: {
-          summary: "SxProps",
-        },
-      },
-    },
-  },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <Box width="400px">
-          <Story />
-        </Box>
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
 }
 
 export default meta
+type Story = StoryObj<typeof TextField>
 
-type Story = StoryObj<textFieldProps>
+const Controlled = (args: TextFieldProps) => {
+  const [val, setVal] = useState<string>("")
+  const [err, setErr] = useState<boolean>(!!args.error)
 
-/* -------------------------------------------------------------------------- */
-/*                                   STORIES                                   */
-/* -------------------------------------------------------------------------- */
+  return (
+    <Flex direction="column" gap="12px" width="640px">
+      <Flex justify="space-between" align="center">
+        <Typography text="Playground" variant="h3" />
+        <Flex gap="8px">
+          <Button
+            variant="outlined"
+            text={err ? "Error: ON" : "Error: OFF"}
+            onClick={() => setErr((p) => !p)}
+          />
+          <Button text="Set sample" onClick={() => setVal("sample value")} />
+          <Button variant="outlined" text="Clear" onClick={() => setVal("")} />
+        </Flex>
+      </Flex>
 
-export const Default: Story = {}
+      <TextField
+        {...args}
+        value={val}
+        error={err}
+        helperText={err ? "Error helper text" : args.helperText}
+        onChange={(e) => setVal(e.target.value)}
+        onClear={() => setVal("")}
+        onSearch={(v, isEnter) => {
+          // * demo: 검색 시 값에 태그 추가
+          setVal((p) => (p ? `${p} | search:${v}(${isEnter ? "enter" : "click"})` : `search:${v}`))
+        }}
+        onSearchEnter={(v) => {
+          // * demo: 엔터 검색 시 추가 태그
+          setVal((p) => (p ? `${p} | enter:${v}` : `enter:${v}`))
+        }}
+      />
 
-export const Password: Story = {
-  args: {
-    type: "password",
-    label: "비밀번호",
-  },
-}
-
-export const Search: Story = {
-  args: {
-    type: "search",
-    label: "검색",
-    placeholder: "검색어 입력",
-  },
-}
-
-export const WithIcons: Story = {
-  args: {
-    label: "아이콘 포함",
-    startIcon: "SearchLine",
-    endIcon: "Check",
-  },
-}
-
-export const ErrorState: Story = {
-  args: {
-    label: "에러 상태",
-    error: true,
-    helperText: "올바르지 않은 값입니다.",
-  },
-}
-
-export const Disabled: Story = {
-  args: {
-    label: "비활성화",
-    disabled: true,
-    placeholder: "입력 불가",
-  },
-}
-
-export const Multiline: Story = {
-  args: {
-    multiline: true,
-    rows: 5,
-    label: "멀티라인 텍스트",
-    placeholder: "여러 줄을 입력하세요...",
-  },
-}
-
-export const Sizes: Story = {
-  render: (args) => (
-    <Flex direction="column" gap="20px">
-      <TextFieldInteractive {...args} size="S" label="Small" />
-      <TextFieldInteractive {...args} size="M" label="Medium" />
-      <TextFieldInteractive {...args} size="L" label="Large" />
+      <Box sx={{ padding: "10px 12px", borderRadius: "12px", backgroundColor: "grayscale.50" }}>
+        <Typography text={`value: ${val}`} variant="b2Regular" />
+      </Box>
     </Flex>
-  ),
+  )
 }
 
-export const LabelPlacements: Story = {
-  render: (args) => (
-    <Flex direction="column" gap="24px">
-      <TextFieldInteractive {...args} labelPlacement="top" label="Top" />
-      <TextFieldInteractive {...args} labelPlacement="bottom" label="Bottom" />
-      <TextFieldInteractive {...args} labelPlacement="left" label="Left" />
-      <TextFieldInteractive {...args} labelPlacement="right" label="Right" />
-    </Flex>
-  ),
+export const Playground: Story = {
+  render: (args) => <Controlled {...(args as TextFieldProps)} />,
 }
 
-export const DemoGrid: Story = {
-  render: () => (
-    <Flex direction="column" gap="32px">
-      <TextFieldInteractive label="기본" placeholder="입력하세요" />
-      <TextFieldInteractive label="비밀번호" type="password" />
-      <TextFieldInteractive label="검색" type="search" />
-      <TextFieldInteractive label="에러" error helperText="필수 입력입니다." />
-      <TextFieldInteractive label="멀티라인" multiline rows={4} />
-    </Flex>
-  ),
+export const Variants: Story = {
+  render: (args) => {
+    const common = args as TextFieldProps
+
+    const [vText, setVText] = useState("hello")
+    const [vSearch, setVSearch] = useState("query")
+    const [vPass, setVPass] = useState("password")
+    const [vNum, setVNum] = useState("1234")
+    const [vMulti, setVMulti] = useState("line1\nline2\nline3")
+
+    return (
+      <Flex direction="column" gap="18px" width="980px">
+        <Typography text="Basic" variant="h3" />
+        <Flex gap="12px" wrap="wrap">
+          <TextField
+            {...common}
+            label="Outlined"
+            variant="outlined"
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+          <TextField
+            {...common}
+            label="Filled"
+            variant="filled"
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+          <TextField
+            {...common}
+            label="Standard"
+            variant="standard"
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+        </Flex>
+
+        <Typography text="Sizes" variant="h3" />
+        <Flex gap="12px" wrap="wrap">
+          <TextField
+            {...common}
+            size="S"
+            label="Size S"
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+          <TextField
+            {...common}
+            size="M"
+            label="Size M"
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+          <TextField
+            {...common}
+            size="L"
+            label="Size L"
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+        </Flex>
+
+        <Typography text="States" variant="h3" />
+        <Flex gap="12px" wrap="wrap">
+          <TextField
+            {...common}
+            label="Disabled"
+            disabled
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+          <TextField
+            {...common}
+            label="ReadOnly"
+            readOnly
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+          <TextField
+            {...common}
+            label="Error"
+            error
+            helperText="error helper text"
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+        </Flex>
+
+        <Typography text="Icons" variant="h3" />
+        <Flex gap="12px" wrap="wrap">
+          <TextField
+            {...common}
+            label="Start/End"
+            startIcon={"Mail" as any}
+            endIcon={"Check" as any}
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+        </Flex>
+
+        <Typography text="Search" variant="h3" />
+        <Flex gap="12px" wrap="wrap">
+          <TextField
+            {...common}
+            type="search"
+            label="Search (Enter / Click)"
+            placeholder="type and Enter"
+            value={vSearch}
+            onChange={(e) => setVSearch(e.target.value)}
+            onSearch={(v) => setVSearch(v)}
+          />
+        </Flex>
+
+        <Typography text="Password" variant="h3" />
+        <Flex gap="12px" wrap="wrap">
+          <TextField
+            {...common}
+            type="password"
+            label="Password"
+            value={vPass}
+            onChange={(e) => setVPass(e.target.value)}
+          />
+        </Flex>
+
+        <Typography text="Only number / MaxLength" variant="h3" />
+        <Flex gap="12px" wrap="wrap">
+          <TextField
+            {...common}
+            label="onlyNumber"
+            onlyNumber
+            value={vNum}
+            onChange={(e) => setVNum(e.target.value)}
+          />
+          <TextField
+            {...common}
+            label="maxLength=6"
+            maxLength={6}
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+        </Flex>
+
+        <Typography text="Multiline" variant="h3" />
+        <Flex gap="12px" wrap="wrap">
+          <TextField
+            {...common}
+            label="Multiline"
+            multiline
+            rows={4}
+            value={vMulti}
+            onChange={(e) => setVMulti(e.target.value)}
+          />
+        </Flex>
+
+        <Typography text="Label placement" variant="h3" />
+        <Flex gap="12px" wrap="wrap">
+          <TextField
+            {...common}
+            label="Top"
+            labelPlacement="top"
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+          <TextField
+            {...common}
+            label="Bottom"
+            labelPlacement="bottom"
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+          <TextField
+            {...common}
+            label="Left"
+            labelPlacement="left"
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+          <TextField
+            {...common}
+            label="Right"
+            labelPlacement="right"
+            value={vText}
+            onChange={(e) => setVText(e.target.value)}
+          />
+        </Flex>
+      </Flex>
+    )
+  },
 }

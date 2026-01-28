@@ -16,6 +16,7 @@ import Icon from "../Icon/Icon"
 import { IconName } from "../Icon/icon-loader"
 import ToggleButton from "../ToggleButton/ToggleButton"
 import Button from "../Button/Button"
+import { SizeUiType } from "../../types"
 
 export type TreeNodeType = {
   id: string
@@ -27,18 +28,24 @@ export type TreeNodeType = {
 }
 
 export type TreeViewProps = BaseMixinProps &
-  Omit<HTMLAttributes<HTMLDivElement>, keyof BaseMixinProps> & {
+  Omit<HTMLAttributes<HTMLDivElement>, keyof BaseMixinProps | "onSelect"> & {
     items?: TreeNodeType[]
     depth?: number
     breadth?: number
+
     defaultExpandedIds?: string[]
     expandedIds?: string[]
     onExpandedChange?: (expandedIds: string[]) => void
+
+    defaultSelectedId?: string | null
     selectedId?: string | null
     onSelect?: (id: string, node: TreeNodeType) => void
+
     expandOnLabelClick?: boolean
     showHeaderControls?: boolean
     showFooterButtons?: boolean
+
+    size?: SizeUiType
   }
 
 type FlatNode = {
@@ -51,67 +58,113 @@ type FlatNode = {
   isVisible: boolean
 }
 /**---------------------------------------------------------------------------/
-
-* ! TreeView
-*
-* * 계층형 데이터를 트리 구조로 렌더링하는 TreeView 컴포넌트
-* * items 미지정 시 depth / breadth 기반 데모 트리 자동 생성
-* * expandedIds controlled/uncontrolled 모두 지원 (defaultExpandedIds 포함)
-* * expandAll / collapseAll 헤더/푸터 컨트롤 제공 옵션 지원
-* * 노드 선택(selectedId) controlled/uncontrolled 흐름 지원 (activeId 내부 포커스 상태)
-* * 키보드 네비게이션 지원 (ArrowUp/Down/Left/Right, Enter/Space)
-* * 폴더/파일 아이콘 및 확장 토글(chevron) UI 제공
-* * expandOnLabelClick 옵션으로 라벨 클릭 시 확장/축소 동작 지원
-* * leaf 노드에서만 node.onClick 호출 (기본 클릭은 선택 처리)
-* * a11y 속성(role/treeitem, aria-expanded, aria-selected) 및 roving tabIndex 적용
-* * BaseMixin 기반 외부 스타일 확장 지원
-* * theme 기반 색상, borderRadius, transition 시스템 활용
-*
-* @module TreeView
-* 계층형(Tree) UI를 제공하는 트리 뷰 컴포넌트입니다.
-* - `items`를 전달하면 해당 데이터를 렌더링하고, 미전달 시 depth/breadth 기반 샘플 데이터를 생성합니다.
-* - 확장 상태는 `expandedIds`(controlled) 또는 내부 상태(uncontrolled)로 관리합니다.
-* - 선택 상태는 `selectedId`(controlled) 또는 내부 activeId로 포커스/키보드 이동을 처리합니다.
-* - 키보드:
-*   - ArrowUp/Down: 이전/다음 가시 노드로 이동
-*   - ArrowRight: 확장 또는 첫 자식으로 이동
-*   - ArrowLeft: 축소 또는 부모로 이동
-*   - Enter/Space: 선택 처리, leaf 노드면 onClick 호출
-* - 헤더/푸터 컨트롤로 전체 펼치기/접기 UI를 옵션으로 제공합니다.
-*
-* @usage
-* <TreeView items={items} selectedId={id} onSelect={setId} />
-* <TreeView defaultExpandedIds={["a"]} expandOnLabelClick showFooterButtons={false} />
-
+ *
+ * ! TreeView
+ *
+ * * 트리 구조 데이터를 계층(레벨) 단위로 렌더링하고, 노드 확장/접기 + 단일 선택 + 키보드 탐색(roving tabIndex)을 제공하는 컴포넌트
+ * * `items`가 있으면 해당 트리를 렌더링하고, 없으면 `depth`/`breadth` 기반으로 내부에서 기본 트리를 생성하여 렌더링한다
+ * * 확장 상태(`expandedIds`)와 선택 상태(`selectedId`)는 각각 controlled / uncontrolled를 지원한다
+ * * 키보드 탐색을 위해 선택 상태와 분리된 `activeId`를 유지하며, roving tabIndex 패턴으로 포커스를 제어한다
+ *
+ * * 동작 규칙
+ *   * 확장 상태 관리
+ *     * `expandedIds`가 전달되면 controlled 모드로 동작하며 내부 상태는 사용하지 않는다
+ *     * uncontrolled 모드에서는 `defaultExpandedIds`로 초기화된 내부 state를 사용한다
+ *     * 개별 노드 확장은 Set 기반 토글로 처리되며, 결과는 항상 id 배열 형태로 반영된다
+ *     * 전체 펼치기/접기는 트리 전체 id 목록(`allIds`)을 기준으로 일괄 처리된다
+ *   * 선택 처리
+ *     * 선택 시 항상 `activeId`를 동일 id로 갱신하여 키보드 포커스 기준을 동기화한다
+ *     * controlled 모드에서는 `onSelect`만 호출하고 내부 선택 state는 변경하지 않는다
+ *     * uncontrolled 모드에서는 내부 선택 state를 갱신한 뒤 `onSelect`를 호출한다
+ *   * 클릭 이벤트 우선순위
+ *     * disabled 노드는 선택, 확장, leaf 클릭 모두 차단된다
+ *     * Row 클릭 시: 선택 처리 → (`expandOnLabelClick` && hasChildren)이면 확장 토글 → leaf 노드일 경우에만 `node.onClick` 호출
+ *     * 확장 아이콘 영역 클릭 시: 이벤트 전파를 차단하고, hasChildren인 경우에만 확장 토글을 수행한다
+ *   * 키보드 네비게이션
+ *     * ArrowUp / ArrowDown: visible 노드 리스트 기준으로 이전/다음 노드로 포커스 이동
+ *     * ArrowRight: 닫힌 부모 노드는 확장, 열린 부모 노드는 첫 번째 자식으로 이동
+ *     * ArrowLeft: 열린 부모 노드는 접기, 닫힌 노드는 부모로 이동
+ *     * Enter / Space: 선택 처리 수행, leaf 노드인 경우에만 `node.onClick` 추가 호출
+ *
+ * * 레이아웃/스타일 관련 규칙
+ *   * 루트는 `role="tree"` + `tabIndex=0`을 가지며, 포커스 진입 시 active 노드로 실제 DOM 포커스를 이동한다
+ *   * 각 노드는 `role="treeitem"`을 사용하고 roving tabIndex 패턴으로 활성 노드만 포커스를 허용한다
+ *   * 계층 표현은 `level * 16px` padding-left 규칙으로 처리된다
+ *   * active 상태는 border, selected 상태는 background로 시각 구분된다
+ *   * ChildrenGroup은 max-height / opacity / transform 트랜지션으로 확장·접기 애니메이션을 처리한다
+ *
+ * * 데이터 처리 규칙
+ *   * `items`가 없을 경우에만 `depth` / `breadth` 기반 더미 트리를 내부에서 생성한다
+ *   * 전체 노드 탐색 및 키보드 이동을 위해 트리를 flat 구조로 변환하고,
+ *     부모의 확장 상태에 따라 `isVisible`을 계산하여 실제 렌더/이동 기준으로 사용한다
+ *   * 아이콘 크기는 `size` props를 기준으로 상위(TreeView)에서 계산하여 하위 컴포넌트에 전달한다
+ *   * 클라이언트 제어 컴포넌트이며, 서버 상태 동기화 로직은 포함하지 않는다
+ *
+ * @module TreeView
+ * 계층형 트리 데이터를 키보드/마우스 인터랙션과 함께 표시하는 UI 컴포넌트
+ *
+ * @usage
+ * <TreeView
+ *   items={items}
+ *   expandedIds={expandedIds}
+ *   selectedId={selectedId}
+ *   onExpandedChange={onExpandedChange}
+ *   onSelect={onSelect}
+ * />
+ *
 /---------------------------------------------------------------------------**/
 
 const TreeView = ({
   items,
   depth = 3,
   breadth = 4,
+
   defaultExpandedIds = [],
   expandedIds,
   onExpandedChange,
+
+  defaultSelectedId = null,
   selectedId,
   onSelect,
+
   expandOnLabelClick = false,
   showHeaderControls = true,
   showFooterButtons = true,
+
+  size = "M",
   ...baseProps
 }: TreeViewProps) => {
   // * expandedIds controlled/uncontrolled 모드 여부 판단
   const isControlledExpanded = expandedIds !== undefined
   const [uncontrolledExpanded, setUncontrolledExpanded] = useState<string[]>(defaultExpandedIds)
 
-  // * selectedId controlled 값을 내부 activeId(키보드 포커스/활성)로 동기화
-  const [activeId, setActiveId] = useState<string | null>(selectedId ?? null)
-  useEffect(() => {
-    if (selectedId !== undefined) setActiveId(selectedId ?? null)
-  }, [selectedId])
+  // * selectedId controlled/uncontrolled 모드 분리
+  const isControlledSelected = selectedId !== undefined
+  const [uncontrolledSelectedId, setUncontrolledSelectedId] = useState<string | null>(
+    defaultSelectedId ?? null,
+  )
+
+  // * activeId는 roving tabIndex/키보드 포커스용 (selected 동기화)
+  const [activeId, setActiveId] = useState<string | null>(
+    (isControlledSelected ? selectedId : uncontrolledSelectedId) ?? null,
+  )
 
   const rootRef = useRef<HTMLDivElement | null>(null)
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const buildIdRef = useRef(0)
+
+  // * Icon size는 상위(TreeView)에서 계산해서 전달
+  const iconSize = useMemo(() => {
+    if (size === "S") return 12
+    if (size === "L") return 16
+    return 14
+  }, [size])
+
+  const chevronSize = useMemo(() => {
+    if (size === "S") return 12
+    if (size === "L") return 16
+    return 14
+  }, [size])
 
   // * depth/breadth 기반 기본 트리 데이터 생성 (items 없을 때만)
   const builtItems = useMemo<TreeNodeType[]>(() => {
@@ -133,7 +186,6 @@ const TreeView = ({
           onClick: hasChildren
             ? undefined
             : (clickedId) => {
-                // no-op default
                 void clickedId
               },
         }
@@ -175,6 +227,14 @@ const TreeView = ({
   // * 전체 펼치기/접기
   const expandAll = useCallback(() => setExpanded(allIds), [allIds, setExpanded])
   const collapseAll = useCallback(() => setExpanded([]), [setExpanded])
+
+  // * 헤더 ToggleButton selectedValue는 항상 string을 보장 (undefined 금지)
+  const headerSelectedValue = useMemo<"expand" | "collapse">(() => {
+    if (!showHeaderControls) return "expand"
+    if (expandedList.length === 0) return "collapse"
+    if (expandedList.length === allIds.length && allIds.length > 0) return "expand"
+    return "expand"
+  }, [expandedList.length, allIds.length, showHeaderControls])
 
   // * 단일 노드 expanded 토글
   const toggleExpanded = useCallback(
@@ -224,6 +284,8 @@ const TreeView = ({
   // * 화면에 표시되는 노드만 추출 (키보드 Up/Down 이동 기준)
   const visibleFlat = useMemo(() => flat.filter((n) => n.isVisible), [flat])
 
+  const selectedValue = isControlledSelected ? (selectedId ?? null) : uncontrolledSelectedId
+
   // * 특정 노드로 포커스 이동
   const focusItem = useCallback((id: string | null) => {
     if (!id) return
@@ -242,6 +304,12 @@ const TreeView = ({
     if (!activeId) return
     focusItem(activeId)
   }, [activeId, focusItem])
+
+  // * selected 변경 시 activeId 동기화
+  useEffect(() => {
+    const nextSelected = selectedValue ?? null
+    if (nextSelected !== null) setActiveId(nextSelected)
+  }, [selectedValue])
 
   // * activeId의 visibleFlat index 계산
   const getFlatIndex = (id: string | null) => {
@@ -271,10 +339,14 @@ const TreeView = ({
     return null
   }
 
-  // * 노드 선택 처리 (activeId + 외부 콜백)
+  // * 노드 선택 처리 (selected + activeId + 외부 콜백)
   const handleSelect = (id: string, node: TreeNodeType) => {
     setActiveId(id)
-    onSelect?.(id, node)
+    if (isControlledSelected) onSelect?.(id, node)
+    else {
+      setUncontrolledSelectedId(id)
+      onSelect?.(id, node)
+    }
   }
 
   // * Arrow/Enter 기반 트리 키보드 네비게이션
@@ -335,6 +407,14 @@ const TreeView = ({
     }
   }
 
+  const onRootFocus = () => {
+    if (!activeId && visibleFlat.length) {
+      setActiveId(visibleFlat[0].id)
+      return
+    }
+    focusItem(activeId)
+  }
+
   // * label 렌더링 (string이면 Typography 적용)
   const renderLabel = (label: ReactNode, isSelected: boolean, isDisabled: boolean) => {
     if (typeof label === "string") {
@@ -361,7 +441,7 @@ const TreeView = ({
     return nodes.map((node) => {
       const hasChildren = !!node.children?.length
       const isExpanded = expandedSet.has(node.id)
-      const isSelected = !!selectedId && selectedId === node.id
+      const isSelected = !!selectedValue && selectedValue === node.id
       const isActive = activeId === node.id
       const isDisabled = !!node.disabled
 
@@ -389,6 +469,8 @@ const TreeView = ({
             role="treeitem"
             aria-expanded={hasChildren ? isExpanded : undefined}
             aria-selected={isSelected ? true : undefined}
+            aria-disabled={isDisabled ? true : undefined}
+            aria-level={level + 1}
             tabIndex={isActive ? 0 : -1}
             $selected={isSelected}
             $active={isActive}
@@ -409,13 +491,13 @@ const TreeView = ({
               aria-label={isExpanded ? "collapse" : "expand"}
             >
               {hasChildren ? (
-                <Icon name={isExpanded ? "ArrowDown" : "ArrowRight"} size={12} />
+                <Icon name={isExpanded ? "ArrowDown" : "ArrowRight"} size={chevronSize} />
               ) : null}
             </ExpandHitArea>
 
             {node.icon ? (
               <Flex align="center">
-                <Icon name={node.icon} size={12} />
+                <Icon name={node.icon} size={iconSize} />
               </Flex>
             ) : null}
 
@@ -431,7 +513,14 @@ const TreeView = ({
   }
 
   return (
-    <TreeRoot ref={rootRef} role="tree" tabIndex={-1} onKeyDown={onKeyDown} {...baseProps}>
+    <TreeRoot
+      ref={rootRef}
+      role="tree"
+      tabIndex={0}
+      onFocus={onRootFocus}
+      onKeyDown={onKeyDown}
+      {...baseProps}
+    >
       {showHeaderControls ? (
         <Flex width={"100%"} mb={8} justify="flex-end">
           <ToggleButton
@@ -439,7 +528,7 @@ const TreeView = ({
               { label: "Expand all", value: "expand" },
               { label: "Collapse all", value: "collapse" },
             ]}
-            selectedValue={"expand"}
+            selectedValue={headerSelectedValue}
             onClick={(v) => {
               if (v === "expand") expandAll()
               if (v === "collapse") collapseAll()

@@ -1,253 +1,307 @@
-import { useState } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
-import TreeView from "./TreeView"
-import type { TreeNodeType } from "./TreeView"
-import Box from "../Box/Box"
+import React, { useMemo, useState } from "react"
+import TreeView, { TreeNodeType, TreeViewProps } from "./TreeView"
 import Flex from "../Flex/Flex"
-import Button from "../Button/Button"
+import { Typography } from "../Typography/Typography"
 import { theme } from "../../tokens/theme"
 
-/* ------------------------------------------------------------------ */
-/* meta */
-/* ------------------------------------------------------------------ */
+const buildSampleItems = (): TreeNodeType[] => [
+  {
+    id: "root-1",
+    label: "Root 1",
+    icon: "Folder",
+    children: [
+      {
+        id: "root-1-1",
+        label: "Leaf 1-1 (clickable)",
+        icon: "File",
+        onClick: () => {
+          // story no-op
+        },
+      },
+      {
+        id: "root-1-2",
+        label: "Branch 1-2",
+        icon: "Folder",
+        children: [
+          {
+            id: "root-1-2-1",
+            label: "Leaf 1-2-1",
+            icon: "File",
+            onClick: () => {
+              // story no-op
+            },
+          },
+          {
+            id: "root-1-2-2",
+            label: "Leaf 1-2-2 (disabled)",
+            icon: "File",
+            disabled: true,
+            onClick: () => {
+              // story no-op
+            },
+          },
+        ],
+      },
+      {
+        id: "root-1-3",
+        label: "Leaf 1-3",
+        icon: "File",
+        onClick: () => {
+          // story no-op
+        },
+      },
+    ],
+  },
+  {
+    id: "root-2",
+    label: "Root 2 (disabled)",
+    icon: "Folder",
+    disabled: true,
+    children: [
+      {
+        id: "root-2-1",
+        label: "Leaf 2-1",
+        icon: "File",
+        onClick: () => {
+          // story no-op
+        },
+      },
+    ],
+  },
+  {
+    id: "root-3",
+    label: (
+      <Typography
+        variant="b1Bold"
+        color={theme.colors.text.primary}
+        text={"Custom ReactNode Label"}
+        sx={{ userSelect: "none" }}
+      />
+    ),
+    icon: "Folder",
+    children: [
+      {
+        id: "root-3-1",
+        label: "Leaf 3-1",
+        icon: "File",
+        onClick: () => {
+          // story no-op
+        },
+      },
+    ],
+  },
+]
 
-const meta: Meta<typeof TreeView> = {
+type StoryArgs = TreeViewProps
+
+const meta: Meta<StoryArgs> = {
   title: "Components/TreeView",
   component: TreeView,
   argTypes: {
-    items: { control: false },
-    depth: { control: { type: "number", min: 1, step: 1 } },
-    breadth: { control: { type: "number", min: 1, step: 1 } },
-    defaultExpandedIds: { control: false },
-    expandedIds: { control: false },
+    items: { control: "object" },
+    depth: { control: "number" },
+    breadth: { control: "number" },
+
+    defaultExpandedIds: { control: "object" },
+    expandedIds: { control: "object" },
     onExpandedChange: { control: false },
-    selectedId: { control: false },
+
+    defaultSelectedId: { control: "text" },
+    selectedId: { control: "text" },
     onSelect: { control: false },
+
     expandOnLabelClick: { control: "boolean" },
     showHeaderControls: { control: "boolean" },
     showFooterButtons: { control: "boolean" },
+
+    size: { control: "radio", options: ["S", "M", "L"] },
+
+    p: { control: "text" },
+    px: { control: "text" },
+    py: { control: "text" },
+    pt: { control: "text" },
+    pr: { control: "text" },
+    pb: { control: "text" },
+    pl: { control: "text" },
+
+    m: { control: "text" },
+    mx: { control: "text" },
+    my: { control: "text" },
+    mt: { control: "text" },
+    mr: { control: "text" },
+    mb: { control: "text" },
+    ml: { control: "text" },
+
+    width: { control: "text" },
+    height: { control: "text" },
+    bgColor: { control: "text" },
+    sx: { control: "object" },
   },
   args: {
+    items: buildSampleItems(),
     depth: 3,
     breadth: 4,
+
+    defaultExpandedIds: ["root-1"],
+    expandedIds: undefined,
+
+    defaultSelectedId: null,
+    selectedId: undefined,
+
     expandOnLabelClick: false,
     showHeaderControls: true,
     showFooterButtons: true,
+
+    size: "M",
+
+    width: "100%",
   },
-  decorators: [
-    (Story) => (
-      <Box p={24} bgColor={theme.colors.background.default} width="100%">
-        <Story />
-      </Box>
-    ),
-  ],
 }
 
 export default meta
 
-type Story = StoryObj<typeof TreeView>
-
-/* ------------------------------------------------------------------ */
-/* stories */
-/* ------------------------------------------------------------------ */
+type Story = StoryObj<StoryArgs>
 
 export const Playground: Story = {
   render: (args) => {
-    const [expandedIds, setExpandedIds] = useState<string[]>([])
-    const [selectedId, setSelectedId] = useState<string | null>(null)
-    const [selectedNode, setSelectedNode] = useState<TreeNodeType | null>(null)
+    const [expandedIds, setExpandedIds] = useState<string[]>(args.defaultExpandedIds ?? [])
+    const [selectedId, setSelectedId] = useState<string | null>(args.defaultSelectedId ?? null)
 
-    // * TreeViewProps가 HTMLAttributes를 합치며 onSelect가 ReactEventHandler와 교차 타입이 된 케이스 대응
-    // * (event) 시그니처도 만족하면서 내부에서 (id, node) 형태로 사용 가능하도록 가변 인수로 처리
-    const handleSelect = (...argsAny: any[]) => {
-      const idArg = argsAny[0] as string
-      const nodeArg = argsAny[1] as TreeNodeType
-      if (typeof idArg === "string") setSelectedId(idArg)
-      if (nodeArg) setSelectedNode(nodeArg)
-    }
+    const items = useMemo(() => args.items, [args.items])
 
     return (
-      <Flex direction="column" gap={16} width="100%">
-        <Flex gap={8} align="center" wrap="wrap">
-          <Button
-            text=" Clear expanded (External)"
-            variant="outlined"
-            onClick={() => setExpandedIds([])}
+      <Flex direction="column" gap={12} width="80%">
+        <Flex direction="column" gap={6}>
+          <Typography
+            variant="b1Bold"
+            color={theme.colors.text.secondary}
+            text="Playground (controlled expanded/selected via useState)"
           />
-
-          <Button
-            text="Clear selection"
-            variant="outlined"
-            onClick={() => {
-              setSelectedId(null)
-              setSelectedNode(null)
-            }}
+          <Typography
+            variant="b3Regular"
+            color={theme.colors.text.tertiary}
+            text={`selectedId: ${selectedId ?? "null"} | expandedIds: [${expandedIds.join(", ")}]`}
           />
         </Flex>
 
         <TreeView
           {...args}
+          items={items}
           expandedIds={expandedIds}
           onExpandedChange={setExpandedIds}
           selectedId={selectedId}
-          onSelect={handleSelect as any}
+          onSelect={(id) => setSelectedId(id)}
         />
-
-        <Box
-          p={12}
-          bgColor={theme.colors.grayscale[50]}
-          sx={{
-            border: `1px solid ${theme.colors.border.default}`,
-            borderRadius: theme.borderRadius[8],
-          }}
-        >
-          Selected: {selectedId ?? "-"} / Expanded: {expandedIds.length}
-        </Box>
-
-        <Box
-          p={12}
-          sx={{
-            border: `1px solid ${theme.colors.border.default}`,
-            borderRadius: theme.borderRadius[8],
-            wordBreak: "break-word",
-          }}
-        >
-          {selectedNode ? (
-            <>
-              <div>Node id: {selectedNode.id}</div>
-              <div>Disabled: {selectedNode.disabled ? "true" : "false"}</div>
-              <div>Has children: {selectedNode.children?.length ? "true" : "false"}</div>
-              <div>Leaf onClick: {selectedNode.onClick ? "true" : "false"}</div>
-            </>
-          ) : (
-            "No node selected"
-          )}
-        </Box>
       </Flex>
     )
   },
 }
 
-export const UncontrolledExpanded: Story = {
-  args: {
-    depth: 4,
-    breadth: 3,
-    expandOnLabelClick: true,
-    showHeaderControls: true,
-    showFooterButtons: true,
-    defaultExpandedIds: [],
-  },
-  render: (args) => {
-    const [selectedId, setSelectedId] = useState<string | null>(null)
+export const Variants: Story = {
+  render: () => {
+    const items = useMemo(() => buildSampleItems(), [])
 
-    const handleSelect = (...argsAny: any[]) => {
-      const idArg = argsAny[0] as string
-      if (typeof idArg === "string") setSelectedId(idArg)
-    }
+    const [expandedA, setExpandedA] = useState<string[]>(["root-1"])
+    const [selectedA, setSelectedA] = useState<string | null>("root-1-1")
+
+    const [expandedB, setExpandedB] = useState<string[]>([])
+    const [selectedB, setSelectedB] = useState<string | null>(null)
+
+    const [expandedC, setExpandedC] = useState<string[]>(["root-1", "root-1-2", "root-3"])
+    const [selectedC, setSelectedC] = useState<string | null>("root-3-1")
 
     return (
-      <Flex direction="column" gap={16} width="100%">
-        <TreeView {...args} selectedId={selectedId} onSelect={handleSelect as any} />
-
-        <Box
-          p={12}
-          bgColor={theme.colors.grayscale[50]}
-          sx={{
-            border: `1px solid ${theme.colors.border.default}`,
-            borderRadius: theme.borderRadius[8],
-          }}
+      <Flex direction="column" gap={18} width="90%">
+        <Section
+          title="M / header+footer / label click does NOT expand"
+          description={`controlled expanded+selected (interactive)`}
         >
-          Selected: {selectedId ?? "-"}
-        </Box>
+          <TreeView
+            items={items}
+            size="M"
+            expandOnLabelClick={false}
+            showHeaderControls
+            showFooterButtons
+            expandedIds={expandedA}
+            onExpandedChange={setExpandedA}
+            selectedId={selectedA}
+            onSelect={(id) => setSelectedA(id)}
+          />
+        </Section>
+
+        <Section
+          title="S / header only / label click expands"
+          description={`controlled expanded+selected (interactive)`}
+        >
+          <TreeView
+            items={items}
+            size="S"
+            expandOnLabelClick
+            showHeaderControls
+            showFooterButtons={false}
+            expandedIds={expandedB}
+            onExpandedChange={setExpandedB}
+            selectedId={selectedB}
+            onSelect={(id) => setSelectedB(id)}
+          />
+        </Section>
+
+        <Section
+          title="L / footer only / mixed expanded state"
+          description={`controlled expanded+selected (interactive)`}
+        >
+          <TreeView
+            items={items}
+            size="L"
+            expandOnLabelClick={false}
+            showHeaderControls={false}
+            showFooterButtons
+            expandedIds={expandedC}
+            onExpandedChange={setExpandedC}
+            selectedId={selectedC}
+            onSelect={(id) => setSelectedC(id)}
+          />
+        </Section>
+
+        <Section
+          title="Uncontrolled (defaultExpandedIds/defaultSelectedId)"
+          description={`uncontrolled selection/expanded (interactive)`}
+        >
+          <TreeView
+            items={items}
+            size="M"
+            expandOnLabelClick
+            showHeaderControls
+            showFooterButtons
+            defaultExpandedIds={["root-1", "root-1-2"]}
+            defaultSelectedId={"root-1-2-1"}
+            onSelect={() => {
+              // story no-op
+            }}
+          />
+        </Section>
       </Flex>
     )
   },
 }
 
-export const CustomItems: Story = {
-  args: {
-    items: [
-      {
-        id: "root",
-        label: "Root",
-        icon: "Folder",
-        children: [
-          {
-            id: "folder-a",
-            label: "Folder A",
-            icon: "Folder",
-            children: [
-              {
-                id: "file-a-1",
-                label: "File A-1",
-                icon: "File",
-                onClick: () => void 0,
-              },
-              {
-                id: "file-a-2",
-                label: "File A-2 (disabled)",
-                icon: "File",
-                disabled: true,
-                onClick: () => void 0,
-              },
-            ],
-          },
-          {
-            id: "folder-b",
-            label: "Folder B",
-            icon: "Folder",
-            children: [
-              {
-                id: "file-b-1",
-                label: "File B-1",
-                icon: "File",
-                onClick: () => void 0,
-              },
-              {
-                id: "file-b-2",
-                label: "File B-2",
-                icon: "File",
-                onClick: () => void 0,
-              },
-            ],
-          },
-        ],
-      },
-    ] as any,
-    expandOnLabelClick: false,
-    showHeaderControls: true,
-    showFooterButtons: true,
-  },
-  render: (args) => {
-    const [expandedIds, setExpandedIds] = useState<string[]>(["root", "folder-a"])
-    const [selectedId, setSelectedId] = useState<string | null>("file-a-1")
-
-    const handleSelect = (...argsAny: any[]) => {
-      const idArg = argsAny[0] as string
-      if (typeof idArg === "string") setSelectedId(idArg)
-    }
-
-    return (
-      <Flex direction="column" gap={16} width="100%">
-        <TreeView
-          {...args}
-          expandedIds={expandedIds}
-          onExpandedChange={setExpandedIds}
-          selectedId={selectedId}
-          onSelect={handleSelect as any}
-        />
-
-        <Box
-          p={12}
-          bgColor={theme.colors.grayscale[50]}
-          sx={{
-            border: `1px solid ${theme.colors.border.default}`,
-            borderRadius: theme.borderRadius[8],
-          }}
-        >
-          Selected: {selectedId ?? "-"} / Expanded: {expandedIds.length}
-        </Box>
+const Section = ({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description: string
+  children: React.ReactNode
+}) => {
+  return (
+    <Flex direction="column" gap={8} width="100%">
+      <Flex direction="column" gap={4}>
+        <Typography variant="b1Bold" color={theme.colors.text.primary} text={title} />
+        <Typography variant="b3Regular" color={theme.colors.text.tertiary} text={description} />
       </Flex>
-    )
-  },
+      {children}
+    </Flex>
+  )
 }

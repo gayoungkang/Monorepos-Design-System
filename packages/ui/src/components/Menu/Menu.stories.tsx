@@ -1,151 +1,126 @@
 import type { Meta, StoryObj } from "@storybook/react"
-import { ThemeProvider } from "styled-components"
-import Menu, { type MenuProps } from "./Menu"
-import { theme } from "../../tokens/theme"
+import React, { useMemo, useState } from "react"
+import Menu from "./Menu"
+import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
+import { Typography } from "../Typography/Typography"
+import Button from "../Button/Button"
 import { IconNames } from "../Icon/icon-loader"
 
-/* -------------------------------------------------------------------------- */
-/*                                  Meta 설정                                  */
-/* -------------------------------------------------------------------------- */
-
-const meta: Meta<MenuProps> = {
-  title: "components/Menu",
+const meta: Meta<typeof Menu> = {
+  title: "Components/Menu",
   component: Menu,
-
-  args: {
-    text: "메뉴 아이템",
-    size: "M",
-    disabled: false,
-    selected: false,
-  },
-
+  parameters: { layout: "padded" },
   argTypes: {
-    /* ---------------------------------- UI ---------------------------------- */
-    text: { control: "text", description: "메뉴 텍스트" },
-    size: {
-      control: "radio",
-      options: ["S", "M", "L"],
-      description: "메뉴 크기",
-    },
-    selected: { control: "boolean", description: "선택 상태" },
-    disabled: { control: "boolean", description: "비활성화 여부" },
-
-    startIcon: {
-      control: "text",
-      description: "시작 아이콘(IconName)",
-    },
-    endIcon: {
-      control: "text",
-      description: "끝 아이콘(IconName)",
-    },
-
-    onClick: { control: false },
-
-    /* -------------------------------- BaseMixinProps ------------------------------- */
-    p: { control: "text" },
-    pt: { control: "text" },
-    pr: { control: "text" },
-    pb: { control: "text" },
-    pl: { control: "text" },
-
-    px: { control: "text" },
-    py: { control: "text" },
-
-    m: { control: "text" },
-    mt: { control: "text" },
-    mr: { control: "text" },
-    mb: { control: "text" },
-    ml: { control: "text" },
-
-    mx: { control: "text" },
-    my: { control: "text" },
-
-    width: { control: "text" },
-    height: { control: "text" },
-    bgColor: { control: "text" },
-
-    sx: { control: "object" },
+    onClick: { action: "onClick" },
+    iconProps: { control: false },
+    typographyProps: { control: false },
   },
-
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <div style={{ width: "240px" }}>
-          <Story />
-        </div>
-      </ThemeProvider>
-    ),
-  ],
-
-  tags: ["autodocs"],
-}
-
-export default meta
-
-type Story = StoryObj<MenuProps>
-
-/* -------------------------------------------------------------------------- */
-/*                                   Stories                                   */
-/* -------------------------------------------------------------------------- */
-
-/* --------------------------------- Default --------------------------------- */
-export const Default: Story = {
   args: {
-    text: "기본 메뉴",
-  },
-}
-
-/* --------------------------------- Selected -------------------------------- */
-export const Selected: Story = {
-  args: {
-    text: "선택됨",
-    selected: true,
-  },
-}
-
-/* -------------------------------- Disabled --------------------------------- */
-export const Disabled: Story = {
-  args: {
-    text: "비활성 메뉴",
-    disabled: true,
-  },
-}
-
-/* ------------------------------ Icon Variants ------------------------------ */
-export const Icons: Story = {
-  render: () => (
-    <Flex direction="column" gap="12px">
-      <Menu text="start Icon" startIcon={IconNames[0]} />
-      <Menu text="end Icon" endIcon={IconNames[1]} />
-      <Menu text="start Icon + end Icon" startIcon={IconNames[0]} endIcon={IconNames[0]} />
-      <Menu
-        text="start Icon + end Icon + selected"
-        startIcon={IconNames[0]}
-        endIcon={IconNames[0]}
-        selected
-      />
-    </Flex>
-  ),
-}
-
-/* ------------------------------ Size Variants ------------------------------ */
-export const Sizes: Story = {
-  render: () => (
-    <Flex direction="column" gap="12px">
-      <Menu text="Small 메뉴" size="S" />
-      <Menu text="Medium 메뉴" size="M" />
-      <Menu text="Large 메뉴" size="L" />
-    </Flex>
-  ),
-}
-
-/* ------------------------------ Playground --------------------------------- */
-export const Playground: Story = {
-  args: {
-    text: "플레이그라운드 메뉴",
+    text: "Menu Item",
     size: "M",
-    selected: false,
     disabled: false,
+    selected: false,
+    startIcon: IconNames[0],
+    endIcon: IconNames[0],
+  },
+}
+export default meta
+type Story = StoryObj<typeof Menu>
+
+export const Playground: Story = {
+  render: (args) => {
+    const [selected, setSelected] = useState<boolean>(!!args.selected)
+    const [disabled, setDisabled] = useState<boolean>(!!args.disabled)
+    const [size, setSize] = useState<"S" | "M" | "L">((args.size as any) ?? "M")
+    const [log, setLog] = useState<string>("")
+
+    return (
+      <Box>
+        <Typography variant="h3" text="Menu Playground" mb="12px" />
+
+        <Flex gap="8px" align="center" wrap="wrap" mb="12px">
+          <Button
+            text={`selected: ${selected ? "true" : "false"}`}
+            variant="outlined"
+            color="normal"
+            onClick={() => setSelected((p) => !p)}
+          />
+          <Button
+            text={`disabled: ${disabled ? "true" : "false"}`}
+            variant="outlined"
+            color="normal"
+            onClick={() => setDisabled((p) => !p)}
+          />
+          <Button text="size: S" variant="outlined" color="normal" onClick={() => setSize("S")} />
+          <Button text="size: M" variant="outlined" color="normal" onClick={() => setSize("M")} />
+          <Button text="size: L" variant="outlined" color="normal" onClick={() => setSize("L")} />
+        </Flex>
+
+        <Box sx={{ width: "360px", border: "1px solid #eee" }}>
+          <Menu
+            {...args}
+            size={size}
+            disabled={disabled}
+            selected={selected}
+            onClick={(e) => {
+              args.onClick?.(e as any)
+              setLog(`clicked at ${new Date().toLocaleTimeString()}`)
+              setSelected((p) => !p)
+            }}
+          />
+        </Box>
+
+        <Box mt="10px">
+          <Typography variant="b3Regular" color="#666666" text={`log: ${log || "-"}`} />
+        </Box>
+      </Box>
+    )
+  },
+}
+
+export const AllStates: Story = {
+  render: () => {
+    const cases = useMemo(
+      () => [
+        { title: "Size S", size: "S" as const },
+        { title: "Size M", size: "M" as const },
+        { title: "Size L", size: "L" as const },
+      ],
+      [],
+    )
+
+    return (
+      <Box>
+        <Typography variant="h3" text="Menu All States" mb="12px" />
+
+        <Flex gap="16px" wrap="wrap">
+          {cases.map((c) => (
+            <Box key={c.title} sx={{ width: "360px", border: "1px solid #eee" }}>
+              <Box p="10px">
+                <Typography variant="b2Regular" text={c.title} color="#666666" />
+              </Box>
+
+              <Menu text="Default" size={c.size} startIcon={IconNames[0]} endIcon={IconNames[0]} />
+              <Menu
+                text="Selected"
+                size={c.size}
+                selected
+                startIcon={IconNames[0]}
+                endIcon={IconNames[0]}
+              />
+              <Menu
+                text="Disabled"
+                size={c.size}
+                disabled
+                startIcon={IconNames[0]}
+                endIcon={IconNames[0]}
+              />
+              <Menu text="No icons" size={c.size} onClick={() => {}} />
+            </Box>
+          ))}
+        </Flex>
+      </Box>
+    )
   },
 }
