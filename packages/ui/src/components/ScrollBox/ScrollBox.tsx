@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react"
 import { forwardRef } from "react"
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
+import { BaseMixin, type BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import { cssValue } from "../../utils/string"
 

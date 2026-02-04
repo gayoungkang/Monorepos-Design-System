@@ -1,7 +1,6 @@
-import { ReactNode } from "react"
 import { create } from "zustand"
-import { ButtonProps } from "../components/Button/Button"
-import { BaseMixinProps } from "../tokens/baseMixin"
+import type { ButtonProps } from "../components/Button/Button"
+import type { BaseMixinProps } from "../tokens/baseMixin"
 
 export type AlertType = "confirm" | "alert"
 

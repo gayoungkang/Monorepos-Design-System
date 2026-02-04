@@ -1,4 +1,5 @@
-import { JSX, useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import type { JSX } from "react"
 import Pagination from "../Pagination/Pagination"
 import { Typography } from "../Typography/Typography"
 import type {
@@ -21,7 +22,6 @@ import TableSummaryRow from "./_internal/TableSummaryRow"
 import Box from "../Box/Box"
 import { theme } from "../../tokens/theme"
 import type { ExportType } from "./_internal/TableExport"
-
 import { clamp, clampRowsPerPage, parseWidthToPx } from "./@utils/table"
 import TableToolBar from "./_internal/TableToolbar"
 

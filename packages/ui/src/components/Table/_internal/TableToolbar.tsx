@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react"
+import { type ReactNode, useState } from "react"
 import Flex from "../../Flex/Flex"
 import IconButton from "../../IconButton/IconButton"
 import Divider from "../../Divider/Divider"

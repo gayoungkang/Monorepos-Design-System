@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import { SnackBarProps } from "../components/SnackBar/SnackBar"
+import type { SnackBarProps } from "../components/SnackBar/SnackBar"
 
 type EnqueueOptions = Omit<SnackBarProps, "id" | "message">
 

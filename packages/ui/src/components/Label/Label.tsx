@@ -1,8 +1,9 @@
 import { useMemo } from "react"
 import { useTheme } from "styled-components"
-import { BaseMixinProps } from "../../tokens/baseMixin"
+import type { BaseMixinProps } from "../../tokens/baseMixin"
 import Flex from "../Flex/Flex"
-import { Typography, TypographyProps } from "../Typography/Typography"
+import { Typography } from "../Typography/Typography"
+import type { TypographyProps } from "../Typography/Typography"
 
 export type LabelProps = BaseMixinProps & {
   text: string

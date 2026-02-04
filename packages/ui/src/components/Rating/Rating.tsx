@@ -1,11 +1,14 @@
-import { forwardRef, KeyboardEvent, MouseEvent, ReactNode, useId, useMemo, useState } from "react"
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
+import { forwardRef, useId, useMemo, useState } from "react"
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react"
+import { BaseMixin } from "../../tokens/baseMixin"
+import type { BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import Flex from "../Flex/Flex"
-import Label, { LabelProps } from "../Label/Label"
-import { AxisPlacement } from "../../types"
+import Label from "../Label/Label"
+import type { LabelProps } from "../Label/Label"
+import type { AxisPlacement } from "../../types"
 import Icon from "../Icon/Icon"
-import { IconName } from "../Icon/icon-loader"
+import type { IconName } from "../Icon/icon-loader"
 import { theme } from "../../tokens/theme"
 
 type RatingValue = number | null
@@ -17,8 +20,6 @@ export type RatingProps = BaseMixinProps & {
   labelProps?: LabelProps
 
   labelPlacement?: AxisPlacement
-  /** @deprecated labelPlacement 사용 */
-  LabelPlacement?: AxisPlacement
 
   max?: number
   precision?: number
@@ -156,7 +157,6 @@ const Rating = forwardRef<HTMLDivElement, RatingProps>(
       label,
       labelProps,
       labelPlacement,
-      LabelPlacement,
       max = 5,
       precision = 1,
       disabled = false,
@@ -172,7 +172,7 @@ const Rating = forwardRef<HTMLDivElement, RatingProps>(
   ) => {
     const uid = useId()
 
-    const placement = labelPlacement ?? LabelPlacement ?? "top"
+    const placement = labelPlacement ?? "top"
     const axis = useMemo(() => normalizeAxisPlacement(placement), [placement])
     const labelAlign = useMemo(() => getPlacementAlign(placement), [placement])
     const isHorizontalLabel = axis === "left" || axis === "right"

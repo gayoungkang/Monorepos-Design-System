@@ -1,5 +1,4 @@
 import React, {
-  ReactNode,
   forwardRef,
   useCallback,
   useEffect,
@@ -8,11 +7,13 @@ import React, {
   useRef,
   useState,
 } from "react"
-import { DirectionType } from "../../types"
+import type { ReactNode } from "react"
+import type { DirectionType } from "../../types"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
 import { theme } from "../../tokens/theme"
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
+import { BaseMixin } from "../../tokens/baseMixin"
+import type { BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import { RESIZABLEPANEL } from "../../types/zindex"
 

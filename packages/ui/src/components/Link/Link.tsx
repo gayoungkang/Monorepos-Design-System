@@ -1,8 +1,9 @@
-import { AnchorHTMLAttributes, ReactNode } from "react"
 import { useTheme } from "styled-components"
-import { BaseMixinProps } from "../../tokens/baseMixin"
+import type { AnchorHTMLAttributes, ReactNode } from "react"
+import type { BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
-import { Typography, TypographyProps } from "../Typography/Typography"
+import { Typography } from "../Typography/Typography"
+import type { TypographyProps } from "../Typography/Typography"
 
 export type LinkProps = BaseMixinProps &
   AnchorHTMLAttributes<HTMLAnchorElement> & {

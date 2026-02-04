@@ -1,10 +1,11 @@
 import { css } from "styled-components"
-import { BaseMixinProps } from "../../tokens/baseMixin"
+import type { BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import { theme } from "../../tokens/theme"
-import { ColorUiType, AxisPlacement, SizeUiType } from "../../types"
+import type { ColorUiType, AxisPlacement, SizeUiType } from "../../types"
 import Flex from "../Flex/Flex"
-import { Typography, TypographyProps } from "../Typography/Typography"
+import { Typography } from "../Typography/Typography"
+import type { TypographyProps } from "../Typography/Typography"
 
 export type SwitchButtonProps = BaseMixinProps & {
   checked: boolean

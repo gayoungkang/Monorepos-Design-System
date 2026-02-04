@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { styled } from "../../tokens/customStyled"
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
+import { BaseMixin, type BaseMixinProps } from "../../tokens/baseMixin"
 import { theme } from "../../tokens/theme"
 import Icon from "../Icon/Icon"
 import Label from "../Label/Label"

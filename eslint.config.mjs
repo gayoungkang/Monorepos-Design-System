@@ -45,6 +45,31 @@ export default tseslint.config(
     rules: {
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@acme/ui/**"],
+              message: "Deep import 금지. '@acme/ui' 공개 API만 사용하세요.",
+            },
+          ],
+          paths: [
+            {
+              name: "styled-components",
+              message:
+                "apps/*에서 styled-components 직접 사용 금지(또는 제한). UI는 @acme/ui로 이동.",
+            },
+          ],
+        },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Literal[value=/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/]",
+          message: "임의 HEX 컬러 금지. theme/tokens를 사용하세요.",
+        },
+      ],
     },
   },
 )

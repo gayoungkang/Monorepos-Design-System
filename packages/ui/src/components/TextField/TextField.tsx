@@ -1,27 +1,25 @@
-import {
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react"
+import type {
   ChangeEvent,
   FocusEventHandler,
-  forwardRef,
   HTMLInputTypeAttribute,
   KeyboardEvent,
   MouseEvent,
   Ref,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
 } from "react"
-import { BaseMixinProps } from "../../tokens/baseMixin"
-import { AxisPlacement, SizeUiType, VariantFormType } from "../../types"
+import type { BaseMixinProps } from "../../tokens/baseMixin"
+import type { AxisPlacement, SizeUiType, VariantFormType } from "../../types"
 import Flex from "../Flex/Flex"
-import Label, { LabelProps } from "../Label/Label"
+import Label from "../Label/Label"
+import type { LabelProps } from "../Label/Label"
 import Box from "../Box/Box"
-import Icon, { IconProps } from "../Icon/Icon"
+import Icon from "../Icon/Icon"
+import type { IconProps } from "../Icon/Icon"
 import IconButton from "../IconButton/IconButton"
 import HelperText from "../HelperText/HelperText"
 import { styled } from "../../tokens/customStyled"
 import { theme } from "../../tokens/theme"
-import { IconName } from "../Icon/icon-loader"
+import type { IconName } from "../Icon/icon-loader"
 import { css } from "styled-components"
 
 export type TextFieldProps = BaseMixinProps & {

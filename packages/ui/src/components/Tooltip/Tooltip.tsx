@@ -1,7 +1,8 @@
-import { ReactNode, useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import type { ReactNode } from "react"
 import { styled } from "../../tokens/customStyled"
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
-import { AxisPlacement } from "../../types/placement"
+import { BaseMixin, type BaseMixinProps } from "../../tokens/baseMixin"
+import type { AxisPlacement } from "../../types/placement"
 
 export type TooltipProps = BaseMixinProps & {
   children: ReactNode

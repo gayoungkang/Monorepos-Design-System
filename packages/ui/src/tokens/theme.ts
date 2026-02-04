@@ -1,4 +1,5 @@
-import { css, DefaultTheme } from "styled-components"
+import { css } from "styled-components"
+import type { DefaultTheme } from "styled-components"
 
 const colors = {
   grayscale: {

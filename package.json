@@ -13,6 +13,8 @@
     "build:ui": "yarn workspace @acme/ui build",
     "storybook": "yarn workspace @acme/ui storybook",
     "storybook:build": "yarn workspace @acme/ui storybook:build",
+    "storybook:test": "yarn workspace @acme/ui storybook:test",
+    "storybook:ci": "yarn storybook:build && yarn storybook:test",
     "lint": "eslint . --ext ts,tsx --fix",
     "format": "prettier . --write",
     "prepare": "husky install",

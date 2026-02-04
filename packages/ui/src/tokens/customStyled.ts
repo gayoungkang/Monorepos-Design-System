@@ -64,7 +64,10 @@ const isStyleProp = (prop: string) => {
   return false
 }
 
-const shouldForwardProp = (prop: string) => !isStyleProp(prop)
+export const shouldForwardProp = (prop: string) => {
+  if (prop.startsWith("$")) return false
+  return true
+}
 
 // * Proxy로 감싼 커스텀 styled
 const customStyled = new Proxy(styled, {

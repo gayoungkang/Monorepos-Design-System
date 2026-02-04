@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react"
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
+import { BaseMixin, type BaseMixinProps } from "../../tokens/baseMixin"
 import { theme } from "../../tokens/theme"
 import { styled } from "../../tokens/customStyled"
 import { css } from "styled-components"
 import Flex from "../Flex/Flex"
 import { Typography } from "../Typography/Typography"
-import { ColorUiType, SizeUiType } from "../../types"
+import type { ColorUiType, SizeUiType } from "../../types"
 import IconButton from "../IconButton/IconButton"
 
 export type TabOptionsType = {

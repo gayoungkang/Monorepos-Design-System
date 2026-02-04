@@ -1,7 +1,7 @@
 import type React from "react"
-import { JSX, ReactNode } from "react"
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
-import { theme, TypographyVariant, typographyVariants } from "../../tokens/theme"
+import type { JSX, ReactNode } from "react"
+import { BaseMixin, type BaseMixinProps } from "../../tokens/baseMixin"
+import { theme, type TypographyVariant, typographyVariants } from "../../tokens/theme"
 import { styled } from "../../tokens/customStyled"
 
 export type TypographyProps = BaseMixinProps & {
@@ -63,6 +63,15 @@ export type TypographyProps = BaseMixinProps & {
  *
 /---------------------------------------------------------------------------**/
 
+type StyledTypographyProps = BaseMixinProps & {
+  $variant?: TypographyVariant
+  $color: string
+  $italic?: boolean
+  $ellipsis?: boolean
+  $underline?: boolean
+  $align?: React.CSSProperties["textAlign"]
+}
+
 export const Typography = ({
   variant = "b1Medium",
   text,
@@ -86,12 +95,12 @@ export const Typography = ({
   return (
     <StyledTypography
       as={as}
-      color={color}
-      variant={variant}
-      ellipsis={ellipsis}
-      italic={italic}
-      underline={underline}
-      align={align}
+      $color={color}
+      $variant={variant}
+      $ellipsis={ellipsis || undefined}
+      $italic={italic || undefined}
+      $underline={underline || undefined}
+      $align={align}
       {...mixin}
     >
       {renderText}
@@ -99,20 +108,20 @@ export const Typography = ({
   )
 }
 
-const StyledTypography = styled.p<Omit<TypographyProps, "text" | "as">>`
+const StyledTypography = styled.p<StyledTypographyProps>`
   display: inline-block;
   max-width: 100%;
 
-  color: ${({ color }) => color};
+  color: ${({ $color }) => $color};
 
-  ${({ variant }) => typographyVariants[variant ?? "b1Medium"]};
+  ${({ $variant }) => typographyVariants[$variant ?? "b1Medium"]};
 
-  font-style: ${({ italic }) => (italic ? "italic" : "normal")};
-  white-space: ${({ ellipsis }) => (ellipsis ? "nowrap" : "normal")};
-  overflow: ${({ ellipsis }) => (ellipsis ? "hidden" : "visible")};
-  text-overflow: ${({ ellipsis }) => (ellipsis ? "ellipsis" : "initial")};
-  text-align: ${({ align }) => align ?? "left"};
-  text-decoration: ${({ underline }) => (underline ? "underline" : "none")};
+  font-style: ${({ $italic }) => ($italic ? "italic" : "normal")};
+  white-space: ${({ $ellipsis }) => ($ellipsis ? "nowrap" : "normal")};
+  overflow: ${({ $ellipsis }) => ($ellipsis ? "hidden" : "visible")};
+  text-overflow: ${({ $ellipsis }) => ($ellipsis ? "ellipsis" : "initial")};
+  text-align: ${({ $align }) => $align ?? "left"};
+  text-decoration: ${({ $underline }) => ($underline ? "underline" : "none")};
 
   ${BaseMixin};
 `

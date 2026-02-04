@@ -1,22 +1,16 @@
-import React, {
-  HTMLAttributes,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import type { HTMLAttributes, ReactNode } from "react"
+import { BaseMixin } from "../../tokens/baseMixin"
+import type { BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import { theme } from "../../tokens/theme"
 import Flex from "../Flex/Flex"
 import { Typography } from "../Typography/Typography"
 import Icon from "../Icon/Icon"
-import { IconName } from "../Icon/icon-loader"
+import type { IconName } from "../Icon/icon-loader"
 import ToggleButton from "../ToggleButton/ToggleButton"
 import Button from "../Button/Button"
-import { SizeUiType } from "../../types"
+import type { SizeUiType } from "../../types"
 
 export type TreeNodeType = {
   id: string

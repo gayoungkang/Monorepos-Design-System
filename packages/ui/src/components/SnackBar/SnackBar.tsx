@@ -1,15 +1,7 @@
-import {
-  forwardRef,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  ForwardRefExoticComponent,
-  RefAttributes,
-  CSSProperties,
-} from "react"
-import { DirectionalPlacement, StatusUiType } from "../../types"
-import { IconName } from "../Icon/icon-loader"
+import { forwardRef, useEffect, useMemo, useRef, useState } from "react"
+import type { ForwardRefExoticComponent, RefAttributes, CSSProperties } from "react"
+import type { DirectionalPlacement, StatusUiType } from "../../types"
+import type { IconName } from "../Icon/icon-loader"
 import { theme } from "../../tokens/theme"
 import { useSnackBarStore } from "../../stores/useSnackBarStore"
 import Flex from "../Flex/Flex"

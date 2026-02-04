@@ -1,13 +1,9 @@
-import {
-  FocusEventHandler,
-  MouseEventHandler,
-  useState,
-  MouseEvent,
-  forwardRef,
-  useMemo,
-} from "react"
-import { useTheme, type DefaultTheme } from "styled-components"
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
+import { forwardRef, useMemo, useState } from "react"
+import type { FocusEventHandler, MouseEvent, MouseEventHandler } from "react"
+import { useTheme } from "styled-components"
+import type { DefaultTheme } from "styled-components"
+import { BaseMixin } from "../../tokens/baseMixin"
+import type { BaseMixinProps } from "../../tokens/baseMixin"
 import type { IconName } from "../Icon/icon-loader"
 import Icon, { type IconProps } from "../Icon/Icon"
 import { styled } from "../../tokens/customStyled"

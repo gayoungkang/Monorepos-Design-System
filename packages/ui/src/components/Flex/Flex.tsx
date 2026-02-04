@@ -13,6 +13,7 @@ export type FlexProps = HTMLAttributes<HTMLDivElement> &
     wrap?: CSSProperties["flexWrap"]
     gap?: string | number
     extraProps?: Record<string, any>
+    isActive?: boolean
   }
 /**---------------------------------------------------------------------------/
  *
@@ -58,7 +59,18 @@ export type FlexProps = HTMLAttributes<HTMLDivElement> &
 
 const Flex = forwardRef<HTMLDivElement, FlexProps>(
   (
-    { as = "div", children, direction, justify, align, wrap, gap = "0px", extraProps, ...props },
+    {
+      as = "div",
+      children,
+      direction,
+      justify,
+      align,
+      wrap,
+      gap = "0px",
+      extraProps,
+      isActive,
+      ...props
+    },
     ref,
   ) => {
     return (
@@ -70,6 +82,7 @@ const Flex = forwardRef<HTMLDivElement, FlexProps>(
         $align={align}
         $gap={gap}
         $wrap={wrap}
+        $isActive={isActive || undefined}
         {...extraProps}
         {...props}
       >
@@ -88,6 +101,7 @@ const StyledFlex = styled.div<
     $align?: CSSProperties["alignItems"]
     $wrap?: CSSProperties["flexWrap"]
     $gap?: string | number
+    $isActive?: boolean
   }
 >`
   display: flex;

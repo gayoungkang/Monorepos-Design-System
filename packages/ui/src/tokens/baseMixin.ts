@@ -1,4 +1,5 @@
-import { css, CSSObject } from "styled-components"
+import { css } from "styled-components"
+import type { CSSObject } from "styled-components"
 import { toCssValue } from "../utils/string"
 
 /**---------------------------------------------------------------------------/
@@ -65,7 +66,7 @@ export const omittedBaseProps = [
   "sx",
   "width",
   "height",
-  "backgroundColor",
+  "bgColor",
 ] as const
 
 type OmittedBaseProp = (typeof omittedBaseProps)[number]

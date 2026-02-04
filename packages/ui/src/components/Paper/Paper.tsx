@@ -1,5 +1,6 @@
-import { ReactNode } from "react"
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
+import type { ReactNode } from "react"
+import { BaseMixin } from "../../tokens/baseMixin"
+import type { BaseMixinProps } from "../../tokens/baseMixin"
 import { theme } from "../../tokens/theme"
 import { styled } from "../../tokens/customStyled"
 import { css } from "styled-components"

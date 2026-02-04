@@ -1,6 +1,6 @@
 import { forwardRef } from "react"
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
-import { IconName } from "./icon-loader"
+import { BaseMixin, type BaseMixinProps } from "../../tokens/baseMixin"
+import type { IconName } from "./icon-loader"
 import { styled } from "../../tokens/customStyled"
 
 export type IconPaintType = "auto" | "fill" | "stroke" | "both"

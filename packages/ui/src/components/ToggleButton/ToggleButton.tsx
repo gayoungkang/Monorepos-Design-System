@@ -1,13 +1,16 @@
-import { BaseMixin, BaseMixinProps } from "../../tokens/baseMixin"
-import { IconName } from "../Icon/icon-loader"
-import Label, { LabelProps } from "../Label/Label"
-import Icon, { IconProps } from "../Icon/Icon"
+import { BaseMixin } from "../../tokens/baseMixin"
+import type { BaseMixinProps } from "../../tokens/baseMixin"
+import type { IconName } from "../Icon/icon-loader"
+import Label from "../Label/Label"
+import type { LabelProps } from "../Label/Label"
+import Icon from "../Icon/Icon"
+import type { IconProps } from "../Icon/Icon"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
 import { theme } from "../../tokens/theme"
 import { Typography } from "../Typography/Typography"
 import { styled } from "../../tokens/customStyled"
-import { DirectionType, SizeUiType } from "../../types"
+import type { DirectionType, SizeUiType } from "../../types"
 
 export type ToggleButtonItem<Value extends string | number = string> = {
   startIcon?: IconName
