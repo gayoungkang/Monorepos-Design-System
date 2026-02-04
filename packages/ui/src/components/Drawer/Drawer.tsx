@@ -7,6 +7,7 @@ import { styled } from "../../tokens/customStyled"
 import type { AxisPlacement } from "../../types"
 import Box from "../Box/Box"
 import { cssValue } from "../../utils/string"
+import { canUseDOM } from "../../utils/canUseDOM"
 
 export type DrawerVariant = "fixed" | "absolute" | "flex"
 export type DrawerCloseBehavior = "hidden" | "collapsed"
@@ -174,7 +175,7 @@ const Drawer = ({
   if (!isFixed) return content
 
   // * SSR/테스트 안전 처리
-  if (typeof document === "undefined") return null
+  if (!canUseDOM()) return null
 
   return createPortal(content, container ?? document.body)
 }

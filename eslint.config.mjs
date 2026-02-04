@@ -50,8 +50,8 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ["@acme/ui/**"],
-              message: "Deep import 금지. '@acme/ui' 공개 API만 사용하세요.",
+              group: ["@acme/ui/*", "@acme/ui/**"],
+              message: "Deep import 금지. '@acme/ui' 공개 API만 사용.",
             },
           ],
           paths: [

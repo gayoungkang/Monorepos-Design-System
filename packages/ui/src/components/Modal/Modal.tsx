@@ -16,6 +16,7 @@ import Divider from "../Divider/Divider"
 import Progress from "../Progress/Progress"
 import { styled } from "../../tokens/customStyled"
 import { css } from "styled-components"
+import { canUseDOM } from "../../utils/canUseDOM"
 
 export type BasicModalProps = BaseMixinProps & {
   width?: string
@@ -228,6 +229,9 @@ const Modal = ({
       </AnimatedBox>
     </Flex>
   )
+
+  // * SSR/테스트 안전 처리
+  if (!canUseDOM()) return null
 
   return ReactDOM.createPortal(overlay, container ?? document.body)
 }

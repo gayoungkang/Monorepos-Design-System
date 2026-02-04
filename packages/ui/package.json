@@ -1,33 +1,14 @@
 {
   "name": "@acme/ui",
   "version": "1.0.0",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "private": true,
+  "sideEffects": false,
   "files": [
     "dist"
   ],
-  "peerDependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "styled-components": "^6.0.0"
-  },
-  "scripts": {
-    "build": "tsup",
-    "storybook": "storybook dev -p 6006",
-    "storybook:build": "storybook build",
-    "storybook:test": "storybook test --watch=false"
-  },
-  "devDependencies": {
-    "@storybook/addon-themes": "^10.1.5",
-    "@storybook/react-vite": "^10.1.5",
-    "storybook": "^10.1.5",
-    "tsup": "^8.0.0",
-    "typescript": "^5.6.3",
-    "vite": "^7.2.7",
-    "vite-plugin-svg-icons": "^2.0.1",
-    "vite-plugin-svgr": "^4.5.0"
-  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -36,15 +17,48 @@
     },
     "./tokens": {
       "types": "./dist/tokens/index.d.ts",
-      "require": "./dist/tokens/index.cjs",
-      "import": "./dist/tokens/index.js"
+      "import": "./dist/tokens/index.mjs",
+      "require": "./dist/tokens/index.js"
     },
     "./types": {
       "types": "./dist/types/index.d.ts",
-      "require": "./dist/types/index.cjs",
-      "import": "./dist/types/index.js"
+      "import": "./dist/types/index.mjs",
+      "require": "./dist/types/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18",
+    "styled-components": ">=6"
+  },
+  "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": false
     }
   },
-  "private": true,
-  "sideEffects": false
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "zustand": "^5.0.9"
+  },
+  "devDependencies": {
+    "@storybook/addon-themes": "^10.1.5",
+    "@storybook/react-vite": "^10.1.5",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "jsdom": "^28.0.0",
+    "storybook": "^10.1.5",
+    "tsup": "^8.0.0",
+    "typescript": "^5.6.3",
+    "vite": "^7.2.7",
+    "vite-plugin-svg-icons": "^2.0.1",
+    "vite-plugin-svgr": "^4.5.0",
+    "vitest": "^4.0.18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "storybook": "storybook dev -p 6006",
+    "storybook:build": "storybook build",
+    "storybook:test": "storybook test --watch=false"
+  }
 }

@@ -6,6 +6,7 @@ import type { DirectionalPlacement } from "../../types"
 import { POPOVER_ZINDEX } from "../../types/zindex"
 import { styled } from "../../tokens/customStyled"
 import { popover } from "../../tokens/keyframes"
+import { canUseDOM } from "../../utils/canUseDOM"
 
 export type PopperProps = {
   anchorRef: RefObject<HTMLElement | null>
@@ -249,6 +250,9 @@ const Popper = forwardRef<HTMLDivElement, PopperProps>(
     }, [open, anchorRef, onClose])
 
     if (!open) return null
+
+    // * SSR/테스트 안전 처리
+    if (!canUseDOM()) return null
 
     return createPortal(
       <StyledPopper ref={setMergedRef} placement={placement} height={height} style={style}>

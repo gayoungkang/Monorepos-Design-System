@@ -10,6 +10,7 @@ import Icon from "../Icon/Icon"
 import { Typography } from "../Typography/Typography"
 import IconButton from "../IconButton/IconButton"
 import { createPortal } from "react-dom"
+import { canUseDOM } from "../../utils/canUseDOM"
 
 export type SnackBarProps = {
   id: string
@@ -261,6 +262,9 @@ const SnackBarList = () => {
   }, [snackbars])
 
   if (!portalEl) return null
+
+  // * SSR/테스트 안전 처리
+  if (!canUseDOM()) return null
 
   return createPortal(
     <>
