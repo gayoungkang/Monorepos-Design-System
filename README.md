@@ -1,138 +1,186 @@
-# Component-first Design System Monorepo (Component-first + Monorepos + Design System)
+# Component-first Design System Monorepo
 
-(Yarn + Vite + React + TypeScript + styled-components + Storybook + tsup)
-전세계 대규모 기술 기업들이 규모 확장성과 디자인 일관성을 위해 사용하는 실무 구조를 기반으로 설계
+**Yarn + Vite + React + TypeScript + styled-components + Storybook + tsup**
 
----
-
-## 디자인 시스템 핵심 규칙
-
-- 모든 UI는 @acme/ui에서 관리
-- 서비스(app) 폴더에는 UI를 구현하지 않음
-- UI 수정 PR은 Storybook 참고 스크린샷/링크 포함
-- 모든 페이지는 디자인 시스템 기반으로 구성
-- ThemeProvider는 앱 루트 레벨에서 적용
-
-## Component-first 철학
-
-- Atomic은 “분류 철학”, Component-first는 “구현 방식”
-- UI는 독립적인 단위로 구성
-- 재사용성 + 접근성 + 디자인 일관성 보장
-- 컴포넌트는 UI 상태/로직 없이 순수 표현에 집중
+전세계 대규모 기술 기업들이 사용하는  
+**확장 가능한 Component-first 디자인 시스템 아키텍처** 기반으로 설계된 Monorepo입니다.
 
 ---
 
-## 핵심
+# 디자인 시스템 핵심 규칙
 
-Atomic 구조는 “사고 방식”으로만 사용하고,
-폴더/컴포넌트 구조는 **Component-first** 방식으로 유지합니다.
-
-## 구성 원칙
-
-- 1 컴포넌트 = 1 폴더
-- Component-first (Atomic 구분 폴더 없음)
-- 비즈니스 로직은 포함하지 않음
-- 디자인 토큰은 tokens 에서만 관리
-- Storybook으로 문서화
-
-### Component-first + Atomic Thinking
-
-- Atoms (UI Primitive) : 가장 작은 UI 요소 (조합의 기본 단위)
-  ex) Button, Icon, Typography, Input, Checkbox, Flex, Box, Tooltip, Overlay, Label
-
-- Molecules (UI Function Unit) : Atoms 2~3개 이상을 조합해 기능적 UI를 형성
-  ex) Input + Label → LabeledInput, Button + Icon → IconButton, Avatar + Label → UserChip, ToggleButtonGroup, Tabs, Tag
-
-- Organisms (UI Composite Pattern) : Molecules를 조합해 UI 구조/UX 패턴 제공
-  ex) SearchBar (Input + IconButton + Tag 등), ProductCard, Sidebar, Header, Navbar, DataGrid, Chart + Filter
-
-- Templates (Layout Structure) : 데이터 없이 UI 구조만 제공하는 페이지 템플릿
-  ex) Page layout, Dashboard layout, Content + Sidebar, Header + Body + Footer
-
-- Pages (Application Logic) : 비즈니스 로직은 여기에서만 존재
-  ex) fetch, 상태관리, router, 비즈니스 로직, 인증
+- 모든 UI는 **`@acme/ui` 패키지에서만 개발**
+- 앱(`apps/web`)에는 UI 컴포넌트 작성 금지
+- UI 수정 PR은 **Storybook 스크린샷/링크 필수**
+- 모든 페이지는 디자인 시스템 컴포넌트 기반
+- `ThemeProvider`는 앱 루트에서만 적용
 
 ---
 
-## 아키텍쳐
+# Component-first 철학
+
+Atomic은 사고 방식, Component-first는 구현 방식입니다.
+
+- UI는 독립 단위로 구성
+- 재사용성 / 접근성 / 일관성 보장
+- 컴포넌트는 **표현 전용**, 비즈니스 로직 없음
+
+---
+
+# 아키텍처
+
+```
+my-org/
+├─ apps/
+│  └─ web/              # 실제 서비스 앱
+└─ packages/
+   └─ ui/               # 디자인 시스템
+       ├─ src/
+       │  ├─ components/
+       │  ├─ tokens/
+       │  ├─ utils/
+       │  └─ index.ts
+```
+
+---
+
+# 설치
 
 ```bash
-my-org/
-├─ package.json
-├─ tsconfig.json
-├─ yarn.lock
-├─ apps/
-│ └─ web/              # 소비자(실제 앱) - Domain/Feature 기반
-└─ packages/
-    └─ ui/             # 디자인 시스템 (Component-first)
-        ├─ src/
-        │ ├─ components/               # 모든 UI 컴포넌트는 이름 기준 1폴더
-        │ │   └─ Button/
-        │ │       ├─ Button.tsx
-        │ │       ├─ Button.types.ts
-        │ │       ├─ Button.styled.ts
-        │ │       ├─ Button.stories.tsx
-        │ │       └─ index.ts
-        │ ├─ tokens/                   # theme, mixin, design token
-        │ │   ├─ theme.ts
-        │ │   ├─ baseMixin.ts
-        │ │   └─ customStyled.ts
-        │ ├─ utils/
-        │ └─ index.ts                  # 전체 export
-        ├─ package.json
-        ├─ tsconfig.json
-        └─ tsup.config.ts
-```
-
----
-
-## 설치
-
-```dash
-
-cd acme-design-system-storybook
-
-# 모든 의존성 설치
 yarn
-
-# UI 패키지만 빌드
-yarn build:ui
-
 ```
 
 ---
 
-## 개발 서버
+# 개발 서버
 
-### Web (Vite)
+### Web
 
-브라우저: http://localhost:5173
-
-```dash
-
+```bash
 yarn dev
-
 ```
 
-### Storybook (UI 컴포넌트)
+### Storybook
 
-브라우저: http://localhost:6006
-
-```dash
-
+```bash
 yarn storybook
-
-
 ```
 
 ---
 
-## UI 패키지 빌드
+# UI 패키지 빌드
 
-packages/ui/dist 에 CJS, ESM, 타입 선언이 생성됩니다.
-
-```dash
-
+```bash
 yarn build:ui
+```
+
+생성물:
+
+- ESM
+- CJS
+- 타입 선언 (.d.ts)
+
+---
+
+# Storybook CI 빌드
+
+```bash
+yarn storybook:build
+yarn storybook:test
+```
+
+---
+
+# 코드 품질
+
+```bash
+yarn lint
+yarn format
+```
+
+---
+
+# Icon 시스템 (번들러 독립 구조)
+
+Vite/Webpack 등 특정 번들러에 종속되지 않는  
+**런타임 SVG Sprite 방식**을 사용합니다.
+
+## 아이콘 원본 위치
 
 ```
+root/public/icons/svgs/
+```
+
+---
+
+## 아이콘 파이프라인 실행
+
+아이콘 수정 시 반드시 실행:
+
+```bash
+yarn fix:svg
+yarn icons:generate
+yarn copy:sprite
+```
+
+---
+
+## 파이프라인 구성
+
+| 스크립트                     | 역할                         |
+| ---------------------------- | ---------------------------- |
+| `fix-svg.ts`                 | SVG 정규화                   |
+| `generate-icon-sprite.ts`    | sprite.svg 생성              |
+| `generate-icon-types.ts`     | `IconName` 타입 생성         |
+| `copy-icon-sprite-to-web.ts` | sprite를 web public으로 복사 |
+
+---
+
+## 사용법
+
+### 앱 루트
+
+```tsx
+<IconSpriteProvider />
+```
+
+### 컴포넌트
+
+```tsx
+<Icon name="CloseLine" />
+```
+
+---
+
+# 버전 관리 (Changesets)
+
+```bash
+yarn dlx @changesets/cli init
+yarn changeset
+yarn version-packages
+yarn release
+```
+
+---
+
+# 이 구조의 장점
+
+- 번들러 독립 UI 패키지
+- Tree-shaking 최적화
+- 타입 안정성
+- Storybook 문서화
+- 대기업 수준 아키텍처
+
+---
+
+# 개발 규칙 요약
+
+- UI는 `@acme/ui`에서만 개발
+- 앱에서 스타일 직접 작성 금지
+- Token 기반 스타일만 허용
+- Storybook 없는 UI PR 금지
+- 비즈니스 로직은 앱 레이어에서만 작성
+
+---
+
+이 구조는 Shopify Polaris, Atlassian, Adobe Spectrum, Airbnb, Microsoft Fluent UI와 동일한 아키텍처 개념을 따릅니다.

@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useTheme } from "styled-components"
 import { BaseMixin, type BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
-import type { AxisPlacement, ColorUiType, SizeUiType } from "../../types"
 import Icon, { type IconProps } from "../Icon/Icon"
-import type { IconName } from "../Icon/icon-loader"
 import { Typography, type TypographyProps } from "../Typography/Typography"
+import type { IconName } from "../Icon/icon-types"
+import type { ColorUiType, SizeUiType } from "../../types/ui"
+import type { AxisPlacement } from "../../types/placement"
 
 type OptionType = {
   icon: IconName

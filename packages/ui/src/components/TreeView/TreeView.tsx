@@ -7,10 +7,10 @@ import { theme } from "../../tokens/theme"
 import Flex from "../Flex/Flex"
 import { Typography } from "../Typography/Typography"
 import Icon from "../Icon/Icon"
-import type { IconName } from "../Icon/icon-loader"
 import ToggleButton from "../ToggleButton/ToggleButton"
 import Button from "../Button/Button"
-import type { SizeUiType } from "../../types"
+import type { IconName } from "../Icon/icon-types"
+import type { SizeUiType } from "../../types/ui"
 
 export type TreeNodeType = {
   id: string

@@ -5,8 +5,8 @@ import { styled } from "../../tokens/customStyled"
 import { css } from "styled-components"
 import Flex from "../Flex/Flex"
 import { Typography } from "../Typography/Typography"
-import type { ColorUiType, SizeUiType } from "../../types"
 import IconButton from "../IconButton/IconButton"
+import type { ColorUiType, SizeUiType } from "../../types/ui"
 
 export type TabOptionsType = {
   label: string

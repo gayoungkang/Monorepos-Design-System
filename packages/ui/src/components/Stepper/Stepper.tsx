@@ -6,11 +6,11 @@ import { styled } from "../../tokens/customStyled"
 import { theme } from "../../tokens/theme"
 import { Typography } from "../Typography/Typography"
 import type { TypographyProps } from "../Typography/Typography"
-import type { DirectionType } from "../../types"
 import Divider from "../Divider/Divider"
 import Icon from "../Icon/Icon"
-import type { IconName } from "../Icon/icon-loader"
 import Flex from "../Flex/Flex"
+import type { IconName } from "../Icon/icon-types"
+import type { DirectionType } from "../../types/layout"
 
 export type StepperOptionType<Value extends string | number = string> = {
   children?: string | ReactNode | IconName

@@ -1,7 +1,6 @@
 import { useId, useMemo } from "react"
 import type { ChangeEvent } from "react"
 import type { BaseMixinProps } from "../../tokens/baseMixin"
-import type { AxisPlacement, DirectionType, SizeUiType } from "../../types"
 import Label from "../Label/Label"
 import type { LabelProps } from "../Label/Label"
 import Flex from "../Flex/Flex"
@@ -9,6 +8,9 @@ import Box from "../Box/Box"
 import { Typography } from "../Typography/Typography"
 import HelperText from "../HelperText/HelperText"
 import { styled } from "../../tokens/customStyled"
+import type { DirectionType } from "../../types/layout"
+import type { AxisPlacement } from "../../types/placement"
+import type { SizeUiType } from "../../types/ui"
 
 export type DataType<Value extends string | number> = {
   text: string

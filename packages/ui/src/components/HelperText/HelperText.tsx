@@ -2,11 +2,11 @@ import { useMemo } from "react"
 import { useTheme } from "styled-components"
 import type { BaseMixinProps } from "../../tokens/baseMixin"
 import { BaseMixin } from "../../tokens/baseMixin"
-import type { HelperTextUiType } from "../../types"
 import { styled } from "../../tokens/customStyled"
 import Icon, { type IconProps } from "../Icon/Icon"
-import type { IconName } from "../Icon/icon-loader"
 import { Typography, type TypographyProps } from "../Typography/Typography"
+import type { IconName } from "../Icon/icon-types"
+import type { HelperTextUiType } from "../../types/form"
 
 export type HelperTextProps = BaseMixinProps & {
   text: string

@@ -3,7 +3,7 @@ import { useTheme } from "styled-components"
 import { BaseMixin, type BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import { Typography } from "../Typography/Typography"
-import type { SizeUiType } from "../../types"
+import type { SizeUiType } from "../../types/ui"
 
 export type AvatarProps = BaseMixinProps & {
   src?: string

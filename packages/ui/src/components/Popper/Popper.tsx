@@ -2,11 +2,11 @@ import { forwardRef, useLayoutEffect, useRef, useState } from "react"
 import type { ReactNode, RefObject } from "react"
 import { createPortal } from "react-dom"
 import { css } from "styled-components"
-import type { DirectionalPlacement } from "../../types"
 import { POPOVER_ZINDEX } from "../../types/zindex"
 import { styled } from "../../tokens/customStyled"
 import { popover } from "../../tokens/keyframes"
 import { canUseDOM } from "../../utils/canUseDOM"
+import type { DirectionalPlacement } from "../../types/placement"
 
 export type PopperProps = {
   anchorRef: RefObject<HTMLElement | null>

@@ -3,11 +3,11 @@ import { forwardRef } from "react"
 import { useTheme, type DefaultTheme } from "styled-components"
 import { BaseMixin, type BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
-import type { IconName } from "../Icon/icon-loader"
 import Icon, { type IconProps } from "../Icon/Icon"
 import Progress, { type ProgressProps } from "../Progress/Progress"
 import { Typography, type TypographyProps } from "../Typography/Typography"
-import type { ColorUiType, SizeUiType, VariantUiType } from "packages/ui/src/types"
+import type { ColorUiType, SizeUiType, VariantUiType } from "../../types/ui"
+import type { IconName } from "../Icon/icon-types"
 
 export type ButtonProps = BaseMixinProps & {
   text: string

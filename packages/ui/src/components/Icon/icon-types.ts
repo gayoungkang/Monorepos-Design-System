@@ -1,0 +1,36 @@
+// AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
+export const IconNames = [
+  "Add",
+  "AlertTriangle",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowLeftCircleLine",
+  "ArrowRight",
+  "ArrowUp",
+  "BookmarkFill",
+  "BookmarkLine",
+  "CheckLine",
+  "ClipboardLine",
+  "CloseCircleFill",
+  "CloseLine",
+  "Download",
+  "Eye",
+  "EyeOff",
+  "File",
+  "Filter",
+  "FirstPageArrow",
+  "Folder",
+  "LastPageArrow",
+  "SearchLine",
+  "StarGlyph",
+  "StarOutLine",
+  "StatusDefault",
+  "StatusError",
+  "StatusInfo",
+  "StatusSuccess",
+  "StatusWarning",
+  "ViewColumn",
+  "reset"
+] as const;
+
+export type IconName = typeof IconNames[number];

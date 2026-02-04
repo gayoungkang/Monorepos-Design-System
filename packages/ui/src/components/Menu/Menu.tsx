@@ -2,8 +2,7 @@ import { forwardRef } from "react"
 import type { ForwardedRef, MouseEventHandler } from "react"
 import { BaseMixin } from "../../tokens/baseMixin"
 import type { BaseMixinProps } from "../../tokens/baseMixin"
-import type { SizeUiType } from "../../types"
-import type { IconName } from "../Icon/icon-loader"
+
 import Icon from "../Icon/Icon"
 import type { IconProps } from "../Icon/Icon"
 import { Typography } from "../Typography/Typography"
@@ -11,6 +10,8 @@ import type { TypographyProps } from "../Typography/Typography"
 import Flex from "../Flex/Flex"
 import { styled } from "../../tokens/customStyled"
 import { theme } from "../../tokens/theme"
+import type { SizeUiType } from "../../types/ui"
+import type { IconName } from "../Icon/icon-types"
 
 export type MenuProps = BaseMixinProps & {
   size?: SizeUiType

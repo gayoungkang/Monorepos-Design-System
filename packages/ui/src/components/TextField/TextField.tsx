@@ -8,7 +8,6 @@ import type {
   Ref,
 } from "react"
 import type { BaseMixinProps } from "../../tokens/baseMixin"
-import type { AxisPlacement, SizeUiType, VariantFormType } from "../../types"
 import Flex from "../Flex/Flex"
 import Label from "../Label/Label"
 import type { LabelProps } from "../Label/Label"
@@ -19,8 +18,11 @@ import IconButton from "../IconButton/IconButton"
 import HelperText from "../HelperText/HelperText"
 import { styled } from "../../tokens/customStyled"
 import { theme } from "../../tokens/theme"
-import type { IconName } from "../Icon/icon-loader"
 import { css } from "styled-components"
+import type { VariantFormType } from "../../types/form"
+import type { SizeUiType } from "../../types/ui"
+import type { IconName } from "../Icon/icon-types"
+import type { AxisPlacement } from "../../types/placement"
 
 export type TextFieldProps = BaseMixinProps & {
   variant?: VariantFormType

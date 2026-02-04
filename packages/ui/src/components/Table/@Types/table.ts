@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import type { BaseMixinProps } from "../../../tokens/baseMixin"
-import type { AxisPlacement } from "../../../types"
+import type { AxisPlacement } from "packages/ui/src/types/placement"
 
 // * 테이블 정렬 방향(오름차순/내림차순) 타입
 export type SortDirection = "ASC" | "DESC"

@@ -1,7 +1,5 @@
-import { forwardRef, useEffect, useMemo, useRef, useState } from "react"
+import { forwardRef, useEffect, useMemo, useState } from "react"
 import type { ForwardRefExoticComponent, RefAttributes, CSSProperties } from "react"
-import type { DirectionalPlacement, StatusUiType } from "../../types"
-import type { IconName } from "../Icon/icon-loader"
 import { theme } from "../../tokens/theme"
 import { useSnackBarStore } from "../../stores/useSnackBarStore"
 import Flex from "../Flex/Flex"
@@ -11,6 +9,9 @@ import { Typography } from "../Typography/Typography"
 import IconButton from "../IconButton/IconButton"
 import { createPortal } from "react-dom"
 import { canUseDOM } from "../../utils/canUseDOM"
+import type { StatusUiType } from "../../types/status"
+import type { DirectionalPlacement } from "../../types/placement"
+import type { IconName } from "../Icon/icon-types"
 
 export type SnackBarProps = {
   id: string

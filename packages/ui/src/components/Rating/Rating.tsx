@@ -6,10 +6,10 @@ import { styled } from "../../tokens/customStyled"
 import Flex from "../Flex/Flex"
 import Label from "../Label/Label"
 import type { LabelProps } from "../Label/Label"
-import type { AxisPlacement } from "../../types"
 import Icon from "../Icon/Icon"
-import type { IconName } from "../Icon/icon-loader"
 import { theme } from "../../tokens/theme"
+import type { AxisPlacement } from "../../types/placement"
+import type { IconName } from "../Icon/icon-types"
 
 type RatingValue = number | null
 
@@ -195,7 +195,7 @@ const Rating = forwardRef<HTMLDivElement, RatingProps>(
 
     const renderIconNode = (node: ReactNode | IconName) => {
       if (typeof node === "string") {
-        return <Icon name={node} size={iconSize} color="currentColor" aria-hidden />
+        return <Icon name={node as IconName} size={iconSize} color="currentColor" aria-hidden />
       }
       return node
     }
@@ -304,7 +304,6 @@ const Rating = forwardRef<HTMLDivElement, RatingProps>(
     const ariaValueText = `${displayedValue} / ${safeMax}`
 
     const emptyColor = disabled ? theme.colors.text.disabled : theme.colors.border.thick
-
     const filledColor = disabled ? theme.colors.text.disabled : theme.colors.primary[400]
 
     return (

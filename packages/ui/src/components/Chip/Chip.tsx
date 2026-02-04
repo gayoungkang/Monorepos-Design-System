@@ -2,13 +2,13 @@ import type { MouseEvent } from "react"
 import { useMemo } from "react"
 import { useTheme } from "styled-components"
 import { BaseMixin, type BaseMixinProps } from "../../tokens/baseMixin"
-import type { IconName } from "../Icon/icon-loader"
-import type { SizeUiType, VariantUiType } from "../../types"
 import Icon, { type IconProps } from "../Icon/Icon"
 import { Typography, type TypographyProps } from "../Typography/Typography"
 import IconButton from "../IconButton/IconButton"
 import { styled } from "../../tokens/customStyled"
 import { COMMON_PARENTS_ELEMENT_ZINDEX } from "../../types/zindex"
+import type { IconName } from "../Icon/icon-types"
+import type { SizeUiType, VariantUiType } from "../../types/ui"
 
 export type ChipProps = BaseMixinProps & {
   label: string

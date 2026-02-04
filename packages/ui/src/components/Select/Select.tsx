@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { ReactNode, FocusEventHandler } from "react"
 import type { BaseMixinProps } from "../../tokens/baseMixin"
-import type { AxisPlacement, SizeUiType, VariantFormType } from "../../types"
 import Label from "../Label/Label"
 import type { LabelProps } from "../Label/Label"
 import { Typography } from "../Typography/Typography"
@@ -17,6 +16,9 @@ import Progress from "../Progress/Progress"
 import IconButton from "../IconButton/IconButton"
 import HelperText from "../HelperText/HelperText"
 import { styled } from "../../tokens/customStyled"
+import type { VariantFormType } from "../../types/form"
+import type { SizeUiType } from "../../types/ui"
+import type { AxisPlacement } from "../../types/placement"
 
 export type SelectOptionType<
   T extends string | number = string | number,

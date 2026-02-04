@@ -7,11 +7,15 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "yarn workspace web dev",
-    "build": "yarn workspace web build",
+    "icons:types": "tsx scripts/generate-icon-types.ts",
+    "icons:sprite": "tsx scripts/generate-icon-sprite.ts",
+    "icons:copy:web": "tsx scripts/copy-icon-sprite-to-web.ts",
+    "icons:build": "yarn icons:types && yarn icons:sprite",
+    "dev": "yarn icons:build && yarn icons:copy:web && yarn workspace web dev",
+    "build": "yarn icons:build && yarn icons:copy:web && yarn workspace web build",
+    "storybook": "yarn icons:build && yarn workspace @acme/ui storybook",
     "preview": "yarn workspace web preview",
     "build:ui": "yarn workspace @acme/ui build",
-    "storybook": "yarn workspace @acme/ui storybook",
     "storybook:build": "yarn workspace @acme/ui storybook:build",
     "storybook:test": "yarn workspace @acme/ui storybook:test",
     "storybook:ci": "yarn storybook:build && yarn storybook:test",

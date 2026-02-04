@@ -1,6 +1,5 @@
 import { BaseMixin } from "../../tokens/baseMixin"
 import type { BaseMixinProps } from "../../tokens/baseMixin"
-import type { IconName } from "../Icon/icon-loader"
 import Label from "../Label/Label"
 import type { LabelProps } from "../Label/Label"
 import Icon from "../Icon/Icon"
@@ -10,7 +9,9 @@ import Box from "../Box/Box"
 import { theme } from "../../tokens/theme"
 import { Typography } from "../Typography/Typography"
 import { styled } from "../../tokens/customStyled"
-import type { DirectionType, SizeUiType } from "../../types"
+import type { IconName } from "../Icon/icon-types"
+import type { DirectionType } from "../../types/layout"
+import type { SizeUiType } from "../../types/ui"
 
 export type ToggleButtonItem<Value extends string | number = string> = {
   startIcon?: IconName

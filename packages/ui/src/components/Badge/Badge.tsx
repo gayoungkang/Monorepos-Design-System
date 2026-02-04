@@ -2,10 +2,11 @@ import type { ReactNode } from "react"
 import { useMemo } from "react"
 import { useTheme, type DefaultTheme } from "styled-components"
 import type { BaseMixinProps } from "../../tokens/baseMixin"
-import type { CornerPlacement, StatusUiType } from "../../types"
 import { styled } from "../../tokens/customStyled"
 import Box from "../Box/Box"
 import { Typography } from "../Typography/Typography"
+import type { StatusUiType } from "../../types/status"
+import type { CornerPlacement } from "../../types/placement"
 
 export type BadgeProps = BaseMixinProps & {
   children: ReactNode

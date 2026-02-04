@@ -2,8 +2,8 @@ import { useMemo } from "react"
 import { useTheme } from "styled-components"
 import type { BaseMixinProps } from "../../tokens/baseMixin"
 import { BaseMixin } from "../../tokens/baseMixin"
-import type { DirectionType } from "../../types"
 import { styled } from "../../tokens/customStyled"
+import type { DirectionType } from "../../types/layout"
 
 export type DividerProps = BaseMixinProps & {
   direction?: DirectionType

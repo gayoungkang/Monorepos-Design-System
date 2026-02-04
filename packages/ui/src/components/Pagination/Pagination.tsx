@@ -4,10 +4,10 @@ import type { BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import { theme } from "../../tokens/theme"
 import Flex from "../Flex/Flex"
-import type { IconName } from "../Icon/icon-loader"
 import { Typography } from "../Typography/Typography"
 import IconButton from "../IconButton/IconButton"
 import { clamp } from "../Table/@utils/table"
+import type { IconName } from "../Icon/icon-types"
 
 export type PaginationType = "Table" | "Basic"
 

@@ -4,11 +4,11 @@ import { useTheme } from "styled-components"
 import type { DefaultTheme } from "styled-components"
 import { BaseMixin } from "../../tokens/baseMixin"
 import type { BaseMixinProps } from "../../tokens/baseMixin"
-import type { IconName } from "../Icon/icon-loader"
 import Icon, { type IconProps } from "../Icon/Icon"
 import { styled } from "../../tokens/customStyled"
 import { Tooltip, type TooltipProps } from "../Tooltip/Tooltip"
-import type { VariantUiType } from "../../types"
+import type { IconName } from "../Icon/icon-types"
+import type { VariantUiType } from "../../types/ui"
 
 export type IconButtonProps = BaseMixinProps & {
   icon: IconName

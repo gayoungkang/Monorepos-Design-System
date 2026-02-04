@@ -6,7 +6,12 @@ export * from "./tokens/keyframes"
 export * from "./tokens/theme"
 
 // types
-export * from "./types"
+export * from "./types/form"
+export * from "./types/layout"
+export * from "./types/placement"
+export * from "./types/status"
+export * from "./types/ui"
+export * from "./types/zindex"
 
 // utils
 export * from "./utils/string"
@@ -62,3 +67,4 @@ export * from "./components/ToggleButton/ToggleButton"
 export * from "./components/Tooltip/Tooltip"
 export * from "./components/TreeView/TreeView"
 export * from "./components/Typography/Typography"
+export * from "./components/Icon/IconSpriteProvider"

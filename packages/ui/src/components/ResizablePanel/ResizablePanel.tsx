@@ -8,7 +8,6 @@ import React, {
   useState,
 } from "react"
 import type { ReactNode } from "react"
-import type { DirectionType } from "../../types"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
 import { theme } from "../../tokens/theme"
@@ -16,6 +15,7 @@ import { BaseMixin } from "../../tokens/baseMixin"
 import type { BaseMixinProps } from "../../tokens/baseMixin"
 import { styled } from "../../tokens/customStyled"
 import { RESIZABLEPANEL } from "../../types/zindex"
+import type { DirectionType } from "../../types/layout"
 
 const SIZE = 8
 

@@ -1,7 +1,6 @@
 import type { ChangeEvent, FocusEventHandler } from "react"
 import { forwardRef, useCallback, useEffect, useId, useMemo, useRef } from "react"
 import type { BaseMixinProps } from "../../tokens/baseMixin"
-import type { AxisPlacement, DirectionType, SizeUiType } from "../../types"
 import Label, { type LabelProps } from "../Label/Label"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
@@ -9,6 +8,7 @@ import HelperText from "../HelperText/HelperText"
 import { Typography } from "../Typography/Typography"
 import { styled } from "../../tokens/customStyled"
 import { useTheme } from "styled-components"
+import type { AxisPlacement, DirectionType, SizeUiType } from "../../public"
 
 type DataType<Value extends string | number = string> = {
   text: string
