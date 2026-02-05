@@ -1,11 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import React, { useMemo, useState } from "react"
 import Icon, { type IconProps } from "./Icon"
-import { IconNames, type IconName } from "./icon-loader"
 import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
 import Button from "../Button/Button"
 import { Typography } from "../Typography/Typography"
+
+const ICON_SAMPLE_0 = "Add"
+const ICON_SAMPLE_1 = "ArrowDown"
+const ICON_SAMPLE_2 = "CloseLine"
+const ICON_SAMPLE_3 = "InfoLine" as any
 
 const meta: Meta<typeof Icon> = {
   title: "Components/Icon",
@@ -20,7 +24,7 @@ const meta: Meta<typeof Icon> = {
     ariaLabel: { control: "text" },
   },
   args: {
-    name: "CloseLine" as any,
+    name: ICON_SAMPLE_2 as any,
     size: 24,
     color: "",
     strokeWidth: 1.5,
@@ -79,7 +83,7 @@ export const Playground: Story = {
 export const PaintModes: Story = {
   render: () => {
     const paints: IconProps["paint"][] = ["auto", "fill", "stroke", "both"]
-    const icon: IconName = "ArrowDown" as any
+    const icon = ICON_SAMPLE_1 as any
 
     return (
       <Box p="20px">
@@ -116,7 +120,7 @@ export const Sizes: Story = {
         <Flex gap="14px" align="center" wrap="wrap">
           {sizes.map((s) => (
             <Flex key={s} direction="column" align="center" gap="6px">
-              <Icon name={IconNames[0]} size={s} color="#333333" ariaLabel={`size-${s}`} />
+              <Icon name={ICON_SAMPLE_0 as any} size={s} color="#333333" ariaLabel={`size-${s}`} />
               <Typography variant="b3Regular" text={String(s)} />
             </Flex>
           ))}
@@ -134,12 +138,12 @@ export const A11yExamples: Story = {
 
         <Flex gap="18px" align="center" wrap="wrap">
           <Flex direction="column" gap="6px" align="center">
-            <Icon name={IconNames[3]} size={24} color="#333333" />
+            <Icon name={ICON_SAMPLE_2 as any} size={24} color="#333333" />
             <Typography variant="b3Regular" text="decorative (aria-hidden)" />
           </Flex>
 
           <Flex direction="column" gap="6px" align="center">
-            <Icon name={IconNames[3]} size={24} color="#333333" ariaLabel="information" />
+            <Icon name={ICON_SAMPLE_2 as any} size={24} color="#333333" ariaLabel="information" />
             <Typography variant="b3Regular" text='role="img" + aria-label' />
           </Flex>
         </Flex>

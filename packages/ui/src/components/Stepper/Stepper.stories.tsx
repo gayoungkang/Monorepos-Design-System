@@ -6,11 +6,12 @@ import Box from "../Box/Box"
 import { Typography } from "../Typography/Typography"
 import Button from "../Button/Button"
 import Divider from "../Divider/Divider"
-import { DirectionType } from "../../types"
 
+type DirectionType = "horizontal" | "vertical"
 type ValueType = string
 
 const StepperString = (props: StepperProps<ValueType>) => <Stepper<ValueType> {...props} />
+StepperString.displayName = "StepperString"
 
 const meta: Meta<typeof StepperString> = {
   title: "Components/Stepper",
@@ -64,7 +65,7 @@ const Controlled = (args: StepperProps<ValueType>) => {
   )
   const [linear, setLinear] = useState<boolean>(args.linear ?? true)
   const [value, setValue] = useState<ValueType | null>("step-1")
-  const [useCustomConnector, setUseCustomConnector] = useState(false)
+  const [useCustomConnector, setUseCustomConnector] = useState<boolean>(false)
 
   const options = useMemo(() => buildOptions(), [])
 
@@ -89,17 +90,19 @@ const Controlled = (args: StepperProps<ValueType>) => {
           <Button
             text={orientation === "horizontal" ? "Horizontal" : "Vertical"}
             variant="outlined"
-            onClick={() => setOrientation((p) => (p === "horizontal" ? "vertical" : "horizontal"))}
+            onClick={() =>
+              setOrientation((p: DirectionType) => (p === "horizontal" ? "vertical" : "horizontal"))
+            }
           />
           <Button
             text={linear ? "Linear: ON" : "Linear: OFF"}
             variant="outlined"
-            onClick={() => setLinear((p) => !p)}
+            onClick={() => setLinear((p: boolean) => !p)}
           />
           <Button
             text={useCustomConnector ? "Connector: Custom" : "Connector: Default"}
             variant="outlined"
-            onClick={() => setUseCustomConnector((p) => !p)}
+            onClick={() => setUseCustomConnector((p: boolean) => !p)}
           />
           <Button text="Reset" onClick={() => setValue("step-1")} />
         </Flex>
@@ -119,7 +122,7 @@ const Controlled = (args: StepperProps<ValueType>) => {
         orientation={orientation}
         linear={linear}
         connector={connector}
-        onSelect={(v, idx) => {
+        onSelect={(v) => {
           setValue(v)
         }}
       />

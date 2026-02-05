@@ -6,7 +6,10 @@ import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
 import Button from "../Button/Button"
 import { Typography } from "../Typography/Typography"
-import { IconNames } from "../Icon/icon-loader"
+
+const ICON_0 = "CloseLine"
+const ICON_1 = "File"
+const ICON_2 = "CheckLine"
 
 const meta: Meta<typeof IconButton> = {
   title: "Components/IconButton",
@@ -21,7 +24,7 @@ const meta: Meta<typeof IconButton> = {
     onMouseLeave: { control: false },
   },
   args: {
-    icon: "CloseLine" as any,
+    icon: ICON_0 as any,
     variant: "contained",
     size: 16,
     disabled: false,
@@ -59,7 +62,7 @@ export const Playground: Story = {
 export const Variants: Story = {
   render: () => {
     const variants: IconButtonProps["variant"][] = ["contained", "outlined", "text"]
-    const icons = ["CloseLine", "File", "CheckLine"] as any[]
+    const icons = [ICON_0, ICON_1, ICON_2] as any[]
 
     return (
       <Box p="20px">
@@ -98,7 +101,7 @@ export const Sizes: Story = {
               {sizes.map((s) => (
                 <IconButton
                   key={`${v}-${s}`}
-                  icon={IconNames[0]}
+                  icon={ICON_0 as any}
                   variant={v}
                   size={s}
                   toolTip={`size: ${s}`}
@@ -131,22 +134,22 @@ export const TooltipAndAria: Story = {
 
         <Flex gap="12px" align="center" wrap="wrap">
           <IconButton
-            icon={IconNames[0]}
+            icon={ICON_1 as any}
             variant="outlined"
             toolTip={enabled ? "Info tooltip" : ""}
             ariaLabel="info button"
           />
           <IconButton
-            icon={IconNames[1]}
+            icon={ICON_0 as any}
             variant="text"
             toolTip={enabled ? "Close tooltip" : ""}
             ariaLabel="close button"
           />
           <IconButton
-            icon={IconNames[2]}
+            icon={ICON_2 as any}
             variant="contained"
-            toolTip={enabled ? "Delete tooltip" : ""}
-            ariaLabel="delete button"
+            toolTip={enabled ? "Check tooltip" : ""}
+            ariaLabel="check button"
           />
         </Flex>
       </Box>
@@ -175,20 +178,20 @@ export const DisabledAndInteraction: Story = {
           <Flex gap="12px" align="center" wrap="wrap">
             <Typography variant="b2Regular" text="Enabled" width="90px" />
             <IconButton
-              icon={IconNames[0]}
+              icon={ICON_0 as any}
               variant="outlined"
               disableInteraction={disableInteraction}
               toolTip={`disableInteraction=${disableInteraction}`}
               onClick={() => {}}
             />
             <IconButton
-              icon={IconNames[1]}
+              icon={ICON_1 as any}
               variant="text"
               disableInteraction={disableInteraction}
               toolTip={`disableInteraction=${disableInteraction}`}
             />
             <IconButton
-              icon={IconNames[2]}
+              icon={ICON_2 as any}
               variant="contained"
               disableInteraction={disableInteraction}
               toolTip={`disableInteraction=${disableInteraction}`}
@@ -198,21 +201,21 @@ export const DisabledAndInteraction: Story = {
           <Flex gap="12px" align="center" wrap="wrap">
             <Typography variant="b2Regular" text="Disabled" width="90px" />
             <IconButton
-              icon={IconNames[0]}
+              icon={ICON_0 as any}
               variant="outlined"
               disabled
               disableInteraction={disableInteraction}
               toolTip="disabled"
             />
             <IconButton
-              icon={IconNames[1]}
+              icon={ICON_1 as any}
               variant="text"
               disabled
               disableInteraction={disableInteraction}
               toolTip="disabled"
             />
             <IconButton
-              icon={IconNames[2]}
+              icon={ICON_2 as any}
               variant="contained"
               disabled
               disableInteraction={disableInteraction}

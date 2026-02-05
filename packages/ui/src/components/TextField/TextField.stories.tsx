@@ -33,8 +33,8 @@ const meta: Meta<typeof TextField> = {
     disabled: { control: { type: "boolean" } },
     error: { control: { type: "boolean" } },
     helperText: { control: { type: "text" } },
-    startIcon: { control: { type: "text" } },
-    endIcon: { control: { type: "text" } },
+    startIcon: { control: "text" },
+    endIcon: { control: "text" },
     required: { control: { type: "boolean" } },
     readOnly: { control: { type: "boolean" } },
     labelPlacement: { control: { type: "radio" }, options: ["top", "bottom", "left", "right"] },
@@ -58,8 +58,8 @@ const meta: Meta<typeof TextField> = {
     disabled: false,
     error: false,
     helperText: "Helper text",
-    startIcon: "",
-    endIcon: "",
+    startIcon: undefined,
+    endIcon: undefined,
     required: false,
     readOnly: false,
     labelPlacement: "top",
@@ -213,8 +213,8 @@ export const Variants: Story = {
           <TextField
             {...common}
             label="Start/End"
-            startIcon={"Mail" as any}
-            endIcon={"Check" as any}
+            startIcon={"ClipboardLine" as any}
+            endIcon={"CheckLine" as any}
             value={vText}
             onChange={(e) => setVText(e.target.value)}
           />

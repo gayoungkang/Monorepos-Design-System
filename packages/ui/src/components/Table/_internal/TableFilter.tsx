@@ -5,11 +5,12 @@ import { styled } from "../../../tokens/customStyled"
 import { theme } from "../../../tokens/theme"
 import Divider from "../../Divider/Divider"
 import Drawer, { DrawerVariant } from "../../Drawer/Drawer"
-import type { AxisPlacement } from "../../../types"
 import ScrollBox from "../../ScrollBox/ScrollBox"
 import Skeleton from "../../Skeleton/Skeleton"
 import Badge from "../../Badge/Badge"
 import { toCssValue } from "../../../utils/string"
+
+type AxisPlacement = "top" | "bottom" | "left" | "right"
 
 export type TableFilterProps = {
   disabled?: boolean

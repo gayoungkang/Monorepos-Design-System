@@ -6,7 +6,13 @@ import Flex from "../Flex/Flex"
 import Button from "../Button/Button"
 import IconButton from "../IconButton/IconButton"
 import { Typography } from "../Typography/Typography"
-import { IconNames } from "../Icon/icon-loader"
+
+const ICON_MAIN = "File"
+const ICON_PROFILE = "BookmarkLine"
+const ICON_MORE = "MoreLine" as any
+const ICON_NOTIFY = "AlertTriangle"
+const ICON_RESET = "reset"
+const ICON_LOCK = "LockLine" as any
 
 const meta: Meta<typeof List> = {
   title: "Components/List",
@@ -53,13 +59,13 @@ const buildItems = (params: {
       onClick: () => setSelectedIndex(selectedIndex === 0 ? null : 0),
       startItem: [
         { type: "Avatar", props: { name: "Jane Doe", size: "M" } },
-        { type: "Icon", props: { name: IconNames[0] } },
+        { type: "Icon", props: { name: ICON_PROFILE as any } },
       ],
       endItem: [
         {
           type: "IconButton",
           props: {
-            icon: IconNames[0],
+            icon: ICON_MORE as any,
             variant: "outlined",
             toolTip: "More actions",
           },
@@ -70,7 +76,7 @@ const buildItems = (params: {
       label: "Notifications",
       selected: selectedIndex === 1,
       onClick: () => setSelectedIndex(selectedIndex === 1 ? null : 1),
-      startItem: [{ type: "Icon", props: { name: IconNames[0] } }],
+      startItem: [{ type: "Icon", props: { name: ICON_NOTIFY as any } }],
       endItem: [
         {
           type: "Switch",
@@ -100,7 +106,7 @@ const buildItems = (params: {
         {
           type: "IconButton",
           props: {
-            icon: IconNames[0],
+            icon: ICON_MAIN as any,
             variant: "text",
             toolTip: "Single checkbox example",
           },
@@ -134,12 +140,12 @@ const buildItems = (params: {
       label: "Disabled item",
       disabled: true,
       selected: false,
-      startItem: [{ type: "Icon", props: { name: "LockLine" as any } }],
+      startItem: [{ type: "Icon", props: { name: ICON_LOCK as any } }],
       endItem: [
         {
           type: "IconButton",
           props: {
-            icon: IconNames[0],
+            icon: ICON_MAIN as any,
             disabled: true,
             toolTip: "disabled",
           },
@@ -200,7 +206,7 @@ export const Playground: Story = {
             onClick={() => setSeparator((p) => !p)}
           />
           <IconButton
-            icon={IconNames[0]}
+            icon={ICON_RESET as any}
             toolTip="Reset selection"
             variant="outlined"
             onClick={() => setSelectedIndex(0)}
@@ -251,18 +257,18 @@ export const DensityMatrix: Story = {
                 label: "Clickable",
                 selected: idx % 2 === 0,
                 onClick: () => {},
-                startItem: [{ type: "Icon", props: { name: IconNames[0] } }],
+                startItem: [{ type: "Icon", props: { name: ICON_MAIN as any } }],
                 endItem: [
                   {
                     type: "IconButton",
-                    props: { icon: IconNames[0], toolTip: "tooltip", variant: "outlined" },
+                    props: { icon: ICON_MAIN as any, toolTip: "tooltip", variant: "outlined" },
                   },
                 ],
               },
               {
                 label: "Disabled",
                 disabled: true,
-                startItem: [{ type: "Icon", props: { name: IconNames[0] } }],
+                startItem: [{ type: "Icon", props: { name: ICON_MAIN as any } }],
               },
             ]
 

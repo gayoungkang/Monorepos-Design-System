@@ -5,7 +5,6 @@ import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
 import { Typography } from "../Typography/Typography"
 import Button from "../Button/Button"
-import { IconNames } from "../Icon/icon-loader"
 
 type ValueType = "all" | "active" | "archived"
 
@@ -46,10 +45,14 @@ const meta: Meta<typeof ToggleButtonFixed> = {
 export default meta
 type Story = StoryObj<typeof ToggleButtonFixed>
 
+const ICON_ALL = "File"
+const ICON_ACTIVE = "CheckLine"
+const ICON_ARCHIVED = "BookmarkLine"
+
 const defaultButtons: ToggleButtonItem<ValueType>[] = [
-  { label: "All", value: "all", startIcon: IconNames[0] },
-  { label: "Active", value: "active", startIcon: IconNames[1] },
-  { label: "Archived", value: "archived", startIcon: IconNames[2] },
+  { label: "All", value: "all", startIcon: ICON_ALL as any },
+  { label: "Active", value: "active", startIcon: ICON_ACTIVE as any },
+  { label: "Archived", value: "archived", startIcon: ICON_ARCHIVED as any },
 ]
 
 const Controlled = (args: FixedProps) => {
@@ -96,9 +99,9 @@ export const AllCases: Story = {
     const [disabledAll, setDisabledAll] = useState<boolean>(false)
 
     const buttonsWithItemDisabled: ToggleButtonItem<ValueType>[] = [
-      { label: "All", value: "all", startIcon: IconNames[0] },
-      { label: "Active", value: "active", startIcon: IconNames[1], disabled: true },
-      { label: "Archived", value: "archived", startIcon: IconNames[2] },
+      { label: "All", value: "all", startIcon: ICON_ALL as any },
+      { label: "Active", value: "active", startIcon: ICON_ACTIVE as any, disabled: true },
+      { label: "Archived", value: "archived", startIcon: ICON_ARCHIVED as any },
     ]
 
     return (

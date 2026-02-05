@@ -8,6 +8,9 @@ import ToggleButton from "../ToggleButton/ToggleButton"
 import { theme, typographyVariants } from "../../tokens/theme"
 
 type StoryArgs = TypographyProps
+type VariantKey = keyof typeof typographyVariants
+type AsTag = NonNullable<TypographyProps["as"]>
+type Align = NonNullable<TypographyProps["align"]>
 
 const meta: Meta<StoryArgs> = {
   title: "Components/Typography",
@@ -62,20 +65,30 @@ const meta: Meta<StoryArgs> = {
 export default meta
 type Story = StoryObj<StoryArgs>
 
-const asOptions = ["p", "span", "div", "label", "strong", "em", "h1", "h2", "h3"]
-const alignOptions = ["left", "center", "right", "justify"]
+const asOptions: AsTag[] = ["p", "span", "div", "label", "strong", "em", "h1", "h2", "h3"]
+const alignOptions: Align[] = ["left", "center", "right", "justify"]
 
-const safeString = (v: string | React.SyntheticEvent) => (typeof v === "string" ? v : null)
+const isVariantKey = (v: unknown): v is VariantKey =>
+  typeof v === "string" && Object.prototype.hasOwnProperty.call(typographyVariants, v)
+
+const safeAsTag = (v: unknown): AsTag | null =>
+  typeof v === "string" && (asOptions as string[]).includes(v) ? (v as AsTag) : null
+
+const safeAlign = (v: unknown): Align | null =>
+  typeof v === "string" && (alignOptions as string[]).includes(v) ? (v as Align) : null
 
 export const Playground: Story = {
   render: (args) => {
-    const variantKeys = useMemo(() => Object.keys(typographyVariants), [])
+    const variantKeys = useMemo(() => Object.keys(typographyVariants) as VariantKey[], [])
     const [text, setText] = useState<string>(
       typeof args.text === "string" ? args.text : "Typography",
     )
-    const [variant, setVariant] = useState<string>((args.variant as string) ?? "b1Medium")
-    const [asTag, setAsTag] = useState<string>((args.as as string) ?? "p")
-    const [align, setAlign] = useState<string>((args.align as string) ?? "left")
+
+    const [variant, setVariant] = useState<VariantKey>(
+      isVariantKey(args.variant) ? args.variant : "b1Medium",
+    )
+    const [asTag, setAsTag] = useState<AsTag>(args.as ?? "p")
+    const [align, setAlign] = useState<Align>(args.align ?? "left")
     const [color, setColor] = useState<string>(args.color ?? theme.colors.text.primary)
 
     const [italic, setItalic] = useState<boolean>(!!args.italic)
@@ -87,15 +100,15 @@ export const Playground: Story = {
     }, [args.text])
 
     useEffect(() => {
-      setVariant((args.variant as string) ?? "b1Medium")
+      setVariant(isVariantKey(args.variant) ? args.variant : "b1Medium")
     }, [args.variant])
 
     useEffect(() => {
-      setAsTag((args.as as string) ?? "p")
+      setAsTag(args.as ?? "p")
     }, [args.as])
 
     useEffect(() => {
-      setAlign((args.align as string) ?? "left")
+      setAlign(args.align ?? "left")
     }, [args.align])
 
     useEffect(() => {
@@ -129,9 +142,7 @@ export const Playground: Story = {
                 buttons={variantKeys.map((v) => ({ label: v, value: v }))}
                 selectedValue={variant}
                 onClick={(v) => {
-                  const s = safeString(v)
-                  if (!s) return
-                  setVariant(s)
+                  if (isVariantKey(v)) setVariant(v)
                 }}
                 size="S"
               />
@@ -140,7 +151,7 @@ export const Playground: Story = {
                 buttons={asOptions.map((v) => ({ label: v, value: v }))}
                 selectedValue={asTag}
                 onClick={(v) => {
-                  const s = safeString(v)
+                  const s = safeAsTag(v)
                   if (!s) return
                   setAsTag(s)
                 }}
@@ -151,13 +162,14 @@ export const Playground: Story = {
                 buttons={alignOptions.map((v) => ({ label: v, value: v }))}
                 selectedValue={align}
                 onClick={(v) => {
-                  const s = safeString(v)
+                  const s = safeAlign(v)
                   if (!s) return
                   setAlign(s)
                 }}
                 size="S"
               />
             </Flex>
+
             <Flex gap={10} wrap="wrap" width="100%" align="center">
               <TextField
                 label="color"
@@ -176,9 +188,7 @@ export const Playground: Story = {
                 ]}
                 selectedValue={italic ? "true" : "false"}
                 onClick={(v) => {
-                  const s = safeString(v)
-                  if (!s) return
-                  setItalic(s === "true")
+                  if (v === "true" || v === "false") setItalic(v === "true")
                 }}
                 size="S"
               />
@@ -190,9 +200,7 @@ export const Playground: Story = {
                 ]}
                 selectedValue={underline ? "true" : "false"}
                 onClick={(v) => {
-                  const s = safeString(v)
-                  if (!s) return
-                  setUnderline(s === "true")
+                  if (v === "true" || v === "false") setUnderline(v === "true")
                 }}
                 size="S"
               />
@@ -204,9 +212,7 @@ export const Playground: Story = {
                 ]}
                 selectedValue={ellipsis ? "true" : "false"}
                 onClick={(v) => {
-                  const s = safeString(v)
-                  if (!s) return
-                  setEllipsis(s === "true")
+                  if (v === "true" || v === "false") setEllipsis(v === "true")
                 }}
                 size="S"
               />
@@ -214,7 +220,13 @@ export const Playground: Story = {
           </Flex>
         </Box>
 
-        <Flex direction="column" p={10} gap={10} width="100%" sx={{ backgroundColor: "#ffffff" }}>
+        <Flex
+          direction="column"
+          p={10}
+          gap={10}
+          width="100%"
+          sx={{ backgroundColor: theme.colors.background.default }}
+        >
           <Typography variant="b1Bold" text="Preview" />
 
           <Box
@@ -227,9 +239,9 @@ export const Playground: Story = {
           >
             <Typography
               text={text}
-              variant={variant as any}
-              as={asTag as any}
-              align={align as any}
+              variant={variant}
+              as={asTag}
+              align={align}
               color={color}
               italic={italic}
               underline={underline}
@@ -264,9 +276,9 @@ export const Playground: Story = {
             }}
           >
             <Typography
-              variant={variant as any}
-              as={asTag as any}
-              align={align as any}
+              variant={variant}
+              as={asTag}
+              align={align}
               color={color}
               italic={italic}
               underline={underline}

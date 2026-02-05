@@ -5,7 +5,9 @@ import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
 import { Typography } from "../Typography/Typography"
 import Button from "../Button/Button"
-import { IconNames } from "../Icon/icon-loader"
+
+const START_ICON = "File"
+const END_ICON = "ArrowRight"
 
 const meta: Meta<typeof Menu> = {
   title: "Components/Menu",
@@ -21,8 +23,8 @@ const meta: Meta<typeof Menu> = {
     size: "M",
     disabled: false,
     selected: false,
-    startIcon: IconNames[0],
-    endIcon: IconNames[0],
+    startIcon: START_ICON as any,
+    endIcon: END_ICON as any,
   },
 }
 export default meta
@@ -101,20 +103,25 @@ export const AllStates: Story = {
                 <Typography variant="b2Regular" text={c.title} color="#666666" />
               </Box>
 
-              <Menu text="Default" size={c.size} startIcon={IconNames[0]} endIcon={IconNames[0]} />
+              <Menu
+                text="Default"
+                size={c.size}
+                startIcon={START_ICON as any}
+                endIcon={END_ICON as any}
+              />
               <Menu
                 text="Selected"
                 size={c.size}
                 selected
-                startIcon={IconNames[0]}
-                endIcon={IconNames[0]}
+                startIcon={START_ICON as any}
+                endIcon={END_ICON as any}
               />
               <Menu
                 text="Disabled"
                 size={c.size}
                 disabled
-                startIcon={IconNames[0]}
-                endIcon={IconNames[0]}
+                startIcon={START_ICON as any}
+                endIcon={END_ICON as any}
               />
               <Menu text="No icons" size={c.size} onClick={() => {}} />
             </Box>

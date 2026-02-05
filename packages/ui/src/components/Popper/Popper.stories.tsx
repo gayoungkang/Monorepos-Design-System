@@ -1,12 +1,25 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import { useMemo, useRef, useState } from "react"
 import Popper from "./Popper"
-import type { DirectionalPlacement } from "../../types"
 import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
 import Button from "../Button/Button"
 import { Typography } from "../Typography/Typography"
 import { theme } from "../../tokens/theme"
+
+type DirectionalPlacement =
+  | "top"
+  | "top-start"
+  | "top-end"
+  | "bottom"
+  | "bottom-start"
+  | "bottom-end"
+  | "left"
+  | "left-start"
+  | "left-end"
+  | "right"
+  | "right-start"
+  | "right-end"
 
 const placements: DirectionalPlacement[] = [
   "top",

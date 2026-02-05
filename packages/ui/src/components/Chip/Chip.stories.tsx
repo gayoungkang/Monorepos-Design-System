@@ -6,7 +6,9 @@ import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
 import Button from "../Button/Button"
 import { Typography } from "../Typography/Typography"
-import { IconNames } from "../Icon/icon-loader"
+
+const START_ICON = "Add"
+const END_ICON = "CloseLine"
 
 const meta: Meta<typeof Chip> = {
   title: "Components/Chip",
@@ -39,10 +41,10 @@ export const Playground: Story = {
         <Typography variant="h3" text="Chip Playground" mb="12px" />
         <Flex gap="12px" align="center" wrap="wrap">
           <Chip {...(args as ChipProps)} />
-          <Chip {...(args as ChipProps)} startIcon={IconNames[0]} />
-          <Chip {...(args as ChipProps)} endIcon={IconNames[0]} />
+          <Chip {...(args as ChipProps)} startIcon={START_ICON} />
+          <Chip {...(args as ChipProps)} endIcon={END_ICON} />
           <Chip {...(args as ChipProps)} onDelete={() => undefined} />
-          <Chip {...(args as ChipProps)} startIcon={IconNames[0]} onDelete={() => undefined} />
+          <Chip {...(args as ChipProps)} startIcon={START_ICON} onDelete={() => undefined} />
         </Flex>
       </Box>
     )
@@ -52,7 +54,6 @@ export const Playground: Story = {
 export const ClickAndDeleteInteraction: Story = {
   render: () => {
     const [log, setLog] = useState<string[]>([])
-
     const push = (msg: string) => setLog((prev) => [msg, ...prev].slice(0, 6))
 
     const chips = useMemo(
@@ -80,7 +81,8 @@ export const ClickAndDeleteInteraction: Story = {
               variant={c.variant}
               onClick={() => push(`${c.label}: onClick`)}
               onDelete={() => push(`${c.label}: onDelete`)}
-              startIcon={IconNames[0]}
+              startIcon={START_ICON}
+              endIcon={END_ICON}
             />
           ))}
         </Flex>

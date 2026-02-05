@@ -5,8 +5,23 @@ import Flex from "../Flex/Flex"
 import Box from "../Box/Box"
 import { Typography } from "../Typography/Typography"
 import Button from "../Button/Button"
-import { DirectionalPlacement, StatusUiType } from "../../types"
 import { useSnackBarStore } from "../../stores/useSnackBarStore"
+
+type DirectionalPlacement =
+  | "top"
+  | "bottom"
+  | "left"
+  | "right"
+  | "top-start"
+  | "top-end"
+  | "bottom-start"
+  | "bottom-end"
+  | "left-start"
+  | "left-end"
+  | "right-start"
+  | "right-end"
+
+type StatusUiType = "success" | "error" | "warning" | "info"
 
 type EnqueueOptions = Omit<SnackBarProps, "id" | "message">
 

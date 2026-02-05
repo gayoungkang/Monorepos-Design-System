@@ -6,7 +6,11 @@ import Box from "../Box/Box"
 import Flex from "../Flex/Flex"
 import Button from "../Button/Button"
 import { Typography } from "../Typography/Typography"
-import { IconNames } from "../Icon/icon-loader"
+
+const MAIN_ICON = "Add"
+const ITEM_ICON_1 = "Tag" as any
+const ITEM_ICON_2 = "ArrowRight"
+const ITEM_ICON_3 = "CheckLine"
 
 const meta: Meta<typeof FloatingButton> = {
   title: "Components/FloatingButton",
@@ -18,7 +22,7 @@ const meta: Meta<typeof FloatingButton> = {
     TypographyProps: { control: false },
   },
   args: {
-    icon: IconNames[0],
+    icon: MAIN_ICON,
     label: "Create",
     size: "M",
     color: "primary",
@@ -42,13 +46,13 @@ export const Playground: Story = {
         </Flex>
 
         <FloatingButton
-          icon={IconNames[0]}
+          icon={MAIN_ICON}
           label="New"
           placement="top"
           item={[
-            { icon: IconNames[0] as any, label: "Tag", onClick: () => setLog("Tag clicked") },
-            { icon: IconNames[1] as any, label: "Move", onClick: () => setLog("Move clicked") },
-            { icon: IconNames[2] as any, onClick: () => setLog("Icon-only clicked") },
+            { icon: ITEM_ICON_1, label: "Tag", onClick: () => setLog("Tag clicked") },
+            { icon: ITEM_ICON_2, label: "Move", onClick: () => setLog("Move clicked") },
+            { icon: ITEM_ICON_3, onClick: () => setLog("Icon-only clicked") },
           ]}
         />
 
