@@ -25,6 +25,7 @@
     "fix:svg": "tsx scripts/fix-svg.ts",
     "icons:generate": "tsx scripts/generate-icon-types.ts",
     "changeset": "changeset",
+    "chromatic": "chromatic",
     "changeset:init": "changeset init",
     "version-packages": "changeset version",
     "release": "changeset publish"
@@ -40,6 +41,7 @@
     "@types/prettier": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "^8.48.1",
     "@typescript-eslint/parser": "^8.48.1",
+    "chromatic": "^15.0.0",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
@@ -55,6 +57,14 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.1"
+  },
+  "resolutions": {
+    "vitest": "4.0.18",
+    "@vitest/expect": "4.0.18",
+    "@vitest/runner": "4.0.18",
+    "@vitest/snapshot": "4.0.18",
+    "@vitest/utils": "4.0.18",
+    "@vitest/spy": "4.0.18"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

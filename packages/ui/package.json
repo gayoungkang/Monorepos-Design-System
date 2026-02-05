@@ -42,10 +42,12 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@storybook/addon-a11y": "^10.2.6",
     "@storybook/addon-themes": "^10.1.5",
     "@storybook/react-vite": "^10.1.5",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "jsdom": "^28.0.0",
     "storybook": "^10.1.5",
     "tsup": "^8.0.0",
@@ -59,6 +61,9 @@
     "build": "tsup",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build",
-    "storybook:test": "storybook test --watch=false"
+    "storybook:test": "storybook test --watch=false",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui"
   }
 }

@@ -1,21 +1,36 @@
-[13:19:11.815] [INFO] storybook v10.1.5
-[13:19:12.661] [DEBUG] Getting package.json info for /Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/packages/ui/package.json...
-[13:19:12.667] [WARN] Could not resolve addon "@storybook/addon-essentials", skipping. Is it installed?
-[13:19:12.700] [WARN] Could not resolve addon "@storybook/addon-essentials", skipping. Is it installed?
-[13:19:12.903] [ERROR] [38;2;241;97;97mError: Failed to load static files, no such directory: [36m/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/packages/public[39m
-Make sure this directory exists.[39m
-    at parseStaticDir (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/_node-chunks/chunk-VGBOM5PD.js:107:11)
-    at file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/core-server/presets/common-preset.js:1421:48
-    at Array.map (<anonymous>)
-    at Object.favicon (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/core-server/presets/common-preset.js:1416:193)
-    at async useStatics (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/_node-chunks/chunk-VGBOM5PD.js:63:83)
-    at async Promise.all (index 2)
-    at async storybookDevServer (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/core-server/index.js:7167:141)
-    at async buildOrThrow (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/core-server/index.js:5556:12)
-    at async buildDevStandalone (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/core-server/index.js:7582:66)
+[17:08:33.245] [INFO] storybook v10.1.5
+[17:08:33.365] [ERROR] [38;2;241;97;97mSB_CORE-SERVER_0007 (MainFileEvaluationError): Storybook couldn't evaluate your [33m.storybook/main.ts[39m file.
+
+Original error:
+[37mError: Transform failed with 1 error:
+<stdin>:14:29: ERROR: Expected ":" but found ","
+    at failureErrorWithLog (/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/esbuild/lib/main.js:1467:15)
+    at /Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/esbuild/lib/main.js:736:50
+    at responseCallbacks.<computed> (/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/esbuild/lib/main.js:603:9)
+    at handleIncomingPacket (/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/esbuild/lib/main.js:658:12)
+    at Socket.readFromStdout (/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/esbuild/lib/main.js:581:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)[39m[39m
+    at loadMainConfig (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/_node-chunks/chunk-RZ3SV46Y.js:11701:11)
+    at async buildDevStandalone (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/core-server/index.js:7523:16)
     at async withTelemetry (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/_node-chunks/chunk-VGBOM5PD.js:209:12)
     at async dev (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/bin/core.js:2734:3)
     at async _Command.<anonymous> (file:///Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/storybook/dist/bin/core.js:2801:92)
-[13:19:12.904] [WARN] Broken build, fix the error above.
+[17:08:33.367] [WARN] Broken build, fix the error above.
 You may need to refresh the browser.
-[13:19:12.910] [WARN] Could not resolve addon "@storybook/addon-essentials", skipping. Is it installed?
+[17:08:33.369] [WARN]   Failed to load preset: "/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/packages/ui/.storybook/main.ts"
+[17:08:33.369] [ERROR] [38;2;241;97;97mError: Transform failed with 1 error:
+<stdin>:14:29: ERROR: Expected ":" but found ","[39m
+    at failureErrorWithLog (/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/esbuild/lib/main.js:1467:15)
+    at /Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/esbuild/lib/main.js:736:50
+    at responseCallbacks.<computed> (/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/esbuild/lib/main.js:603:9)
+    at handleIncomingPacket (/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/esbuild/lib/main.js:658:12)
+    at Socket.readFromStdout (/Users/kgy/Documents/gayoung/dev/acme-design-system-storybook/node_modules/esbuild/lib/main.js:581:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
